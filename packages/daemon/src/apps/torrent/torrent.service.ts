@@ -3,7 +3,7 @@ import { Worker } from 'worker_threads';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { getInfoHash } from './utils/get_info_hash';
-import WebTorrent from 'webtorrent';
+import { TorrentDataObject } from './data_classes/Torrent';
 
 @Injectable()
 export class TorrentService {
@@ -49,11 +49,25 @@ export class TorrentService {
       },
     });
     this.managedProcesses[infoHash] = worker;
+    let torrentData: TorrentDataObject;
 
     worker.on('message', (msg) => {
-      //this.logger.log(`Worker message: ${JSON.stringify(msg)}`);
       if (msg.type === 'metadata') {
-        this.logger.log(`Torrent metadata received: ${msg.name}`);
+        this.logger.log(`Torrent metadata received: ${infoHash}`);
+        torrentData = new TorrentDataObject(
+          msg.name,
+          msg.files,
+          msg.infoHash,
+          msg.totalSize,
+          msg.numFiles,
+          worker,
+          0,
+        );
+        this.logger.log(
+          `Torrent started: ${torrentData.name} (${torrentData.infoHash})`,
+        );
+      } else if (msg.type === 'progress') {
+        torrentData.setProgress(msg.progress);
       }
     });
 
@@ -99,8 +113,6 @@ export class TorrentService {
 
   async getProgress(infoHash: string) {
     const worker = this.getWorker(infoHash);
-    
-
   }
 
   async getProcesses() {

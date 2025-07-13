@@ -23,6 +23,7 @@ export type Peer = {
 
 export type Torrent = {
     name: string | null;
+    status: 'downloading' | 'paused' | 'seeding' | 'error' | null;
     files: File[] | null;
     infoHash: string;
     totalSize: number | null;

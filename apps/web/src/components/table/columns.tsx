@@ -47,13 +47,18 @@ const columnsMetadata: {
             );
         },
     },
-    { key: 'status' },
+    {
+        key: 'status',
+        cell: ({ getValue }) => {
+            return <center className="capitalize">{getValue()}</center>;
+        },
+    },
     {
         key: 'seeds',
         cell: ({ row }) => {
             return (
                 <center>
-                    {countPeersByType(row.original.peers, ['leecher'])}
+                    {countPeersByType(row.original.peers, ['seeder'])}
                 </center>
             );
         },

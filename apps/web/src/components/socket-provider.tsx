@@ -18,7 +18,10 @@ export default function SocketProvider() {
         socket.on('connect', () => {
             console.log('Socket connected:', socket.id);
         });
-
+        socket.on('disconnect', () => {
+            console.log('Socket disconnected');
+            setTorrent(null);
+        });
         socket.emit('get_all');
 
         socket.on('get_all', (data: Torrent[]) => {
@@ -42,6 +45,7 @@ export default function SocketProvider() {
                         downloadSpeed: null,
                         numPeers: null,
                         peers: [],
+                        status: null,
                     };
                     if (data.prop && data.value !== undefined) {
                         (newTorrent as any)[data.prop] = data.value;
@@ -68,6 +72,7 @@ export default function SocketProvider() {
                         downloadSpeed: null,
                         numPeers: null,
                         peers: [],
+                        status: null,
                     };
                     if (data.prop && data.value !== undefined) {
                         (newTorrent as any)[data.prop] = data.value;

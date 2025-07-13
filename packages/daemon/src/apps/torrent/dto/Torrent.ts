@@ -37,9 +37,8 @@ export class TorrentDataObject {
     uploadSpeed: number | null;
     downloadSpeed: number | null;
     numPeers: number | null;
-
-    // New peer-related properties
-    peers: Peer[]; // Array of connected peers
+    status: 'downloading' | 'paused' | 'seeding' | 'error' | null;
+    peers: Peer[];
 
     constructor({
         infoHash,
@@ -53,7 +52,8 @@ export class TorrentDataObject {
         downloadSpeed = null,
         uploadSpeed = null,
         numPeers = null,
-        peers = [], // Initialize peers as empty array
+        peers = [],
+        status = null,
     }: {
         infoHash: string;
         worker: Worker;
@@ -66,7 +66,8 @@ export class TorrentDataObject {
         downloadSpeed?: number | null;
         uploadSpeed?: number | null;
         numPeers?: number | null;
-        peers?: Peer[]; // New optional peers parameter
+        peers?: Peer[];
+        status?: 'downloading' | 'paused' | 'seeding' | 'error' | null;
     }) {
         // Assign existing properties
         this.infoHash = infoHash;
@@ -81,7 +82,7 @@ export class TorrentDataObject {
         this.downloadSpeed = downloadSpeed;
         this.numPeers = numPeers;
 
-        // New peer connections array
+        this.status = status;
         this.peers = peers;
     }
 }

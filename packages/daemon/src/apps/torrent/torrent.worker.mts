@@ -17,11 +17,13 @@ const source: string | Buffer =
             })();
 
 let torrent: Torrent;
+let status: 'downloading' | 'paused' | 'seeding' | 'error' | null = null;
 
 function emitTorrentData(type: string) {
     const totalPieces = torrent.pieces.length;
     const data = {
         type,
+        status,
         infoHash: torrent.infoHash,
         name: torrent.name,
         totalSize: torrent.length,
@@ -75,22 +77,42 @@ function emitTorrentData(type: string) {
 }
 
 torrent = client.add(source, {});
+status = 'downloading';
 
-torrent.on('download', () => emitTorrentData('progress'));
-torrent.on('done', () =>
-    parentPort.postMessage({ type: 'done', status: 'download complete' }),
-);
-torrent.on('error', (err: Error) =>
-    parentPort.postMessage({ error: err.message }),
-);
+torrent.on('download', () => {
+    if (status !== 'seeding') {
+        status = 'downloading';
+    }
+    emitTorrentData('progress');
+});
+
+torrent.on('done', () => {
+    status = 'seeding';
+    emitTorrentData('progress');
+    parentPort.postMessage({ type: 'done', status: 'download complete' });
+});
+
+torrent.on('upload', () => {
+    if (status !== 'seeding') {
+        status = 'seeding';
+        emitTorrentData('progress');
+    }
+});
+
+torrent.on('error', (err: Error) => {
+    status = 'error';
+    parentPort.postMessage({ error: err.message });
+});
 
 parentPort.on('message', (msg) => {
     if (!torrent) return;
     if (msg === 'pause') {
         torrent.pause();
+        status = 'paused';
         parentPort.postMessage({ type: 'paused' });
     } else if (msg === 'resume') {
         torrent.resume();
+        status = 'downloading';
         parentPort.postMessage({ type: 'resumed' });
     } else if (msg === 'remove') {
         torrent.destroy(undefined, () => {
@@ -100,6 +122,7 @@ parentPort.on('message', (msg) => {
 });
 
 client.on('error', (err: Error) => {
+    status = 'error';
     parentPort.postMessage({ error: err.message });
     client.destroy();
 });

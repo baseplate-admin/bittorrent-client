@@ -87,6 +87,7 @@ export class TorrentService {
                     torrentData.uploadSpeed = msg.uploadSpeed;
                     torrentData.numPeers = msg.numPeers;
                     torrentData.peers = msg.peers || [];
+                    torrentData.status = msg.status;
                     break;
 
                 case 'done':

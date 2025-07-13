@@ -49,13 +49,19 @@ function emitTorrentData(type: string) {
             }
             const peerProgressPercent =
                 totalPieces > 0 ? (piecesCount / totalPieces) * 100 : 0;
+            let torrentClient: string = 'unknown';
+            if (wire.peerExtendedHandshake?.v) {
+                torrentClient = Buffer.from(
+                    wire.peerExtendedHandshake.v,
+                ).toString('utf-8');
+            }
 
             return {
                 ipAddress: wire.remoteAddress || 'unknown',
                 port: wire.remotePort || 0,
                 connectionType: wire.type || 'tcp',
                 flags: wire.peerExtendedHandshake?.m || '',
-                client: wire.peerExtendedHandshake?.v || 'unknown',
+                client: torrentClient,
                 progress: Number(peerProgressPercent.toFixed(2)),
                 downloaded: wire.downloaded,
                 uploaded: wire.uploaded,

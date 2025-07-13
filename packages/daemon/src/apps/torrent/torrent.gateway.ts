@@ -76,7 +76,7 @@ export class TorrentGateway
             );
             client.emit('add', infoHash);
         } catch (error) {
-            client.emit('error', { message: 'Failed to add torrent' });
+            client.emit('error', { message: error.message });
         }
     }
 

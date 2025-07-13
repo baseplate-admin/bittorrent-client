@@ -10,7 +10,6 @@ type File = {
 
 // New Peer type to represent connected peers
 type Peer = {
-    country: string | null;
     ipAddress: string;
     port: number;
     connectionType: string;

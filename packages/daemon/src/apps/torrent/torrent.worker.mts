@@ -2,7 +2,7 @@ import WebTorrent, { Torrent } from 'webtorrent';
 import { parentPort, workerData } from 'worker_threads';
 
 const client = new WebTorrent({
-    maxConns: 5000, // Max connections per torrent or globally depending on version
+    maxConns: 5000,
 });
 let source: string | Buffer;
 let torrent: Torrent | null = null;
@@ -18,6 +18,8 @@ if (workerData.type === 'magnet') {
 
 function emitTorrentData(type: string) {
     if (!torrent) return;
+
+    const totalPieces = torrent.pieces.length;
 
     const data = {
         type,
@@ -36,21 +38,31 @@ function emitTorrentData(type: string) {
         downloaded: torrent.downloaded,
         total: torrent.length,
         downloadSpeed: torrent.downloadSpeed,
+        uploadSpeed: torrent.uploadSpeed,
         numPeers: torrent.numPeers,
-        peers: (torrent as any).wires.map((wire) => ({
-            ipAddress: wire.remoteAddress || 'unknown',
-            port: wire.remotePort || 0,
-            country: null, // optional: fill in if you add geo lookup
-            connectionType: wire.type || 'tcp',
-            flags: wire.peerExtendedHandshake?.m || '',
-            client: wire.peerExtendedHandshake?.v || 'unknown',
-            progress: wire.peerPieces?.percent || 0,
-            downloadSpeed: wire.downloadSpeed(),
-            uploadSpeed: wire.uploadSpeed(),
-            downloaded: wire.downloaded,
-            uploaded: wire.uploaded,
-            relevance: typeof wire.relevance === 'number' ? wire.relevance : 0,
-        })),
+        peers: (torrent as any).wires.map((wire) => {
+            let piecesCount = 0;
+            if (wire.peerPieces && totalPieces > 0) {
+                for (let i = 0; i < totalPieces; i++) {
+                    if (wire.peerPieces.get(i)) piecesCount++;
+                }
+            }
+            const peerProgressPercent =
+                totalPieces > 0 ? (piecesCount / totalPieces) * 100 : 0;
+
+            return {
+                ipAddress: wire.remoteAddress || 'unknown',
+                port: wire.remotePort || 0,
+                connectionType: wire.type || 'tcp',
+                flags: wire.peerExtendedHandshake?.m || '',
+                client: wire.peerExtendedHandshake?.v || 'unknown',
+                progress: Number(peerProgressPercent.toFixed(2)),
+                downloaded: wire.downloaded,
+                uploaded: wire.uploaded,
+                relevance:
+                    typeof wire.relevance === 'number' ? wire.relevance : 0,
+            };
+        }),
     };
 
     parentPort.postMessage(data);

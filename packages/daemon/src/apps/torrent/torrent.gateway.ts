@@ -10,7 +10,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { TorrentService } from './torrent.service';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class TorrentGateway
     implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {

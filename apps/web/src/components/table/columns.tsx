@@ -3,18 +3,16 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown } from 'lucide-react';
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
+import { Torrent } from '@/types/Torrent';
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type Payment = {
-    id: string;
-    amount: number;
-    status: 'pending' | 'processing' | 'success' | 'failed';
-    email: string;
-};
+
 
 const columnsMetadata: {
     key: string;
     cell?: (context: { getValue: () => any }) => React.ReactNode;
+    keyName?: string;
 }[] = [
     {
         key: 'name',
@@ -25,15 +23,12 @@ const columnsMetadata: {
         ),
     },
     {
-        key: 'size',
-        cell: ({ getValue }) => {
-            return <></>;
-        },
+        key: 'total',
     },
     {
         key: 'progress',
         cell: ({ getValue }) => {
-            const progress = getValue();
+            const progress = getValue() * 100;
             return (
                 <progress
                     max={100}
@@ -45,24 +40,30 @@ const columnsMetadata: {
     },
     { key: 'status' },
     { key: 'seeds' },
-    { key: 'peers' },
+    {
+        key: 'peers',
+        cell: ({ getValue }) => {
+            const items = getValue().length;
+            return <center>{items}</center>;
+        },
+    },
     { key: 'up speed' },
-    { key: 'down speed' },
+    { key: 'downloadSpeed', keyName: 'Download Speed' },
 ];
 
-export const columns: ColumnDef<Payment>[] = columnsMetadata.map(
-    ({ key, cell }) => ({
+export const columns: ColumnDef<Torrent>[] = columnsMetadata.map(
+    ({ key, cell, keyName }) => ({
         accessorKey: key,
         size: 300,
         header: ({ column }) => (
             <Button
                 variant="ghost"
-                className="capitalize"
+                className={cn('capitalize')}
                 onClick={() =>
                     column.toggleSorting(column.getIsSorted() === 'asc')
                 }
             >
-                {key}
+                {keyName ? keyName : key}
             </Button>
         ),
         enableResizing: true,

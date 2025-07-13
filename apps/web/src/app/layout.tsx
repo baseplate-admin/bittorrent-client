@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import './globals.css';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
+import SocketProvider from '@/components/socket-provider';
 
 export const metadata: Metadata = {
     title: 'Create Next App',
@@ -25,6 +26,7 @@ export default function RootLayout({
                 >
                     <SidebarProvider>
                         <AppSidebar />
+                        <SocketProvider />
                         <main className="w-full p-4">{children}</main>
                     </SidebarProvider>
                 </ThemeProvider>

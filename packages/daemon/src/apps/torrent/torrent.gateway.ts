@@ -33,6 +33,24 @@ export class TorrentGateway
   @SubscribeMessage('parse_magnet')
   handleParseMagnet(client: Socket, payload: { data: string }) {}
 
+  @SubscribeMessage('pause')
+  async handlePauseTorrent(client: Socket, payload: { infoHash: string }) {
+    await this.torrentService.pauseTorrent(payload.infoHash);
+    this.server.emit('pause', {
+      message: 'Paused Torrent',
+      infoHash: payload.infoHash,
+    });
+  }
+
+  @SubscribeMessage('resume')
+  async handleResumeTorrent(client: Socket, payload: { infoHash: string }) {
+    await this.torrentService.resumeTorrent(payload.infoHash);
+    this.server.emit('resume', {
+      message: 'Resumed Torrent',
+      infoHash: payload.infoHash,
+    });
+  }
+
   @SubscribeMessage('magnet')
   async handleMagnetLink(client: Socket, payload: { data: string }) {
     const infoHash = await this.torrentService.startTorrent(payload.data);

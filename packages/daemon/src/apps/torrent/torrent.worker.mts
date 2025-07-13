@@ -1,22 +1,23 @@
-import WebTorrent from 'webtorrent';
+import WebTorrent, { Torrent } from 'webtorrent';
 import { parentPort, workerData } from 'worker_threads';
 
 const client = new WebTorrent();
 
-let source;
-let torrent;
+let source: string | Buffer;
+let torrent: Torrent | null = null;
 
 if (workerData.type === 'magnet') {
   source = workerData.payload;
 } else if (workerData.type === 'torrent') {
   source = Buffer.from(workerData.payload, 'base64');
 } else {
-  parentPort.postMessage({ error: 'Invalid torrent input type' });
+  parentPort.postMessage({ error: 'Invalid worker data type' });
   process.exit(1);
 }
 
 function addTorrent() {
   torrent = client.add(source, {}, () => {
+    if (!torrent) return;
     parentPort.postMessage({
       type: 'metadata',
       name: torrent.name,
@@ -32,6 +33,7 @@ function addTorrent() {
 
   // Progress updates
   torrent.on('download', () => {
+    if (!torrent) return;
     const progress = (torrent.progress * 100).toFixed(2);
     parentPort.postMessage({
       type: 'progress',
@@ -48,7 +50,7 @@ function addTorrent() {
     client.destroy();
   });
 
-  torrent.on('error', (err) => {
+  torrent.on('error', (err: Error) => {
     parentPort.postMessage({ error: err.message });
   });
 }
@@ -58,9 +60,13 @@ addTorrent();
 parentPort.on('message', async (msg) => {
   if (msg === 'pause') {
     if (torrent) {
-      await new Promise((resolve) =>
-        torrent.destroy({ destroyStore: false }, resolve),
-      );
+      // Pause by destroying torrent, but keep data in store
+      await new Promise<void>((resolve, reject) => {
+        torrent!.destroy({ destroyStore: false }, (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
       torrent = null;
       parentPort.postMessage({ type: 'paused' });
     }

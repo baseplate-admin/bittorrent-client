@@ -4,6 +4,7 @@ import { parentPort, workerData } from 'worker_threads';
 const client = new WebTorrent();
 
 let source;
+let torrent;
 
 if (workerData.type === 'magnet') {
   source = workerData.payload;
@@ -14,23 +15,22 @@ if (workerData.type === 'magnet') {
   process.exit(1);
 }
 
-console.log('🌀 Adding torrent to client');
-
-client.add(source, { destroyStoreOnDestroy: true }, (torrent) => {
-  // Send metadata once ready
-  parentPort.postMessage({
-    type: 'metadata',
-    name: torrent.name,
-    infoHash: torrent.infoHash,
-    files: torrent.files.map((f) => ({
-      name: f.name,
-      length: f.length,
-    })),
-    totalSize: torrent.length,
-    numFiles: torrent.files.length,
+function addTorrent() {
+  torrent = client.add(source, {}, () => {
+    parentPort.postMessage({
+      type: 'metadata',
+      name: torrent.name,
+      infoHash: torrent.infoHash,
+      files: torrent.files.map((f) => ({
+        name: f.name,
+        length: f.length,
+      })),
+      totalSize: torrent.length,
+      numFiles: torrent.files.length,
+    });
   });
 
-  // Periodic download progress updates
+  // Progress updates
   torrent.on('download', () => {
     const progress = (torrent.progress * 100).toFixed(2);
     parentPort.postMessage({
@@ -43,11 +43,33 @@ client.add(source, { destroyStoreOnDestroy: true }, (torrent) => {
     });
   });
 
-  // When download is done
   torrent.on('done', () => {
     parentPort.postMessage({ type: 'done', status: 'download complete' });
     client.destroy();
   });
+
+  torrent.on('error', (err) => {
+    parentPort.postMessage({ error: err.message });
+  });
+}
+
+addTorrent();
+
+parentPort.on('message', async (msg) => {
+  if (msg === 'pause') {
+    if (torrent) {
+      await new Promise((resolve) =>
+        torrent.destroy({ destroyStore: false }, resolve),
+      );
+      torrent = null;
+      parentPort.postMessage({ type: 'paused' });
+    }
+  } else if (msg === 'resume') {
+    if (!torrent) {
+      addTorrent();
+      parentPort.postMessage({ type: 'resumed' });
+    }
+  }
 });
 
 client.on('error', (err: Error) => {

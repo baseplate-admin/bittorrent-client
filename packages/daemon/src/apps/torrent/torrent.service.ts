@@ -57,6 +57,8 @@ export class TorrentService {
     worker.on('exit', (code) => {
       this.logger.log(`Worker exited with code ${code}`);
     });
+
+    return infoHash;
   }
 
   async getProcesses() {

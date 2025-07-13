@@ -31,14 +31,12 @@ export class TorrentGateway
   }
 
   @SubscribeMessage('parse_magnet')
-  handleParseMagnet(client: Socket, payload: { data: string }) {
-    
-  }
+  handleParseMagnet(client: Socket, payload: { data: string }) {}
 
   @SubscribeMessage('magnet')
-  handleMagnetLink(client: Socket, payload: { data: string }) {
-    this.torrentService.startTorrent(payload.data);
-    this.server.emit('magnet', payload);
+  async handleMagnetLink(client: Socket, payload: { data: string }) {
+    const infoHash = await this.torrentService.startTorrent(payload.data);
+    this.server.emit('magnet', infoHash);
   }
 
   @SubscribeMessage('message')

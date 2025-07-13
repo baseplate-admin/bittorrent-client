@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { TorrentModule } from './torrent/torrent.module';
+import { TorrentModule } from './apps/torrent/torrent.module';
 @Module({
   imports: [TorrentModule],
   controllers: [],

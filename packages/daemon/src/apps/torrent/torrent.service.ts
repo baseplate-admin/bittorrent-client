@@ -3,18 +3,18 @@ import { Worker } from 'worker_threads';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { getInfoHash } from './utils/get_info_hash';
-import { TorrentDataObject } from './data_classes/Torrent';
+import { TorrentDataObject } from './data_classes/torrent';
 
 @Injectable()
 export class TorrentService {
   private readonly logger = new Logger(TorrentService.name);
-  private managedProcesses: { [key: string]: Worker } = {};
+  private managedProcesses: { [key: string]: TorrentDataObject } = {};
   private getWorker(infoHash: string): Worker {
-    const worker = this.managedProcesses[infoHash];
-    if (!worker) {
+    const torrentData = this.managedProcesses[infoHash];
+    if (!torrentData) {
       throw new Error(`No torrent found with infoHash: ${infoHash}`);
     }
-    return worker;
+    return torrentData.worker;
   }
 
   async startTorrent(input: string | Buffer) {
@@ -48,26 +48,23 @@ export class TorrentService {
         payload: type === 'torrent' ? payload.toString('base64') : payload, // send buffer as base64
       },
     });
-    this.managedProcesses[infoHash] = worker;
-    let torrentData: TorrentDataObject;
+    let torrentData = new TorrentDataObject({ infoHash, worker });
 
     worker.on('message', (msg) => {
       if (msg.type === 'metadata') {
         this.logger.log(`Torrent metadata received: ${infoHash}`);
-        torrentData = new TorrentDataObject(
-          msg.name,
-          msg.files,
-          msg.infoHash,
-          msg.totalSize,
-          msg.numFiles,
-          worker,
-          0,
-        );
+        torrentData;
         this.logger.log(
           `Torrent started: ${torrentData.name} (${torrentData.infoHash})`,
         );
       } else if (msg.type === 'progress') {
-        torrentData.setProgress(msg.progress);
+        torrentData.progress = msg.progress;
+        torrentData.downloaded = msg.downloaded;
+        torrentData.total = msg.total;
+        torrentData.downloadSpeed = msg.downloadSpeed;
+        torrentData.numPeers = msg.numPeers;
+      } else {
+        this.logger.warn(`Unhandled message type: ${msg.type}`);
       }
     });
 
@@ -78,6 +75,15 @@ export class TorrentService {
     worker.on('exit', (code) => {
       this.logger.log(`Worker exited with code ${code}`);
     });
+
+    torrentData = new Proxy(torrentData as any, {
+      set: (target: any, prop: string | symbol, value: any) => {
+        target[prop] = value;
+        this.managedProcesses[infoHash] = target;
+        return true;
+      },
+    });
+    this.managedProcesses[infoHash] = torrentData;
 
     return infoHash;
   }
@@ -113,6 +119,21 @@ export class TorrentService {
 
   async getProgress(infoHash: string) {
     const worker = this.getWorker(infoHash);
+  }
+
+  async removeTorrent(infoHash: string) {
+    const worker = this.getWorker(infoHash);
+    return new Promise<void>((resolve, reject) => {
+      worker.postMessage('remove');
+      worker.once('message', (msg) => {
+        if (msg.type === 'removed') {
+          delete this.managedProcesses[infoHash];
+          resolve();
+        } else {
+          reject(new Error(`Failed to remove torrent: ${JSON.stringify(msg)}`));
+        }
+      });
+    });
   }
 
   async getProcesses() {

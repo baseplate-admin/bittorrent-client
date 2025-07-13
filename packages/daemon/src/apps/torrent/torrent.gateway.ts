@@ -33,6 +33,15 @@ export class TorrentGateway
   @SubscribeMessage('parse_magnet')
   handleParseMagnet(client: Socket, payload: { data: string }) {}
 
+  @SubscribeMessage('remove')
+  async handleRemoveTorrent(client: Socket, payload: { infoHash: string }) {
+    await this.torrentService.removeTorrent(payload.infoHash);
+    this.server.emit('remove', {
+      message: 'Removed Torrent',
+      infoHash: payload.infoHash,
+    });
+  }
+
   @SubscribeMessage('pause')
   async handlePauseTorrent(client: Socket, payload: { infoHash: string }) {
     await this.torrentService.pauseTorrent(payload.infoHash);

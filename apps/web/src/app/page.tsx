@@ -1,11 +1,17 @@
 import Image, { type ImageProps } from 'next/image';
-import styles from './page.module.css';
-
-type Props = Omit<ImageProps, 'src'> & {
-    srcLight: string;
-    srcDark: string;
-};
+import { DataTable } from '@/components/table/data-table';
+import { columns, Payment } from '@/components/table/columns';
 
 export default function AllPage() {
-    return <div className="">Hello world</div>;
+    const data = [
+        {
+            id: '728ed52f',
+            amount: 100,
+            status: 'pending',
+            email: 'm@example.com',
+        },
+    ];
+    return (
+        <DataTable columns={columns} data={data as unknown as Array<Payment>} />
+    );
 }

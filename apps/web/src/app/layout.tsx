@@ -25,7 +25,7 @@ export default function RootLayout({
                 >
                     <SidebarProvider>
                         <AppSidebar />
-                        <main>{children}</main>
+                        <main className="w-full p-4">{children}</main>
                     </SidebarProvider>
                 </ThemeProvider>
             </body>

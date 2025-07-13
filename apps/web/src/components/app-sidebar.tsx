@@ -132,8 +132,8 @@ export function AppSidebar() {
                                         }))
                                     }
                                 >
-                                    <div className="flex justify-between px-2">
-                                        Status
+                                    <div className="flex justify-between px-2 py-2">
+                                        <h2 className="text-lg">Status</h2>
                                         <CollapsibleTrigger asChild>
                                             <Button
                                                 variant="ghost"
@@ -149,7 +149,7 @@ export function AppSidebar() {
                                         </CollapsibleTrigger>
                                     </div>
                                     <CollapsibleContent className="ml-4">
-                                        <div className="flex flex-col gap-1">
+                                        <div className="flex flex-col gap-0.5">
                                             {items.map((item) => {
                                                 const isActive =
                                                     pathname === item.url;
@@ -164,7 +164,7 @@ export function AppSidebar() {
                                                             <Link
                                                                 href={item.url}
                                                                 className={cn(
-                                                                    'flex items-center gap-2 justify-start',
+                                                                    'flex items-center gap-2 justify-start text-foreground/80',
                                                                     isActive &&
                                                                         'bg-muted/70'
                                                                 )}

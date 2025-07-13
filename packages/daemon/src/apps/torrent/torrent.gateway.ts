@@ -29,6 +29,9 @@ export class TorrentGateway
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
   }
+  broadcastUpdate(infoHash: string, prop: string | symbol, value: any) {
+    this.server.emit('progress', { infoHash, prop, value });
+  }
 
   @SubscribeMessage('parse_magnet')
   handleParseMagnet(client: Socket, payload: { data: string }) {}

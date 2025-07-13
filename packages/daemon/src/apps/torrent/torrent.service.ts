@@ -1,19 +1,30 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, Logger } from '@nestjs/common';
 import { Worker } from 'worker_threads';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { getInfoHash } from './utils/get_info_hash';
-import { TorrentDataObject } from './data_classes/torrent';
+import { TorrentDataObject } from './dto/Torrent';
+import { TorrentGateway } from './torrent.gateway';
 
 @Injectable()
 export class TorrentService {
   private readonly logger = new Logger(TorrentService.name);
   private managedProcesses: { [key: string]: TorrentDataObject } = {};
-  private getWorker(infoHash: string): Worker {
+
+  constructor(
+    @Inject(forwardRef(() => TorrentGateway))
+    private readonly torrentGateway: TorrentGateway,
+  ) {}
+
+  private getTorrentProcess(infoHash: string): TorrentDataObject {
     const torrentData = this.managedProcesses[infoHash];
     if (!torrentData) {
       throw new Error(`No torrent found with infoHash: ${infoHash}`);
     }
+    return torrentData;
+  }
+  private getWorker(infoHash: string): Worker {
+    const torrentData = this.getTorrentProcess(infoHash);
     return torrentData.worker;
   }
 
@@ -79,7 +90,11 @@ export class TorrentService {
     torrentData = new Proxy(torrentData as any, {
       set: (target: any, prop: string | symbol, value: any) => {
         target[prop] = value;
+        this.logger.debug(
+          `Updated value for ${torrentData.infoHash}: ${String(prop)} = ${value}`,
+        );
         this.managedProcesses[infoHash] = target;
+        //
         return true;
       },
     });
@@ -117,8 +132,9 @@ export class TorrentService {
     });
   }
 
-  async getProgress(infoHash: string) {
-    const worker = this.getWorker(infoHash);
+  getProgress(infoHash: string): TorrentDataObject {
+    const torrentData = this.getTorrentProcess(infoHash);
+    return torrentData;
   }
 
   async removeTorrent(infoHash: string) {

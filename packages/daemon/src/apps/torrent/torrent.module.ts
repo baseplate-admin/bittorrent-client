@@ -3,8 +3,7 @@ import { TorrentService } from './torrent.service';
 import { TorrentGateway } from './torrent.gateway';
 
 @Module({
-  imports: [],
-  controllers: [],
   providers: [TorrentService, TorrentGateway],
+  exports: [TorrentService],
 })
 export class TorrentModule {}

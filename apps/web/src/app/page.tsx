@@ -6,6 +6,6 @@ type Props = Omit<ImageProps, 'src'> & {
     srcDark: string;
 };
 
-export default function Home() {
+export default function AllPage() {
     return <div className="">Hello world</div>;
 }

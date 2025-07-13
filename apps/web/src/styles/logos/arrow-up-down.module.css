@@ -1,0 +1,9 @@
+.red_black path:nth-last-of-type(1),
+.red_black path:nth-last-of-type(2) {
+  stroke: var(--first-color) !important;
+}
+
+.red_black path:nth-last-of-type(3),
+.red_black path:nth-last-of-type(4) {
+  stroke: var(--second-color) !important;
+}

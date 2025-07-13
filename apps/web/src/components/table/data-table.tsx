@@ -35,6 +35,7 @@ export function DataTable<TData, TValue>({
         columns,
         getCoreRowModel: getCoreRowModel(),
         onSortingChange: setSorting,
+        columnResizeMode: 'onChange',
         getSortedRowModel: getSortedRowModel(),
         state: {
             sorting,

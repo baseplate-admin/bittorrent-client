@@ -12,29 +12,60 @@ export type Payment = {
     email: string;
 };
 
-export const columns: ColumnDef<Payment>[] = [
+const columnsMetadata: {
+    key: string;
+    cell?: (context: { getValue: () => any }) => React.ReactNode;
+}[] = [
     {
-        accessorKey: 'status',
-        header: 'Status',
+        key: 'name',
+        cell: ({ getValue }) => (
+            <div className="flex items-center gap-2">
+                <span>{getValue()}</span>
+            </div>
+        ),
     },
     {
-        accessorKey: 'email',
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() =>
-                        column.toggleSorting(column.getIsSorted() === 'asc')
-                    }
-                >
-                    Email
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            );
+        key: 'size',
+        cell: ({ getValue }) => {
+            return <></>;
         },
     },
     {
-        accessorKey: 'amount',
-        header: 'Amount',
+        key: 'progress',
+        cell: ({ getValue }) => {
+            const progress = getValue();
+            return (
+                <progress
+                    max={100}
+                    value={progress}
+                    className="w-full h-3 rounded bg-muted"
+                />
+            );
+        },
     },
+    { key: 'status' },
+    { key: 'seeds' },
+    { key: 'peers' },
+    { key: 'up speed' },
+    { key: 'down speed' },
 ];
+
+export const columns: ColumnDef<Payment>[] = columnsMetadata.map(
+    ({ key, cell }) => ({
+        accessorKey: key,
+        size: 300,
+        header: ({ column }) => (
+            <Button
+                variant="ghost"
+                className="capitalize"
+                onClick={() =>
+                    column.toggleSorting(column.getIsSorted() === 'asc')
+                }
+            >
+                {key}
+            </Button>
+        ),
+        enableResizing: true,
+        ...(cell ? { cell } : {}),
+    })
+);

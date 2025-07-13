@@ -5,6 +5,7 @@ import { columns, Payment } from '@/components/table/columns';
 export default function AllPage() {
     const data = [
         {
+            
             id: '728ed52f',
             amount: 100,
             status: 'pending',

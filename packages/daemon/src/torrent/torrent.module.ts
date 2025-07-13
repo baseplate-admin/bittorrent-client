@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { TorrentController } from './torrent.controller';
 import { TorrentService } from './torrent.service';
+import { TorrentGateway } from './torrent.gateway';
 
 @Module({
   imports: [],
-  controllers: [TorrentController],
-  providers: [TorrentService],
+  controllers: [],
+  providers: [TorrentService, TorrentGateway],
 })
 export class TorrentModule {}

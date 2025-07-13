@@ -28,8 +28,10 @@ const columnsMetadata: {
     },
     {
         key: 'totalSize',
+        keyName: 'Total Size',
+
         cell: ({ getValue }) => (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
                 <span>{formatBytes({ bytes: getValue() })}</span>
             </div>
         ),
@@ -83,6 +85,8 @@ const columnsMetadata: {
     },
     {
         key: 'uploadSpeed',
+        keyName: 'Upload Speed',
+
         cell: ({ getValue }) => (
             <div className="flex items-center justify-center gap-2">
                 <span>

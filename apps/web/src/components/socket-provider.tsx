@@ -83,13 +83,13 @@ export default function SocketProvider() {
                 torrent.files = torrent.files ? [...torrent.files] : [];
 
                 if (!data.prop) return;
-
+                const value = JSON.parse(data.value);
                 if (data.prop.startsWith('peers')) {
-                    torrent.peers = JSON.parse(data.value);
+                    torrent.peers = value;
                 } else if (data.prop.startsWith('files')) {
-                    torrent.files = JSON.parse(data.value);
+                    torrent.files = value;
                 } else {
-                    (torrent as any)[data.prop] = data.value;
+                    (torrent as any)[data.prop] = value;
                 }
 
                 newTorrents[index] = torrent;

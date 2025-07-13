@@ -25,11 +25,7 @@ export default function RootLayout({
                 >
                     <SidebarProvider>
                         <AppSidebar />
-                        <main>
-                            
-                            <SidebarTrigger />
-                            {children}
-                        </main>
+                        <main>{children}</main>
                     </SidebarProvider>
                 </ThemeProvider>
             </body>

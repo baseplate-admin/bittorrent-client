@@ -1,5 +1,20 @@
-import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react';
+'use client';
 
+import {
+    Calendar,
+    Check,
+    ChevronDown,
+    ChevronsDown,
+    ChevronsUp,
+    Inbox,
+    Play,
+    Search,
+    Settings,
+    Shuffle,
+    Square,
+} from 'lucide-react';
+
+import { useState } from 'react';
 import {
     Sidebar,
     SidebarContent,
@@ -10,54 +25,112 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
 
-// Menu items.
 const items = [
     {
-        title: 'Home',
+        title: 'All',
         url: '#',
-        icon: Home,
+        icon: (
+            <Shuffle size={28} strokeWidth={2.8} className="text-orange-400" />
+        ),
     },
     {
-        title: 'Inbox',
+        title: 'Downloading',
         url: '#',
-        icon: Inbox,
+        icon: (
+            <ChevronsDown
+                size={40}
+                strokeWidth={4.5}
+                className="text-green-600"
+            />
+        ),
     },
     {
-        title: 'Calendar',
+        title: 'Uploading',
         url: '#',
-        icon: Calendar,
+        icon: (
+            <ChevronsUp size={40} strokeWidth={4.5} className="text-blue-500" />
+        ),
     },
     {
-        title: 'Search',
+        title: 'Completed',
         url: '#',
-        icon: Search,
+        icon: <Check size={40} strokeWidth={4.0} className="text-purple-500" />,
     },
     {
-        title: 'Settings',
+        title: 'Running',
         url: '#',
-        icon: Settings,
+        icon: (
+            <Play
+                size={40}
+                strokeWidth={4.5}
+                className="text-green-500 fill-current"
+            />
+        ),
+    },
+    {
+        title: 'Stopped',
+        url: '#',
+        icon: (
+            <Square
+                size={40}
+                strokeWidth={3}
+                className="text-red-500 fill-current"
+            />
+        ),
     },
 ];
-
 export function AppSidebar() {
+    const [isOpen, setIsOpen] = useState(true);
+
     return (
         <Sidebar>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Application</SidebarGroupLabel>
+                    <SidebarGroupLabel>
+                        Seederrr version : {'2.0.0'}
+                    </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {items.map((item) => (
-                                <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton asChild>
-                                        <a href={item.url}>
-                                            <item.icon />
-                                            <span>{item.title}</span>
-                                        </a>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
+                            <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+                                <div className="flex justify-between px-2">
+                                    Status
+                                    <CollapsibleTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className={cn(
+                                                'size-8',
+                                                isOpen && 'rotate-180'
+                                            )}
+                                        >
+                                            <ChevronDown />
+                                        </Button>
+                                    </CollapsibleTrigger>
+                                </div>
+                                <CollapsibleContent>
+                                    {items.map((item) => (
+                                        <SidebarMenuItem key={item.title}>
+                                            <SidebarMenuButton asChild>
+                                                <a
+                                                    href={item.url}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    {item.icon}
+                                                    <span>{item.title}</span>
+                                                </a>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </CollapsibleContent>
+                            </Collapsible>
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>

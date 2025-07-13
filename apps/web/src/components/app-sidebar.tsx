@@ -1,6 +1,7 @@
 'use client';
 
 import {
+    ArrowUpDown,
     Calendar,
     Check,
     ChevronDown,
@@ -32,6 +33,8 @@ import {
 } from '@/components/ui/collapsible';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import { title } from 'process';
+import { url } from 'inspector';
 
 const items = [
     {
@@ -85,6 +88,11 @@ const items = [
                 className="text-red-500 fill-current"
             />
         ),
+    },
+    {
+        title: 'Active',
+        url: '#',
+        icon: <ArrowUpDown />,
     },
 ];
 export function AppSidebar() {

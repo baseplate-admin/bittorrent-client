@@ -9,7 +9,7 @@ import { TorrentGateway } from './torrent.gateway';
 @Injectable()
 export class TorrentService {
     private readonly logger = new Logger(TorrentService.name);
-    private managedProcesses: { [key: string]: TorrentDataObject } = {};
+    private managedProcesses: { [infoHash: string]: TorrentDataObject } = {};
 
     constructor(
         @Inject(forwardRef(() => TorrentGateway))
@@ -23,14 +23,13 @@ export class TorrentService {
         }
         return torrentData;
     }
+
     private getWorker(infoHash: string): Worker {
-        const torrentData = this.getTorrentProcess(infoHash);
-        return torrentData.worker;
+        return this.getTorrentProcess(infoHash).worker;
     }
 
     async startTorrent(input: string | Buffer) {
         const infoHash = await getInfoHash(input);
-
         const workerPath = resolve(__dirname, 'torrent.worker.mjs');
 
         let type: 'magnet' | 'torrent' = 'magnet';
@@ -41,7 +40,7 @@ export class TorrentService {
                 type = 'magnet';
             } else if (input.endsWith('.torrent')) {
                 type = 'torrent';
-                payload = await readFile(input); // read as buffer
+                payload = await readFile(input);
             } else {
                 throw new Error(
                     'Invalid input: must be a magnet link or .torrent file path',
@@ -57,9 +56,10 @@ export class TorrentService {
             workerData: {
                 type,
                 payload:
-                    type === 'torrent' ? payload.toString('base64') : payload, // send buffer as base64
+                    type === 'torrent' ? payload.toString('base64') : payload,
             },
         });
+
         let torrentData = new TorrentDataObject({ infoHash, worker });
 
         worker.on('message', (msg) => {
@@ -70,7 +70,7 @@ export class TorrentService {
 
             switch (msg.type) {
                 case 'metadata':
-                    this.logger.log(`Torrent metadata received: ${infoHash}`);
+                    this.logger.log(`Metadata received for ${infoHash}`);
                     torrentData.name = msg.name;
                     torrentData.files = msg.files;
                     torrentData.totalSize = msg.totalSize;
@@ -83,6 +83,7 @@ export class TorrentService {
                     torrentData.total = msg.total;
                     torrentData.downloadSpeed = msg.downloadSpeed;
                     torrentData.numPeers = msg.numPeers;
+                    torrentData.peers = msg.peers || [];
                     break;
 
                 case 'done':
@@ -97,43 +98,53 @@ export class TorrentService {
                     this.logger.log(`Torrent resumed: ${infoHash}`);
                     break;
 
+                case 'removed':
+                    this.logger.log(`Torrent removed: ${infoHash}`);
+                    delete this.managedProcesses[infoHash];
+                    break;
+
                 default:
-                    this.logger.warn(`Unhandled message type: ${msg.type}`);
+                    this.logger.warn(
+                        `Unhandled message type from worker: ${msg.type}`,
+                    );
                     break;
             }
         });
 
         worker.on('error', (err) => {
-            this.logger.error(`Worker error: ${err.message}`);
+            this.logger.error(`Worker error for ${infoHash}: ${err.message}`);
         });
 
         worker.on('exit', (code) => {
-            this.logger.log(`Worker exited with code ${code}`);
+            this.logger.log(`Worker for ${infoHash} exited with code ${code}`);
         });
 
+        // Wrap in proxy to auto-broadcast changes
         torrentData = new Proxy(torrentData as any, {
             set: (target: any, prop: string | symbol, value: any) => {
                 target[prop] = value;
-                this.logger.debug(
-                    `Updated value for ${torrentData.infoHash}: ${String(prop)} = ${value}`,
-                );
+                // this.logger.debug(
+                //     `Updated ${String(prop)} for ${torrentData.infoHash}: ${JSON.stringify(value)}`,
+                // );
                 this.managedProcesses[infoHash] = target;
+
                 this.torrentGateway.broadcastUpdate(
                     torrentData.infoHash,
                     prop,
                     value,
                 );
+
                 return true;
             },
         });
-        this.managedProcesses[infoHash] = torrentData;
 
+        this.managedProcesses[infoHash] = torrentData;
         return infoHash;
     }
-    async pauseTorrent(infoHash: string) {
-        const worker = this.getWorker(infoHash);
 
-        return new Promise<void>((resolve, reject) => {
+    async pauseTorrent(infoHash: string): Promise<void> {
+        const worker = this.getWorker(infoHash);
+        return new Promise((resolve, reject) => {
             worker.postMessage('pause');
             worker.once('message', (msg) => {
                 if (msg.type === 'paused') {
@@ -149,24 +160,27 @@ export class TorrentService {
         });
     }
 
-    async resumeTorrent(infoHash: string) {
+    async resumeTorrent(infoHash: string): Promise<void> {
         const worker = this.getWorker(infoHash);
-
-        return new Promise<void>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             worker.postMessage('resume');
             worker.once('message', (msg) => {
                 if (msg.type === 'resumed') {
                     resolve();
                 } else {
-                    reject(new Error(`Failed to resume torrent: ${msg}`));
+                    reject(
+                        new Error(
+                            `Failed to resume torrent: ${JSON.stringify(msg)}`,
+                        ),
+                    );
                 }
             });
         });
     }
 
-    async removeTorrent(infoHash: string) {
+    async removeTorrent(infoHash: string): Promise<void> {
         const worker = this.getWorker(infoHash);
-        return new Promise<void>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             worker.postMessage('remove');
             worker.once('message', (msg) => {
                 if (msg.type === 'removed') {
@@ -187,5 +201,10 @@ export class TorrentService {
         return Object.values(this.managedProcesses).map(
             ({ worker, ...rest }) => rest,
         );
+    }
+
+    getTorrent(infoHash: string): Omit<TorrentDataObject, 'worker'> {
+        const { worker, ...rest } = this.getTorrentProcess(infoHash);
+        return rest;
     }
 }

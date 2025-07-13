@@ -35,6 +35,20 @@ function emitTorrentData(type: string) {
         total: torrent.length,
         downloadSpeed: torrent.downloadSpeed,
         numPeers: torrent.numPeers,
+        peers: (torrent as any).wires.map((wire) => ({
+            ipAddress: wire.remoteAddress || 'unknown',
+            port: wire.remotePort || 0,
+            country: null, // optional: fill in if you add geo lookup
+            connectionType: wire.type || 'tcp',
+            flags: wire.peerExtendedHandshake?.m || '',
+            client: wire.peerExtendedHandshake?.v || 'unknown',
+            progress: wire.peerPieces?.percent || 0,
+            downloadSpeed: wire.downloadSpeed(),
+            uploadSpeed: wire.uploadSpeed(),
+            downloaded: wire.downloaded,
+            uploaded: wire.uploaded,
+            relevance: typeof wire.relevance === 'number' ? wire.relevance : 0,
+        })),
     };
 
     parentPort.postMessage(data);
@@ -71,6 +85,9 @@ parentPort.on('message', async (msg) => {
     } else if (msg === 'resume' && !torrent) {
         addTorrent();
         parentPort.postMessage({ type: 'resumed' });
+    } else if (msg === 'remove') {
+        if (torrent) torrent.destroy(undefined, () => {});
+        parentPort.postMessage({ type: 'removed' });
     }
 });
 

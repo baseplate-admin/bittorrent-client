@@ -1,12 +1,26 @@
+// src/dto/Torrent.ts
 import { Worker } from 'worker_threads';
 
-type File = {
+export type File = {
     name: string;
     length: number;
     downloaded?: number;
     progress?: number;
     path?: string;
 };
+
+export interface TrackerInfo {
+    url: string;
+    tier: number;
+    status: 'PENDING' | 'OK' | 'ERROR';
+    peers: number;
+    seeds: number;
+    leeches: number;
+    timeDownloaded: number;
+    message: string;
+    nextAnnounce: number;
+    minAnnounce: number;
+}
 
 export class TorrentDataObject {
     name: string | null;
@@ -20,6 +34,7 @@ export class TorrentDataObject {
     total: number | null;
     downloadSpeed: number | null;
     numPeers: number | null;
+    trackers: TrackerInfo[] | null;
 
     constructor({
         infoHash,
@@ -33,6 +48,7 @@ export class TorrentDataObject {
         total = null,
         downloadSpeed = null,
         numPeers = null,
+        trackers = null,
     }: {
         infoHash: string;
         worker: Worker;
@@ -45,6 +61,7 @@ export class TorrentDataObject {
         total?: number | null;
         downloadSpeed?: number | null;
         numPeers?: number | null;
+        trackers?: TrackerInfo[] | null;
     }) {
         Object.assign(this, {
             infoHash,
@@ -58,6 +75,7 @@ export class TorrentDataObject {
             total,
             downloadSpeed,
             numPeers,
+            trackers,
         });
     }
 }

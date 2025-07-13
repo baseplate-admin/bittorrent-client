@@ -63,20 +63,43 @@ export class TorrentService {
         let torrentData = new TorrentDataObject({ infoHash, worker });
 
         worker.on('message', (msg) => {
-            if (msg.type === 'metadata') {
-                this.logger.log(`Torrent metadata received: ${infoHash}`);
-                torrentData;
-                this.logger.log(
-                    `Torrent started: ${torrentData.name} (${torrentData.infoHash})`,
-                );
-            } else if (msg.type === 'progress') {
-                torrentData.progress = msg.progress;
-                torrentData.downloaded = msg.downloaded;
-                torrentData.total = msg.total;
-                torrentData.downloadSpeed = msg.downloadSpeed;
-                torrentData.numPeers = msg.numPeers;
-            } else {
-                this.logger.warn(`Unhandled message type: ${msg.type}`);
+            if (msg.error) {
+                this.logger.error(`Worker error: ${msg.error}`);
+                return;
+            }
+
+            switch (msg.type) {
+                case 'metadata':
+                    this.logger.log(`Torrent metadata received: ${infoHash}`);
+                    torrentData.name = msg.name;
+                    torrentData.files = msg.files;
+                    torrentData.totalSize = msg.totalSize;
+                    torrentData.numFiles = msg.numFiles;
+                    break;
+
+                case 'progress':
+                    torrentData.progress = msg.progress;
+                    torrentData.downloaded = msg.downloaded;
+                    torrentData.total = msg.total;
+                    torrentData.downloadSpeed = msg.downloadSpeed;
+                    torrentData.numPeers = msg.numPeers;
+                    break;
+
+                case 'done':
+                    this.logger.log(`Download complete for ${infoHash}`);
+                    break;
+
+                case 'paused':
+                    this.logger.log(`Torrent paused: ${infoHash}`);
+                    break;
+
+                case 'resumed':
+                    this.logger.log(`Torrent resumed: ${infoHash}`);
+                    break;
+
+                default:
+                    this.logger.warn(`Unhandled message type: ${msg.type}`);
+                    break;
             }
         });
 

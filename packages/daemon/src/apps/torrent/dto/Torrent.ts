@@ -1,6 +1,12 @@
 import { Worker } from 'worker_threads';
 
-type File = { name: string; length: number };
+type File = {
+    name: string;
+    length: number;
+    downloaded?: number;
+    progress?: number;
+    path?: string;
+};
 
 export class TorrentDataObject {
     name: string | null;

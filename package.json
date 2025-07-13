@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "bittorrent-client",
   "private": true,
   "scripts": {
     "build": "turbo run build",

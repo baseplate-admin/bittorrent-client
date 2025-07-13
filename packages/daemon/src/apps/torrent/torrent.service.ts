@@ -30,6 +30,13 @@ export class TorrentService {
 
     async startTorrent(input: string | Buffer) {
         const infoHash = await getInfoHash(input);
+
+        if (this.managedProcesses[infoHash]) {
+            throw new Error(
+                `Torrent with infoHash ${infoHash} is already managed`,
+            );
+        }
+
         const workerPath = resolve(__dirname, 'torrent.worker.mjs');
 
         let type: 'magnet' | 'torrent' = 'magnet';

@@ -70,8 +70,14 @@ export class TorrentGateway
 
     @SubscribeMessage('add')
     async handleMagnetLink(client: Socket, payload: { data: string }) {
-        const infoHash = await this.torrentService.startTorrent(payload.data);
-        client.emit('add', infoHash);
+        try {
+            const infoHash = await this.torrentService.startTorrent(
+                payload.data,
+            );
+            client.emit('add', infoHash);
+        } catch (error) {
+            client.emit('error', { message: 'Failed to add torrent' });
+        }
     }
 
     @SubscribeMessage('message')

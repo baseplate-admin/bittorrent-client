@@ -1,7 +1,9 @@
 import WebTorrent, { Torrent } from 'webtorrent';
 import { parentPort, workerData } from 'worker_threads';
 
-const client = new WebTorrent();
+const client = new WebTorrent({
+    maxConns: 5000, // Max connections per torrent or globally depending on version
+});
 let source: string | Buffer;
 let torrent: Torrent | null = null;
 

@@ -7,7 +7,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject, forwardRef } from '@nestjs/common';
 import { TorrentService } from './torrent.service';
 
 @WebSocketGateway()
@@ -16,9 +16,11 @@ export class TorrentGateway
 {
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger(TorrentGateway.name);
-  constructor(private readonly torrentService: TorrentService) {}
-
-  afterInit(server: Server) {
+  constructor(
+    @Inject(forwardRef(() => TorrentService))
+    private readonly torrentService: TorrentService,
+  ) {}
+  afterInit() {
     this.logger.log('Initialized!');
   }
 
@@ -36,10 +38,16 @@ export class TorrentGateway
   @SubscribeMessage('parse_magnet')
   handleParseMagnet(client: Socket, payload: { data: string }) {}
 
+  @SubscribeMessage('get_all')
+  async handleGetAllTorrents(client: Socket) {
+    const torrents = await this.torrentService.getProcesses();
+    client.emit('get_all', torrents);
+  }
+
   @SubscribeMessage('remove')
   async handleRemoveTorrent(client: Socket, payload: { infoHash: string }) {
     await this.torrentService.removeTorrent(payload.infoHash);
-    this.server.emit('remove', {
+    client.emit('remove', {
       message: 'Removed Torrent',
       infoHash: payload.infoHash,
     });
@@ -48,7 +56,7 @@ export class TorrentGateway
   @SubscribeMessage('pause')
   async handlePauseTorrent(client: Socket, payload: { infoHash: string }) {
     await this.torrentService.pauseTorrent(payload.infoHash);
-    this.server.emit('pause', {
+    client.emit('pause', {
       message: 'Paused Torrent',
       infoHash: payload.infoHash,
     });
@@ -57,7 +65,7 @@ export class TorrentGateway
   @SubscribeMessage('resume')
   async handleResumeTorrent(client: Socket, payload: { infoHash: string }) {
     await this.torrentService.resumeTorrent(payload.infoHash);
-    this.server.emit('resume', {
+    client.emit('resume', {
       message: 'Resumed Torrent',
       infoHash: payload.infoHash,
     });
@@ -66,7 +74,7 @@ export class TorrentGateway
   @SubscribeMessage('magnet')
   async handleMagnetLink(client: Socket, payload: { data: string }) {
     const infoHash = await this.torrentService.startTorrent(payload.data);
-    this.server.emit('magnet', infoHash);
+    client.emit('magnet', infoHash);
   }
 
   @SubscribeMessage('message')
@@ -74,6 +82,6 @@ export class TorrentGateway
     client: Socket,
     payload: { user: string; message: string },
   ): void {
-    this.server.emit('msgToClient', payload);
+    client.emit('msgToClient', payload);
   }
 }

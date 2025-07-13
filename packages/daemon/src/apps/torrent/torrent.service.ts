@@ -94,7 +94,7 @@ export class TorrentService {
           `Updated value for ${torrentData.infoHash}: ${String(prop)} = ${value}`,
         );
         this.managedProcesses[infoHash] = target;
-        //
+        this.torrentGateway.broadcastUpdate(torrentData.infoHash, prop, value);
         return true;
       },
     });
@@ -153,6 +153,9 @@ export class TorrentService {
   }
 
   async getProcesses() {
-    return this.managedProcesses;
+    const plainObjects = Object.values(this.managedProcesses).map(
+      ({ worker, ...rest }) => rest,
+    );
+    return JSON.stringify(plainObjects, null, 2);
   }
 }

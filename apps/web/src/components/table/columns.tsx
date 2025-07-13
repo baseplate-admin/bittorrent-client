@@ -1,13 +1,10 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Torrent } from '@/types/Torrent';
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-
+import { formatBytes } from '@/lib/formatBytes';
 
 const columnsMetadata: {
     key: string;
@@ -18,12 +15,17 @@ const columnsMetadata: {
         key: 'name',
         cell: ({ getValue }) => (
             <div className="flex items-center gap-2">
-                <span>{getValue()}</span>
+                <p className="pl-2">{getValue()}</p>
             </div>
         ),
     },
     {
         key: 'total',
+        cell: ({ getValue }) => (
+            <div className="flex items-center gap-2">
+                <span>{formatBytes({ bytes: getValue() })}</span>
+            </div>
+        ),
     },
     {
         key: 'progress',
@@ -48,7 +50,17 @@ const columnsMetadata: {
         },
     },
     { key: 'up speed' },
-    { key: 'downloadSpeed', keyName: 'Download Speed' },
+    {
+        key: 'downloadSpeed',
+        keyName: 'Download Speed',
+        cell: ({ getValue }) => (
+            <div className="flex items-center justify-center gap-2">
+                <span>
+                    {formatBytes({ bytes: getValue(), perSecond: true })}
+                </span>
+            </div>
+        ),
+    },
 ];
 
 export const columns: ColumnDef<Torrent>[] = columnsMetadata.map(

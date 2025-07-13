@@ -19,7 +19,6 @@ export default function SocketProvider() {
             console.log('Socket connected:', socket.id);
         });
 
-        // Request initial full data
         socket.emit('get_all');
 
         socket.on('get_all', (data: Torrent[]) => {
@@ -31,7 +30,6 @@ export default function SocketProvider() {
             'progress',
             (data: { infoHash: string; prop: string; value: any }) => {
                 if (!latestTorrentsRef.current) {
-                    // No torrents yet — create new one
                     const newTorrent: Torrent = {
                         name: null,
                         files: null,
@@ -49,16 +47,15 @@ export default function SocketProvider() {
                         (newTorrent as any)[data.prop] = data.value;
                     }
                     latestTorrentsRef.current = [newTorrent];
+                    setTorrent(latestTorrentsRef.current);
                     return;
                 }
 
-                // Update existing torrents immutably in the ref
                 const prev = latestTorrentsRef.current;
                 const index = prev.findIndex(
                     (t) => t.infoHash === data.infoHash
                 );
                 if (index === -1) {
-                    // Add new torrent if not found
                     const newTorrent: Torrent = {
                         name: null,
                         files: null,
@@ -88,33 +85,9 @@ export default function SocketProvider() {
                 if (!data.prop) return;
 
                 if (data.prop.startsWith('peers')) {
-                    const peerData = JSON.parse(data.value);
-                    const peerIndex = torrent.peers.findIndex(
-                        (p) => p.ipAddress === peerData.ipAddress
-                    );
-                    if (peerIndex === -1) {
-                        // Add new peer
-                        torrent.peers.push(peerData);
-                    } else {
-                        // Update existing peer
-                        torrent.peers[peerIndex] = {
-                            ...torrent.peers[peerIndex],
-                            ...peerData,
-                        };
-                    }
-                } else if (data.prop.startsWith('files[')) {
-                    const fileData = JSON.parse(data.value);
-                    const fileIndex = torrent.files.findIndex(
-                        (f) => f.name === fileData.name
-                    );
-                    if (fileIndex === -1) {
-                        torrent.files.push(fileData);
-                    } else {
-                        torrent.files[fileIndex] = {
-                            ...torrent.files[fileIndex],
-                            ...fileData,
-                        };
-                    }
+                    torrent.peers = JSON.parse(data.value);
+                } else if (data.prop.startsWith('files')) {
+                    torrent.files = JSON.parse(data.value);
                 } else {
                     (torrent as any)[data.prop] = data.value;
                 }
@@ -124,7 +97,6 @@ export default function SocketProvider() {
             }
         );
 
-        // Flush latest data to atom every 1 second to update UI
         const interval = setInterval(() => {
             setTorrent(latestTorrentsRef.current);
         }, 1000);
@@ -135,9 +107,6 @@ export default function SocketProvider() {
             console.log('Socket disconnected');
         };
     }, [setTorrent]);
-    useEffect(() => {
-        console.log(torrent);
-    }, [torrent]);
 
     return null;
 }

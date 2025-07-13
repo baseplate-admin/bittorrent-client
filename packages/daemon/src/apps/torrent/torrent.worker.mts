@@ -1,30 +1,37 @@
-import WebTorrent, { Torrent } from 'webtorrent';
+import WebTorrent, { Torrent, Options } from 'webtorrent';
 import { parentPort, workerData } from 'worker_threads';
 
 const client = new WebTorrent({
     maxConns: 5000,
-});
-let source: string | Buffer;
-let torrent: Torrent | null = null;
+    ...(process.platform === 'win32' ? { utp: false } : {}),
+} satisfies Options);
 
-if (workerData.type === 'magnet') {
-    source = workerData.payload;
-} else if (workerData.type === 'torrent') {
-    source = Buffer.from(workerData.payload, 'base64');
-} else {
-    parentPort.postMessage({ error: 'Invalid worker data type' });
-    process.exit(1);
-}
+const source: string | Buffer =
+    workerData.type === 'magnet'
+        ? workerData.payload
+        : workerData.type === 'torrent'
+          ? Buffer.from(workerData.payload, 'base64')
+          : (() => {
+                parentPort.postMessage({ error: 'Invalid worker data type' });
+                process.exit(1);
+            })();
+
+let torrent: Torrent;
 
 function emitTorrentData(type: string) {
-    if (!torrent) return;
-
     const totalPieces = torrent.pieces.length;
-
     const data = {
         type,
         infoHash: torrent.infoHash,
         name: torrent.name,
+        totalSize: torrent.length,
+        numFiles: torrent.files.length,
+        progress: +(torrent.progress * 100).toFixed(2),
+        downloaded: torrent.downloaded,
+        total: torrent.length,
+        downloadSpeed: torrent.downloadSpeed,
+        uploadSpeed: torrent.uploadSpeed,
+        numPeers: torrent.numPeers,
         files: torrent.files.map((f) => ({
             name: f.name,
             length: f.length,
@@ -32,37 +39,23 @@ function emitTorrentData(type: string) {
             progress: f.progress,
             path: f.path,
         })),
-        totalSize: torrent.length,
-        numFiles: torrent.files.length,
-        progress: Number((torrent.progress * 100).toFixed(2)),
-        downloaded: torrent.downloaded,
-        total: torrent.length,
-        downloadSpeed: torrent.downloadSpeed,
-        uploadSpeed: torrent.uploadSpeed,
-        numPeers: torrent.numPeers,
         peers: (torrent as any).wires.map((wire) => {
-            let piecesCount = 0;
-            if (wire.peerPieces && totalPieces > 0) {
-                for (let i = 0; i < totalPieces; i++) {
-                    if (wire.peerPieces.get(i)) piecesCount++;
-                }
-            }
-            const peerProgressPercent =
-                totalPieces > 0 ? (piecesCount / totalPieces) * 100 : 0;
-            let torrentClient: string = 'unknown';
-            if (wire.peerExtendedHandshake?.v) {
-                torrentClient = Buffer.from(
-                    wire.peerExtendedHandshake.v,
-                ).toString('utf-8');
-            }
+            const piecesCount = wire.peerPieces
+                ? Array.from({ length: totalPieces }, (_, i) =>
+                      wire.peerPieces.get(i) ? 1 : 0,
+                  ).reduce((a, b) => a + b, 0)
+                : 0;
+            const client = wire.peerExtendedHandshake?.v
+                ? Buffer.from(wire.peerExtendedHandshake.v).toString('utf-8')
+                : 'unknown';
 
             return {
                 ipAddress: wire.remoteAddress || 'unknown',
                 port: wire.remotePort || 0,
                 connectionType: wire.type || 'tcp',
                 flags: wire.peerExtendedHandshake?.m || '',
-                client: torrentClient,
-                progress: Number(peerProgressPercent.toFixed(2)),
+                client,
+                progress: +((piecesCount / totalPieces) * 100).toFixed(2),
                 downloaded: wire.downloaded,
                 uploaded: wire.uploaded,
                 relevance:
@@ -70,44 +63,31 @@ function emitTorrentData(type: string) {
             };
         }),
     };
-
     parentPort.postMessage(data);
 }
 
-function addTorrent() {
-    torrent = client.add(source, {}, () => {
-        emitTorrentData('metadata');
-    });
+torrent = client.add(source, {}, () => emitTorrentData('metadata'));
 
-    torrent.on('download', () => emitTorrentData('progress'));
-    torrent.on('done', () => {
-        parentPort.postMessage({ type: 'done', status: 'download complete' });
-        client.destroy();
-    });
+torrent.on('download', () => emitTorrentData('progress'));
+torrent.on('done', () =>
+    parentPort.postMessage({ type: 'done', status: 'download complete' }),
+);
+torrent.on('error', (err: Error) =>
+    parentPort.postMessage({ error: err.message }),
+);
 
-    torrent.on('error', (err: Error) => {
-        parentPort.postMessage({ error: err.message });
-    });
-}
-
-addTorrent();
-
-parentPort.on('message', async (msg) => {
-    if (msg === 'pause' && torrent) {
-        await new Promise<void>((resolve, reject) => {
-            torrent!.destroy({ destroyStore: false }, (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-        torrent = null;
+parentPort.on('message', (msg) => {
+    if (!torrent) return;
+    if (msg === 'pause') {
+        torrent.pause();
         parentPort.postMessage({ type: 'paused' });
-    } else if (msg === 'resume' && !torrent) {
-        addTorrent();
+    } else if (msg === 'resume') {
+        torrent.resume();
         parentPort.postMessage({ type: 'resumed' });
     } else if (msg === 'remove') {
-        if (torrent) torrent.destroy(undefined, () => {});
-        parentPort.postMessage({ type: 'removed' });
+        torrent.destroy(undefined, () => {
+            parentPort.postMessage({ type: 'removed' });
+        });
     }
 });
 

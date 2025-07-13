@@ -35,9 +35,6 @@ export class TorrentGateway
     this.server.emit('progress', { infoHash, prop, value });
   }
 
-  @SubscribeMessage('parse_magnet')
-  handleParseMagnet(client: Socket, payload: { data: string }) {}
-
   @SubscribeMessage('get_all')
   async handleGetAllTorrents(client: Socket) {
     const torrents = await this.torrentService.getProcesses();

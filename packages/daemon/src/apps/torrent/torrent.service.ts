@@ -132,11 +132,6 @@ export class TorrentService {
     });
   }
 
-  getProgress(infoHash: string): TorrentDataObject {
-    const torrentData = this.getTorrentProcess(infoHash);
-    return torrentData;
-  }
-
   async removeTorrent(infoHash: string) {
     const worker = this.getWorker(infoHash);
     return new Promise<void>((resolve, reject) => {
@@ -152,10 +147,9 @@ export class TorrentService {
     });
   }
 
-  async getProcesses() {
-    const plainObjects = Object.values(this.managedProcesses).map(
+  async getProcesses(): Promise<Omit<TorrentDataObject, 'worker'>[]> {
+    return Object.values(this.managedProcesses).map(
       ({ worker, ...rest }) => rest,
     );
-    return JSON.stringify(plainObjects, null, 2);
   }
 }

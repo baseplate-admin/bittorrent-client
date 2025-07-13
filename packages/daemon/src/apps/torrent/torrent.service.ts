@@ -3,6 +3,7 @@ import { Worker } from 'worker_threads';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
 import { getInfoHash } from './utils/get_info_hash';
+import WebTorrent from 'webtorrent';
 
 @Injectable()
 export class TorrentService {
@@ -43,7 +44,10 @@ export class TorrentService {
     this.managedProcesses[infoHash] = worker;
 
     worker.on('message', (msg) => {
-      this.logger.log(`Worker message: ${JSON.stringify(msg)}`);
+      //this.logger.log(`Worker message: ${JSON.stringify(msg)}`);
+      if (msg.type === 'metadata') {
+        this.logger.log(`Torrent metadata received: ${msg.name}`);
+      }
     });
 
     worker.on('error', (err) => {

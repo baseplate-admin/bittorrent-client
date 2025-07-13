@@ -30,6 +30,11 @@ export class TorrentGateway
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
+  @SubscribeMessage('parse_magnet')
+  handleParseMagnet(client: Socket, payload: { data: string }) {
+    
+  }
+
   @SubscribeMessage('magnet')
   handleMagnetLink(client: Socket, payload: { data: string }) {
     this.torrentService.startTorrent(payload.data);

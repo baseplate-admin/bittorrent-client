@@ -3,12 +3,12 @@ import { parentPort, workerData } from 'worker_threads';
 
 const client = new WebTorrent();
 
-let source ;
+let source;
 
 if (workerData.type === 'magnet') {
   source = workerData.payload;
 } else if (workerData.type === 'torrent') {
-  source = Buffer.from(workerData.payload, 'base64'); // decode torrent file
+  source = Buffer.from(workerData.payload, 'base64');
 } else {
   parentPort.postMessage({ error: 'Invalid torrent input type' });
   process.exit(1);
@@ -16,23 +16,41 @@ if (workerData.type === 'magnet') {
 
 console.log('🌀 Adding torrent to client');
 
-client.add(source, (torrent) => {
+client.add(source, { destroyStoreOnDestroy: true }, (torrent) => {
+  // Send metadata once ready
   parentPort.postMessage({
+    type: 'metadata',
     name: torrent.name,
-    files: torrent.files.map((f) => f.name),
+    infoHash: torrent.infoHash,
+    files: torrent.files.map((f) => ({
+      name: f.name,
+      length: f.length,
+    })),
+    totalSize: torrent.length,
+    numFiles: torrent.files.length,
   });
 
+  // Periodic download progress updates
   torrent.on('download', () => {
-    const progress = ((torrent.downloaded / torrent.length) * 100).toFixed(2);
-    parentPort.postMessage({ progress });
+    const progress = (torrent.progress * 100).toFixed(2);
+    parentPort.postMessage({
+      type: 'progress',
+      progress: Number(progress),
+      downloaded: torrent.downloaded,
+      total: torrent.length,
+      downloadSpeed: torrent.downloadSpeed,
+      numPeers: torrent.numPeers,
+    });
   });
 
+  // When download is done
   torrent.on('done', () => {
-    parentPort.postMessage({ status: 'done' });
+    parentPort.postMessage({ type: 'done', status: 'download complete' });
     client.destroy();
   });
 });
 
 client.on('error', (err: Error) => {
   parentPort.postMessage({ error: err.message });
+  client.destroy();
 });

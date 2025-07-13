@@ -3,7 +3,7 @@ import { parentPort, workerData } from 'worker_threads';
 
 const client = new WebTorrent();
 
-let source;
+let source ;
 
 if (workerData.type === 'magnet') {
   source = workerData.payload;

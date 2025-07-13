@@ -2,13 +2,17 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Worker } from 'worker_threads';
 import { resolve } from 'path';
 import { readFile } from 'fs/promises';
+import { getInfoHash } from './utils/get_info_hash';
 
 @Injectable()
 export class TorrentService {
   private readonly logger = new Logger(TorrentService.name);
+  private managedProcesses: { [key: string]: Worker } = {};
 
   async startTorrent(input: string | Buffer) {
-    const workerPath = resolve(__dirname, 'torrent.worker.mts');
+    const infoHash = await getInfoHash(input);
+
+    const workerPath = resolve(__dirname, 'torrent.worker.mjs');
 
     let type: 'magnet' | 'torrent' = 'magnet';
     let payload: string | Buffer = input;
@@ -36,6 +40,7 @@ export class TorrentService {
         payload: type === 'torrent' ? payload.toString('base64') : payload, // send buffer as base64
       },
     });
+    this.managedProcesses[infoHash] = worker;
 
     worker.on('message', (msg) => {
       this.logger.log(`Worker message: ${JSON.stringify(msg)}`);
@@ -48,5 +53,9 @@ export class TorrentService {
     worker.on('exit', (code) => {
       this.logger.log(`Worker exited with code ${code}`);
     });
+  }
+
+  async getProcesses() {
+    return this.managedProcesses;
   }
 }

@@ -31,8 +31,9 @@ export class TorrentGateway
   }
 
   @SubscribeMessage('magnet')
-  handleMagnetLink(client: Socket, payload: string) {
-    this.torrentService.startTorrent(payload);
+  handleMagnetLink(client: Socket, payload: { data: string }) {
+    this.torrentService.startTorrent(payload.data);
+    this.server.emit('magnet', payload);
   }
 
   @SubscribeMessage('message')
@@ -40,7 +41,6 @@ export class TorrentGateway
     client: Socket,
     payload: { user: string; message: string },
   ): void {
-    this.logger.log(`Received message: ${JSON.stringify(payload)}`);
     this.server.emit('msgToClient', payload);
   }
 }

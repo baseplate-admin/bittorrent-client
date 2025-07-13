@@ -6,12 +6,10 @@ import { cn } from '@/lib/utils';
 import { Torrent } from '@/types/Torrent';
 import { formatBytes } from '@/lib/formatBytes';
 
-const countPeers = (peers: Torrent['peers'], types: string[]) =>
-    peers.filter(
-        (p) =>
-            p.connectionType?.includes &&
-            types.some((type) => p.connectionType.includes(type))
-    ).length;
+const countPeersByType = (
+    peers: Torrent['peers'],
+    types: ('seeder' | 'leecher' | 'unknown')[]
+) => peers.filter((p) => types.includes(p.type)).length;
 
 const columnsMetadata: {
     key: string;
@@ -55,26 +53,16 @@ const columnsMetadata: {
         cell: ({ row }) => {
             return (
                 <center>
-                    {countPeers(row.original.peers, [
-                        'tcpOutgoing',
-                        // 'UDPIncoming',
-                    ])}
+                    {countPeersByType(row.original.peers, ['leecher'])}
                 </center>
             );
         },
     },
     {
         key: 'leeches',
-        cell: ({ row }) => {
-            return (
-                <center>
-                    {countPeers(row.original.peers, [
-                        'tcpIncoming',
-                        // 'UDPIncoming',
-                    ])}
-                </center>
-            );
-        },
+        cell: ({ row }) => (
+            <center>{countPeersByType(row.original.peers, ['leecher'])}</center>
+        ),
     },
     {
         key: 'peers',

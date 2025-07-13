@@ -18,6 +18,7 @@ export type Peer = {
     downloaded: number;
     uploaded: number;
     relevance: number;
+    type: 'seeder' | 'leecher' | 'unknown';
 };
 
 export type Torrent = {

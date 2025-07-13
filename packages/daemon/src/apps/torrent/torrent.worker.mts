@@ -49,6 +49,13 @@ function emitTorrentData(type: string) {
                 ? Buffer.from(wire.peerExtendedHandshake.v).toString('utf-8')
                 : 'unknown';
 
+            let peerType: 'seeder' | 'leecher' | 'unknown' = 'unknown';
+            if (piecesCount === totalPieces) {
+                peerType = 'seeder';
+            } else if (piecesCount > 0 && piecesCount < totalPieces) {
+                peerType = 'leecher';
+            }
+
             return {
                 ipAddress: wire.remoteAddress || 'unknown',
                 port: wire.remotePort || 0,
@@ -60,6 +67,7 @@ function emitTorrentData(type: string) {
                 uploaded: wire.uploaded,
                 relevance:
                     typeof wire.relevance === 'number' ? wire.relevance : 0,
+                type: peerType,
             };
         }),
     };

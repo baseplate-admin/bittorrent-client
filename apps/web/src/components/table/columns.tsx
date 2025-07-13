@@ -6,9 +6,16 @@ import { cn } from '@/lib/utils';
 import { Torrent } from '@/types/Torrent';
 import { formatBytes } from '@/lib/formatBytes';
 
+const countPeers = (peers: Torrent['peers'], types: string[]) =>
+    peers.filter(
+        (p) =>
+            p.connectionType?.includes &&
+            types.some((type) => p.connectionType.includes(type))
+    ).length;
+
 const columnsMetadata: {
     key: string;
-    cell?: (context: { getValue: () => any }) => React.ReactNode;
+    cell?: (context: { getValue: () => any; row: any }) => React.ReactNode;
     keyName?: string;
 }[] = [
     {
@@ -20,7 +27,7 @@ const columnsMetadata: {
         ),
     },
     {
-        key: 'total',
+        key: 'totalSize',
         cell: ({ getValue }) => (
             <div className="flex items-center gap-2">
                 <span>{formatBytes({ bytes: getValue() })}</span>
@@ -30,7 +37,7 @@ const columnsMetadata: {
     {
         key: 'progress',
         cell: ({ getValue }) => {
-            const progress = getValue() * 100;
+            const progress = getValue();
             return (
                 <progress
                     max={100}
@@ -41,7 +48,32 @@ const columnsMetadata: {
         },
     },
     { key: 'status' },
-    { key: 'seeds' },
+    {
+        key: 'seeds',
+        cell: ({ row }) => {
+            return (
+                <center>
+                    {countPeers(row.original.peers, [
+                        'tcpOutgoing',
+                        // 'UDPIncoming',
+                    ])}
+                </center>
+            );
+        },
+    },
+    {
+        key: 'leeches',
+        cell: ({ row }) => {
+            return (
+                <center>
+                    {countPeers(row.original.peers, [
+                        'tcpIncoming',
+                        // 'UDPIncoming',
+                    ])}
+                </center>
+            );
+        },
+    },
     {
         key: 'peers',
         cell: ({ getValue }) => {
@@ -49,7 +81,16 @@ const columnsMetadata: {
             return <center>{items}</center>;
         },
     },
-    { key: 'up speed' },
+    {
+        key: 'uploadSpeed',
+        cell: ({ getValue }) => (
+            <div className="flex items-center justify-center gap-2">
+                <span>
+                    {formatBytes({ bytes: getValue(), perSecond: true })}
+                </span>
+            </div>
+        ),
+    },
     {
         key: 'downloadSpeed',
         keyName: 'Download Speed',

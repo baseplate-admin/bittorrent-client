@@ -76,19 +76,15 @@ export class TorrentService {
             }
 
             switch (msg.type) {
-                case 'metadata':
-                    this.logger.log(`Metadata received for ${infoHash}`);
+                case 'progress':
                     torrentData.name = msg.name;
                     torrentData.files = msg.files;
                     torrentData.totalSize = msg.totalSize;
                     torrentData.numFiles = msg.numFiles;
-                    break;
-
-                case 'progress':
                     torrentData.progress = msg.progress;
                     torrentData.downloaded = msg.downloaded;
-                    torrentData.total = msg.total;
                     torrentData.downloadSpeed = msg.downloadSpeed;
+                    torrentData.uploadSpeed = msg.uploadSpeed;
                     torrentData.numPeers = msg.numPeers;
                     torrentData.peers = msg.peers || [];
                     break;

@@ -66,7 +66,7 @@ function emitTorrentData(type: string) {
     parentPort.postMessage(data);
 }
 
-torrent = client.add(source, {}, () => emitTorrentData('metadata'));
+torrent = client.add(source, {});
 
 torrent.on('download', () => emitTorrentData('progress'));
 torrent.on('done', () =>

@@ -7,7 +7,7 @@ import { torrentAtom } from '@/atoms/torrentAtom';
 import type { Torrent } from '@/types/Torrent';
 
 export default function SocketProvider() {
-    const [, setTorrent] = useAtom(torrentAtom);
+    const [torrent, setTorrent] = useAtom(torrentAtom);
     const latestTorrentsRef = useRef<Torrent[] | null>(null);
 
     useEffect(() => {
@@ -87,56 +87,34 @@ export default function SocketProvider() {
 
                 if (!data.prop) return;
 
-                if (data.prop.startsWith('peers[')) {
-                    const match = data.prop.match(/peers\[(\d+)\]\.(.+)/);
-                    if (!match) return;
-
-                    const idxStr = match[1];
-                    const key = match[2];
-                    if (!idxStr || !key) return;
-
-                    const idx = parseInt(idxStr, 10);
-                    if (isNaN(idx)) return;
-
-                    if (!torrent.peers[idx]) {
-                        torrent.peers[idx] = {
-                            ipAddress: '',
-                            port: 0,
-                            connectionType: '',
-                            flags: '',
-                            client: '',
-                            progress: 0,
-                            downloadSpeed: 0,
-                            uploadSpeed: 0,
-                            downloaded: 0,
-                            uploaded: 0,
-                            relevance: 0,
+                if (data.prop.startsWith('peers')) {
+                    const peerData = JSON.parse(data.value);
+                    const peerIndex = torrent.peers.findIndex(
+                        (p) => p.ipAddress === peerData.ipAddress
+                    );
+                    if (peerIndex === -1) {
+                        // Add new peer
+                        torrent.peers.push(peerData);
+                    } else {
+                        // Update existing peer
+                        torrent.peers[peerIndex] = {
+                            ...torrent.peers[peerIndex],
+                            ...peerData,
                         };
                     }
-
-                    (torrent.peers[idx] as any)[key] = data.value;
                 } else if (data.prop.startsWith('files[')) {
-                    const match = data.prop.match(/files\[(\d+)\]\.(.+)/);
-                    if (!match) return;
-
-                    const idxStr = match[1];
-                    const key = match[2];
-                    if (!idxStr || !key) return;
-
-                    const idx = parseInt(idxStr, 10);
-                    if (isNaN(idx)) return;
-
-                    if (!torrent.files[idx]) {
-                        torrent.files[idx] = {
-                            name: '',
-                            length: 0,
-                            downloaded: 0,
-                            progress: 0,
-                            path: '',
+                    const fileData = JSON.parse(data.value);
+                    const fileIndex = torrent.files.findIndex(
+                        (f) => f.name === fileData.name
+                    );
+                    if (fileIndex === -1) {
+                        torrent.files.push(fileData);
+                    } else {
+                        torrent.files[fileIndex] = {
+                            ...torrent.files[fileIndex],
+                            ...fileData,
                         };
                     }
-
-                    (torrent.files[idx] as any)[key] = data.value;
                 } else {
                     (torrent as any)[data.prop] = data.value;
                 }
@@ -157,6 +135,9 @@ export default function SocketProvider() {
             console.log('Socket disconnected');
         };
     }, [setTorrent]);
+    useEffect(() => {
+        console.log(torrent);
+    }, [torrent]);
 
     return null;
 }

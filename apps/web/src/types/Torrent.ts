@@ -12,12 +12,12 @@ export type Peer = {
     connectionType: string;
     flags: string;
     client: string;
-    progress: number; // decimal e.g. 0.126 for 12.6%
-    downloadSpeed: number; // bytes/sec
-    uploadSpeed: number; // bytes/sec
-    downloaded: number; // bytes
-    uploaded: number; // bytes
-    relevance: number; // decimal
+    progress: number;
+    downloadSpeed: number;
+    uploadSpeed: number;
+    downloaded: number;
+    uploaded: number;
+    relevance: number;
 };
 
 export type Torrent = {

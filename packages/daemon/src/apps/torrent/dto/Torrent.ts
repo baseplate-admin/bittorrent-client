@@ -34,6 +34,7 @@ export class TorrentDataObject {
     progress: number | null;
     downloaded: number | null;
     total: number | null;
+    uploadSpeed: number | null;
     downloadSpeed: number | null;
     numPeers: number | null;
 
@@ -49,8 +50,8 @@ export class TorrentDataObject {
         numFiles = null,
         progress = null,
         downloaded = null,
-        total = null,
         downloadSpeed = null,
+        uploadSpeed = null,
         numPeers = null,
         peers = [], // Initialize peers as empty array
     }: {
@@ -62,8 +63,8 @@ export class TorrentDataObject {
         numFiles?: number | null;
         progress?: number | null;
         downloaded?: number | null;
-        total?: number | null;
         downloadSpeed?: number | null;
+        uploadSpeed?: number | null;
         numPeers?: number | null;
         peers?: Peer[]; // New optional peers parameter
     }) {
@@ -76,7 +77,7 @@ export class TorrentDataObject {
         this.numFiles = numFiles;
         this.progress = progress;
         this.downloaded = downloaded;
-        this.total = total;
+        this.uploadSpeed = uploadSpeed;
         this.downloadSpeed = downloadSpeed;
         this.numPeers = numPeers;
 

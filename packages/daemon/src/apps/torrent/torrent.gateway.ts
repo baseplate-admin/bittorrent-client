@@ -32,7 +32,11 @@ export class TorrentGateway
         this.logger.log(`Client disconnected: ${client.id}`);
     }
     broadcastUpdate(infoHash: string, prop: string | symbol, value: any) {
-        this.server.emit('progress', { infoHash, prop, value });
+        this.server.emit('progress', {
+            infoHash,
+            prop,
+            value: JSON.stringify(value),
+        });
     }
 
     @SubscribeMessage('get_all')

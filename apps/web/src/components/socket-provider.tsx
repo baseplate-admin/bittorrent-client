@@ -18,15 +18,10 @@ import { dequeue, peekQueue } from '@/lib/queue';
 
 const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:5000';
 const socket = io(socketUrl);
-socket.on('connect', () => {
-    console.log('Socket connected:', socket.id);
-});
-socket.on('disconnect', () => {
-    console.log('Socket disconnected');
-});
 
 export default function SocketProvider() {
     const setTorrent = useSetAtom(torrentAtom);
+
     const [torrentUploadFileQueue, setTorrentUploadFileQueue] = useAtom(
         torrentUploadFileQueueAtom
     );
@@ -45,100 +40,122 @@ export default function SocketProvider() {
 
     const latestTorrentsRef = useRef<Torrent[] | null>(null);
 
+    // Basic socket connect/disconnect logging
     useEffect(() => {
-        socket.emit('get_all');
+        function onConnect() {
+            console.log('Socket connected:', socket.id);
+        }
+        function onDisconnect() {
+            console.log('Socket disconnected');
+        }
 
-        socket.on('get_all', (data: Torrent[]) => {
+        socket.on('connect', onConnect);
+        socket.on('disconnect', onDisconnect);
+
+        return () => {
+            socket.off('connect', onConnect);
+            socket.off('disconnect', onDisconnect);
+        };
+    }, []);
+
+    // Handle get_all and progress events
+    useEffect(() => {
+        function onGetAll(data: Torrent[]) {
             latestTorrentsRef.current = data;
             setTorrent(latestTorrentsRef.current);
-        });
+        }
 
-        socket.on(
-            'progress',
-            (data: { infoHash: string; prop: string; value: string }) => {
-                if (!latestTorrentsRef.current) {
-                    const newTorrent: Torrent = {
-                        name: null,
-                        files: null,
-                        infoHash: data.infoHash ?? '',
-                        totalSize: null,
-                        numFiles: null,
-                        progress: null,
-                        downloaded: null,
-                        total: null,
-                        downloadSpeed: null,
-                        numPeers: null,
-                        peers: [],
-                        status: null,
-                    };
-                    if (data.prop && data.value !== undefined) {
-                        (newTorrent as any)[data.prop] = data.value;
-                    }
-                    latestTorrentsRef.current = [newTorrent];
-                    setTorrent(latestTorrentsRef.current);
-                    return;
+        function onProgress(data: {
+            infoHash: string;
+            prop: string;
+            value: string;
+        }) {
+            if (!latestTorrentsRef.current) {
+                const newTorrent: Torrent = {
+                    name: null,
+                    files: null,
+                    infoHash: data.infoHash ?? '',
+                    totalSize: null,
+                    numFiles: null,
+                    progress: null,
+                    downloaded: null,
+                    total: null,
+                    downloadSpeed: null,
+                    numPeers: null,
+                    peers: [],
+                    status: null,
+                };
+                if (data.prop && data.value !== undefined) {
+                    (newTorrent as any)[data.prop] = data.value;
                 }
-
-                const prev = latestTorrentsRef.current;
-                const index = prev.findIndex(
-                    (t) => t.infoHash === data.infoHash
-                );
-                if (index === -1) {
-                    const newTorrent: Torrent = {
-                        name: null,
-                        files: null,
-                        infoHash: data.infoHash ?? '',
-                        totalSize: null,
-                        numFiles: null,
-                        progress: null,
-                        downloaded: null,
-                        total: null,
-                        downloadSpeed: null,
-                        numPeers: null,
-                        peers: [],
-                        status: null,
-                    };
-                    if (data.prop && data.value !== undefined) {
-                        (newTorrent as any)[data.prop] = data.value;
-                    }
-                    latestTorrentsRef.current = [...prev, newTorrent];
-                    return;
-                }
-
-                const newTorrents = [...prev];
-                const torrent: Torrent = { ...newTorrents[index]! };
-
-                torrent.peers = torrent.peers ? [...torrent.peers] : [];
-                torrent.files = torrent.files ? [...torrent.files] : [];
-
-                if (!data.prop) return;
-
-                const value = safeJsonParse(data.value);
-
-                if (data.prop.startsWith('peers')) {
-                    torrent.peers = value;
-                } else if (data.prop.startsWith('files')) {
-                    torrent.files = value;
-                } else {
-                    (torrent as any)[data.prop] = value;
-                }
-
-                newTorrents[index] = torrent;
-                latestTorrentsRef.current = newTorrents;
+                latestTorrentsRef.current = [newTorrent];
+                setTorrent(latestTorrentsRef.current);
+                return;
             }
-        );
+
+            const prev = latestTorrentsRef.current;
+            const index = prev.findIndex((t) => t.infoHash === data.infoHash);
+            if (index === -1) {
+                const newTorrent: Torrent = {
+                    name: null,
+                    files: null,
+                    infoHash: data.infoHash ?? '',
+                    totalSize: null,
+                    numFiles: null,
+                    progress: null,
+                    downloaded: null,
+                    total: null,
+                    downloadSpeed: null,
+                    numPeers: null,
+                    peers: [],
+                    status: null,
+                };
+                if (data.prop && data.value !== undefined) {
+                    (newTorrent as any)[data.prop] = data.value;
+                }
+                latestTorrentsRef.current = [...prev, newTorrent];
+                return;
+            }
+
+            const newTorrents = [...prev];
+            const torrent: Torrent = { ...newTorrents[index]! };
+
+            torrent.peers = torrent.peers ? [...torrent.peers] : [];
+            torrent.files = torrent.files ? [...torrent.files] : [];
+
+            if (!data.prop) return;
+
+            const value = safeJsonParse(data.value);
+
+            if (data.prop.startsWith('peers')) {
+                torrent.peers = value;
+            } else if (data.prop.startsWith('files')) {
+                torrent.files = value;
+            } else {
+                (torrent as any)[data.prop] = value;
+            }
+
+            newTorrents[index] = torrent;
+            latestTorrentsRef.current = newTorrents;
+        }
+
+        socket.emit('get_all');
+
+        socket.on('get_all', onGetAll);
+        socket.on('progress', onProgress);
 
         const interval = setInterval(() => {
             setTorrent(latestTorrentsRef.current);
         }, 1000);
 
         return () => {
+            socket.off('get_all', onGetAll);
+            socket.off('progress', onProgress);
             clearInterval(interval);
-            socket.disconnect();
-            console.log('Socket disconnected');
         };
-    }, [setTorrent, socket]);
+    }, [setTorrent]);
 
+    // Handle uploading files and magnets queues
     useEffect(() => {
         (async () => {
             if (
@@ -149,28 +166,32 @@ export default function SocketProvider() {
 
             const file = peekQueue(torrentUploadFileQueue);
             if (file) {
-                const buffer = await fileToBuffer(file);
-                socket.emit('add', { data: buffer }, (response: any) => {
-                    if (response && response.success) {
-                        dequeue(
-                            torrentUploadFileQueue,
-                            setTorrentUploadFileQueue
-                        );
-                        console.log(
-                            'Uploaded file:',
-                            file.name,
-                            'Response:',
-                            response
-                        );
-                    } else {
-                        console.error(
-                            'Failed to upload file:',
-                            file.name,
-                            'Response:',
-                            response
-                        );
-                    }
-                });
+                try {
+                    const buffer = await fileToBuffer(file);
+                    socket.emit('add', { data: buffer }, (response: any) => {
+                        if (response && response.success) {
+                            dequeue(
+                                torrentUploadFileQueue,
+                                setTorrentUploadFileQueue
+                            );
+                            console.log(
+                                'Uploaded file:',
+                                file.name,
+                                'Response:',
+                                response
+                            );
+                        } else {
+                            console.error(
+                                'Failed to upload file:',
+                                file.name,
+                                'Response:',
+                                response
+                            );
+                        }
+                    });
+                } catch (err) {
+                    console.error('Error converting file to buffer:', err);
+                }
             }
 
             const magnet = peekQueue(torrentUploadMagnetQueue);
@@ -197,14 +218,21 @@ export default function SocketProvider() {
                 });
             }
         })();
-    }, [torrentUploadFileQueue, torrentUploadMagnetQueue, socket]);
+    }, [
+        torrentUploadFileQueue,
+        torrentUploadMagnetQueue,
+        setTorrentUploadFileQueue,
+        setTorrentUploadMagnetQueue,
+    ]);
 
+    // Handle pause queue
     useEffect(() => {
         if (torrentPauseQueue.length === 0) return;
 
         const infoHash = peekQueue(torrentPauseQueue);
-        socket.emit('pause', { infoHash }, (response: any) => {
-            if (response && response.success) {
+
+        function onPause(response: any) {
+            if (response) {
                 dequeue(torrentPauseQueue, setTorrentPauseQueue);
                 console.log(
                     `Paused torrent: ${infoHash}`,
@@ -219,15 +247,24 @@ export default function SocketProvider() {
                     response
                 );
             }
-        });
-    });
+        }
 
+        socket.emit('pause', { infoHash });
+        socket.on('pause', onPause);
+
+        return () => {
+            socket.off('pause', onPause);
+        };
+    }, [torrentPauseQueue, setTorrentPauseQueue]);
+
+    // Handle resume queue
     useEffect(() => {
         if (torrentResumeQueue.length === 0) return;
 
         const infoHash = peekQueue(torrentResumeQueue);
-        socket.emit('resume', { infoHash }, (response: any) => {
-            if (response && response.success) {
+
+        function onResume(response: any) {
+            if (response) {
                 dequeue(torrentResumeQueue, setTorrentResumeQueue);
                 console.log(
                     `Resumed torrent: ${infoHash}`,
@@ -242,15 +279,24 @@ export default function SocketProvider() {
                     response
                 );
             }
-        });
-    }, [torrentResumeQueue, socket]);
+        }
 
+        socket.emit('resume', { infoHash });
+        socket.on('resume', onResume);
+
+        return () => {
+            socket.off('resume', onResume);
+        };
+    }, [torrentResumeQueue, setTorrentResumeQueue]);
+
+    // Handle remove queue
     useEffect(() => {
         if (torrentRemoveQueue.length === 0) return;
 
         const infoHash = peekQueue(torrentRemoveQueue);
-        socket.emit('remove', { infoHash }, (response: any) => {
-            if (response && response.success) {
+
+        function onRemove(response: any) {
+            if (response) {
                 if (latestTorrentsRef.current) {
                     latestTorrentsRef.current =
                         latestTorrentsRef.current.filter(
@@ -273,8 +319,22 @@ export default function SocketProvider() {
                     response
                 );
             }
-        });
-    }, [torrentRemoveQueue, socket]);
+        }
+
+        socket.emit('remove', { infoHash });
+        socket.on('remove', onRemove);
+
+        return () => {
+            socket.off('remove', onRemove);
+        };
+    }, [torrentRemoveQueue, setTorrentRemoveQueue, setTorrent]);
+
+    useEffect(() => {
+        return () => {
+            socket.disconnect();
+            console.log('Socket disconnected');
+        };
+    }, []);
 
     return null;
 }

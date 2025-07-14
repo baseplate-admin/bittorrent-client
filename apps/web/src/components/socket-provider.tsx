@@ -251,6 +251,14 @@ export default function SocketProvider() {
         const infoHash = peekQueue(torrentRemoveQueue);
         socket.emit('remove', { infoHash }, (response: any) => {
             if (response && response.success) {
+                if (latestTorrentsRef.current) {
+                    latestTorrentsRef.current =
+                        latestTorrentsRef.current.filter(
+                            (torrent) => torrent.infoHash !== infoHash
+                        );
+                    setTorrent(latestTorrentsRef.current);
+                }
+
                 dequeue(torrentRemoveQueue, setTorrentRemoveQueue);
                 console.log(
                     `Removed torrent: ${infoHash}`,

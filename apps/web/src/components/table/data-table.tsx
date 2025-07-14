@@ -25,7 +25,14 @@ import {
     ContextMenuItem,
 } from '@/components/ui/context-menu';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
+import { Torrent } from '@/types/Torrent';
+import {
+    torrentPauseQueueAtom,
+    torrentResumeQueueAtom,
+    torrentRemoveQueueAtom,
+} from '@/atoms/torrent';
+import { useSetAtom } from 'jotai';
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -33,6 +40,16 @@ interface DataTableProps<TData, TValue> {
 }
 
 function renderRowContextMenu<T>(rowData: T, children: React.ReactNode) {
+    const data = rowData as Torrent;
+
+    const setTorrentPauseQueue = useSetAtom(torrentPauseQueueAtom);
+    const setTorrentResumeQueue = useSetAtom(torrentResumeQueueAtom);
+    const setTorrentRemoveQueue = useSetAtom(torrentRemoveQueueAtom);
+
+    const handleDeleteButtonClick = () => {
+        setTorrentRemoveQueue((prev) => [...prev, data.infoHash]);
+    };
+
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
@@ -43,10 +60,7 @@ function renderRowContextMenu<T>(rowData: T, children: React.ReactNode) {
                 <ContextMenuItem onClick={() => console.log('Edit', rowData)}>
                     Edit
                 </ContextMenuItem>
-                <ContextMenuItem
-                    className="text-red-600 focus:bg-red-100"
-                    onClick={() => console.log('Delete', rowData)}
-                >
+                <ContextMenuItem onClick={handleDeleteButtonClick}>
                     Delete
                 </ContextMenuItem>
             </ContextMenuContent>
@@ -96,26 +110,27 @@ export function DataTable<TData, TValue>({
                 </TableHeader>
                 <TableBody>
                     {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) =>
-                            renderRowContextMenu(
-                                row.original,
-                                <TableRow
-                                    key={row.id}
-                                    data-state={
-                                        row.getIsSelected() && 'selected'
-                                    }
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext()
-                                            )}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            )
-                        )
+                        table.getRowModel().rows.map((row) => (
+                            <Fragment key={row.id}>
+                                {renderRowContextMenu(
+                                    row.original as Torrent,
+                                    <TableRow
+                                        data-state={
+                                            row.getIsSelected() && 'selected'
+                                        }
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                )}
+                            </Fragment>
+                        ))
                     ) : (
                         <TableRow>
                             <TableCell

@@ -4,6 +4,7 @@ import './globals.css';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import SocketProvider from '@/components/socket-provider';
+import ActionButtons from '@/components/action-buttons';
 
 export const metadata: Metadata = {
     title: 'Create Next App',
@@ -27,7 +28,10 @@ export default function RootLayout({
                     <SidebarProvider>
                         <AppSidebar />
                         <SocketProvider />
-                        <main className="w-full p-4">{children}</main>
+                        <main className="w-full p-4">
+                            <ActionButtons />
+                            {children}
+                        </main>
                     </SidebarProvider>
                 </ThemeProvider>
             </body>

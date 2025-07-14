@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { SetStateAction, useAtom, useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import {
     torrentAtom,
     torrentUploadMagnetQueueAtom,
@@ -10,6 +10,8 @@ import {
 } from '@/atoms/torrent';
 import type { Torrent } from '@/types/Torrent';
 import { fileToBuffer } from '@/lib/fileToBuffer';
+import { safeJsonParse } from '@/lib/safeJsonParse';
+import { dequeue, peekQueue } from '@/lib/queue';
 
 const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:5000';
 const socket = io(socketUrl);
@@ -98,7 +100,9 @@ export default function SocketProvider() {
                 torrent.files = torrent.files ? [...torrent.files] : [];
 
                 if (!data.prop) return;
-                const value = JSON.parse(data.value);
+
+                const value = safeJsonParse(data.value);
+
                 if (data.prop.startsWith('peers')) {
                     torrent.peers = value;
                 } else if (data.prop.startsWith('files')) {
@@ -125,42 +129,60 @@ export default function SocketProvider() {
 
     useEffect(() => {
         (async () => {
-            const handleDequeue = <T,>(
-                queue: T[],
-                setQueue: (update: SetStateAction<T[]>) => void
-            ): T | null => {
-                if (queue.length === 0) return null;
-
-                const value = queue.shift();
-                setQueue([...queue]);
-                return value ?? null;
-            };
-
-            // Check if there are any items in the queues
             if (
-                [torrentUploadFileQueue, torrentUploadMagnetQueue].every(
-                    (q) => q.length === 0
-                )
+                torrentUploadFileQueue.length === 0 &&
+                torrentUploadMagnetQueue.length === 0
             )
                 return;
 
-            const file = handleDequeue(
-                torrentUploadFileQueue,
-                setTorrentUploadFileQueue
-            );
+            const file = peekQueue(torrentUploadFileQueue);
             if (file) {
                 const buffer = await fileToBuffer(file);
-                const res = socket.emit('add', { data: buffer });
-                console.log('Uploaded file:', file.name, 'Response:', res);
+                socket.emit('add', { data: buffer }, (response: any) => {
+                    if (response && response.success) {
+                        dequeue(
+                            torrentUploadFileQueue,
+                            setTorrentUploadFileQueue
+                        );
+                        console.log(
+                            'Uploaded file:',
+                            file.name,
+                            'Response:',
+                            response
+                        );
+                    } else {
+                        console.error(
+                            'Failed to upload file:',
+                            file.name,
+                            'Response:',
+                            response
+                        );
+                    }
+                });
             }
 
-            const magnet = handleDequeue(
-                torrentUploadMagnetQueue,
-                setTorrentUploadMagnetQueue
-            );
+            const magnet = peekQueue(torrentUploadMagnetQueue);
             if (magnet) {
-                socket.emit('add', { data: magnet });
-                confirm(`Added magnet link: ${magnet}`);
+                socket.emit('add', { data: magnet }, (response: any) => {
+                    if (response && response.success) {
+                        dequeue(
+                            torrentUploadMagnetQueue,
+                            setTorrentUploadMagnetQueue
+                        );
+                        console.log(
+                            `Added magnet link: ${magnet}`,
+                            'Response:',
+                            response
+                        );
+                    } else {
+                        console.error(
+                            'Failed to add magnet link:',
+                            magnet,
+                            'Response:',
+                            response
+                        );
+                    }
+                });
             }
         })();
     }, [torrentUploadFileQueue, torrentUploadMagnetQueue, socket]);

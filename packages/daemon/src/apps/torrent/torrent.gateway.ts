@@ -80,6 +80,7 @@ export class TorrentGateway
             );
             client.emit('add', infoHash);
         } catch (error) {
+            console.error('Error adding torrent:', error);
             client.emit('error', { message: error.message });
         }
     }

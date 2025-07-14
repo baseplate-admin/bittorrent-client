@@ -39,7 +39,13 @@ interface DataTableProps<TData, TValue> {
     data: TData[];
 }
 
-function renderRowContextMenu<T>(rowData: T, children: React.ReactNode) {
+function RowContextMenu({
+    rowData,
+    children,
+}: {
+    rowData: Torrent;
+    children: React.ReactNode;
+}) {
     const data = rowData as Torrent;
 
     const setTorrentPauseQueue = useSetAtom(torrentPauseQueueAtom);
@@ -112,8 +118,9 @@ export function DataTable<TData, TValue>({
                     {table.getRowModel().rows?.length ? (
                         table.getRowModel().rows.map((row) => (
                             <Fragment key={row.id}>
-                                {renderRowContextMenu(
-                                    row.original as Torrent,
+                                <RowContextMenu
+                                    rowData={row.original as Torrent}
+                                >
                                     <TableRow
                                         data-state={
                                             row.getIsSelected() && 'selected'
@@ -128,7 +135,7 @@ export function DataTable<TData, TValue>({
                                             </TableCell>
                                         ))}
                                     </TableRow>
-                                )}
+                                </RowContextMenu>
                             </Fragment>
                         ))
                     ) : (

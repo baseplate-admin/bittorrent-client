@@ -1,17 +1,16 @@
-from aiohttp import web
-from seaderr.handler.websocket import websocket_handler
-from seaderr.singletons import LibtorrentSession
+import socketio
 
-
-async def libtorrent_ctx(app):
-    lt_session = LibtorrentSession()
-    await lt_session.init_session()
-    app["lt_session"] = await lt_session.get_session()
-    yield
-    await lt_session.close()
+from seaderr.singletons import SIO
+from seaderr.utilities import import_submodules
 
 
 def create_app():
-    app = web.Application()
-    app.router.add_get("/ws", websocket_handler)
+    SIO.init()
+
+    # Lazy register
+    import_submodules("seaderr.events")
+    import_submodules("seaderr.routes")
+
+    sio = SIO.get_instance()
+    app = socketio.ASGIApp(sio)
     return app

@@ -17,12 +17,18 @@ import {
 } from '@/components/ui/dialog';
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
 
     const handleDownloadButtonClick = (closeDialog: () => void) => {
         console.log('Downloading...');
+        closeDialog();
+    };
+
+    const handleTorrentAddButtonClick = (closeDialog: () => void) => {
+        console.log('Adding torrent file...');
         closeDialog();
     };
 
@@ -61,9 +67,29 @@ export default function ActionButtons() {
         {
             icon: <Plus strokeWidth={4.7} className="text-teal-500" />,
             tooltip: 'Add Torrent File',
-            getDialog: (_closeDialog: () => void) => ({
+            getDialog: (closeDialog: () => void) => ({
                 title: 'Add torrent file',
-                content: <div>Coming soon</div>,
+                content: (
+                    <div className="flex flex-col gap-4 py-3">
+                        <Input type="file" accept=".torrent" />
+                        <p className="italic text-sm">
+                            One link per line (Magnet links are supported)
+                        </p>
+                        <div className="flex w-full items-center justify-center gap-4">
+                            <Button
+                                onClick={() =>
+                                    handleTorrentAddButtonClick(closeDialog)
+                                }
+                                variant="outline"
+                            >
+                                Add
+                            </Button>
+                            <Button variant="outline" onClick={closeDialog}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                ),
             }),
         },
         {

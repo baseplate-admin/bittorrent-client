@@ -2,12 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { useAtom } from 'jotai';
+import { useSetAtom } from 'jotai';
 import { torrentAtom } from '@/atoms/torrentAtom';
 import type { Torrent } from '@/types/Torrent';
 
 export default function SocketProvider() {
-    const [torrent, setTorrent] = useAtom(torrentAtom);
+    const setTorrent = useSetAtom(torrentAtom);
     const latestTorrentsRef = useRef<Torrent[] | null>(null);
 
     useEffect(() => {

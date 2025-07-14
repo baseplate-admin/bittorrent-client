@@ -18,17 +18,32 @@ import {
 import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { useSetAtom } from 'jotai';
+import {
+    torrentUploadFileQueueAtom,
+    torrentUploadMagnetQueueAtom,
+} from '@/atoms/torrent';
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
 
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [textareaValue, setTextareaValue] = useState<string>('');
+
+    const setTorrentUploadFileQueue = useSetAtom(torrentUploadFileQueueAtom);
+    const setTorrentUploadMagnetQueue = useSetAtom(
+        torrentUploadMagnetQueueAtom
+    );
+
     const handleDownloadButtonClick = (closeDialog: () => void) => {
-        console.log('Downloading...');
+        const magnets = textareaValue.split('\n');
+        setTorrentUploadMagnetQueue([...magnets]);
+
         closeDialog();
     };
 
     const handleTorrentAddButtonClick = (closeDialog: () => void) => {
-        console.log('Adding torrent file...');
+        setTorrentUploadFileQueue([...uploadedFiles]);
         closeDialog();
     };
 
@@ -41,6 +56,8 @@ export default function ActionButtons() {
                 content: (
                     <div className="flex flex-col gap-4 py-3">
                         <Textarea
+                            onChange={(e) => setTextareaValue(e.target.value)}
+                            value={textareaValue}
                             className="h-32"
                             placeholder="Type your message here."
                         />
@@ -71,9 +88,22 @@ export default function ActionButtons() {
                 title: 'Add torrent file',
                 content: (
                     <div className="flex flex-col gap-4 py-3">
-                        <Input type="file" accept=".torrent" />
+                        <Input
+                            onInput={(e) => {
+                                const files = (e.target as HTMLInputElement)
+                                    .files;
+                                if (files) {
+                                    setUploadedFiles(Array.from(files));
+                                } else {
+                                    setUploadedFiles([]);
+                                }
+                            }}
+                            type="file"
+                            accept=".torrent"
+                            multiple
+                        />
                         <p className="italic text-sm">
-                            One link per line (Magnet links are supported)
+                            You can select multiple torrent files.
                         </p>
                         <div className="flex w-full items-center justify-center gap-4">
                             <Button
@@ -95,7 +125,7 @@ export default function ActionButtons() {
         {
             icon: <Settings strokeWidth={3} className="text-indigo-300" />,
             tooltip: 'Settings',
-            getDialog: (_closeDialog: () => void) => ({
+            getDialog: () => ({
                 title: 'Settings',
                 content: <div>Settings go here</div>,
             }),

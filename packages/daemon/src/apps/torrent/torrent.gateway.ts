@@ -73,7 +73,7 @@ export class TorrentGateway
     }
 
     @SubscribeMessage('add')
-    async handleMagnetLink(client: Socket, payload: { data: string }) {
+    async handleMagnetLink(client: Socket, payload: { data: string | Buffer }) {
         try {
             const infoHash = await this.torrentService.startTorrent(
                 payload.data,

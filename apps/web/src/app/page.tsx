@@ -1,5 +1,5 @@
 'use client';
-import { torrentAtom } from '@/atoms/torrentAtom';
+import { torrentAtom } from '@/atoms/torrent';
 import { columns } from '@/components/table/columns';
 import { DataTable } from '@/components/table/data-table';
 import { useAtomValue } from 'jotai';

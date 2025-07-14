@@ -16,58 +16,94 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import React, { useState } from 'react';
-
-const mapping: Array<{
-    icon: React.ReactElement;
-    tooltip: string;
-    dialog: {
-        title: string;
-        content: React.ReactElement;
-    };
-}> = [
-    {
-        icon: <Link2 strokeWidth={4} className="text-teal-500" />,
-        tooltip: 'Add Torrent Link',
-        dialog: {
-            title: 'Add torrent links',
-            content: <></>,
-        },
-    },
-    {
-        icon: <Plus strokeWidth={4.7} className="text-teal-500" />,
-        tooltip: 'Add Torrent File',
-        dialog: {
-            title: '',
-            content: <></>,
-        },
-    },
-    {
-        icon: <Settings strokeWidth={3} className="text-indigo-300" />,
-        tooltip: 'Settings',
-        dialog: {
-            title: '',
-            content: <></>,
-        },
-    },
-];
+import { Textarea } from '@/components/ui/textarea';
 
 export default function ActionButtons() {
+    const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
+
+    const handleDownloadButtonClick = (closeDialog: () => void) => {
+        console.log('Downloading...');
+        closeDialog();
+    };
+
+    const mapping = [
+        {
+            icon: <Link2 strokeWidth={4} className="text-teal-500" />,
+            tooltip: 'Add Torrent Link',
+            getDialog: (closeDialog: () => void) => ({
+                title: 'Add torrent links',
+                content: (
+                    <div className="flex flex-col gap-4 py-3">
+                        <Textarea
+                            className="h-32"
+                            placeholder="Type your message here."
+                        />
+                        <p className="italic text-sm">
+                            One link per line (Magnet links are supported)
+                        </p>
+                        <div className="flex w-full items-center justify-center gap-4">
+                            <Button
+                                onClick={() =>
+                                    handleDownloadButtonClick(closeDialog)
+                                }
+                                variant="outline"
+                            >
+                                Download
+                            </Button>
+                            <Button variant="outline" onClick={closeDialog}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                ),
+            }),
+        },
+        {
+            icon: <Plus strokeWidth={4.7} className="text-teal-500" />,
+            tooltip: 'Add Torrent File',
+            getDialog: (_closeDialog: () => void) => ({
+                title: 'Add torrent file',
+                content: <div>Coming soon</div>,
+            }),
+        },
+        {
+            icon: <Settings strokeWidth={3} className="text-indigo-300" />,
+            tooltip: 'Settings',
+            getDialog: (_closeDialog: () => void) => ({
+                title: 'Settings',
+                content: <div>Settings go here</div>,
+            }),
+        },
+    ];
+
     return (
         <div className="flex mb-4 border p-4 rounded-md">
             <div className="flex gap-5">
                 {mapping.map((item, index) => {
-                    const [dialogOpen, setDialogOpen] = useState(false);
+                    const isOpen = openDialogIndex === index;
+
+                    const handleTriggerButtonClick = () => {
+                        setOpenDialogIndex(index);
+                    };
+
+                    const closeDialog = () => setOpenDialogIndex(null);
+                    const { title, content } = item.getDialog(closeDialog);
+
                     return (
-                        <div key={index}>
+                        <Dialog
+                            key={index}
+                            open={isOpen}
+                            onOpenChange={(open) =>
+                                setOpenDialogIndex(open ? index : null)
+                            }
+                        >
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button
                                         className="cursor-pointer"
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => {
-                                            setDialogOpen(true);
-                                        }}
+                                        onClick={handleTriggerButtonClick}
                                     >
                                         {item.icon}
                                     </Button>
@@ -76,22 +112,15 @@ export default function ActionButtons() {
                                     <p>{item.tooltip}</p>
                                 </TooltipContent>
                             </Tooltip>
-                            <Dialog
-                                open={dialogOpen}
-                                onOpenChange={setDialogOpen}
-                            >
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>
-                                            {item.dialog.title}
-                                        </DialogTitle>
-                                        <DialogDescription>
-                                            {item.dialog.content}
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>{title}</DialogTitle>
+                                    <DialogDescription asChild>
+                                        {content}
+                                    </DialogDescription>
+                                </DialogHeader>
+                            </DialogContent>
+                        </Dialog>
                     );
                 })}
             </div>

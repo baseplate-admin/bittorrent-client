@@ -7,6 +7,9 @@ import {
     torrentAtom,
     torrentUploadMagnetQueueAtom,
     torrentUploadFileQueueAtom,
+    torrentPauseQueueAtom,
+    torrentResumeQueueAtom,
+    torrentRemoveQueueAtom,
 } from '@/atoms/torrent';
 import type { Torrent } from '@/types/Torrent';
 import { fileToBuffer } from '@/lib/fileToBuffer';
@@ -29,6 +32,15 @@ export default function SocketProvider() {
     );
     const [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue] = useAtom(
         torrentUploadMagnetQueueAtom
+    );
+    const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(
+        torrentPauseQueueAtom
+    );
+    const [torrentResumeQueue, setTorrentResumeQueue] = useAtom(
+        torrentResumeQueueAtom
+    );
+    const [torrentRemoveQueue, setTorrentRemoveQueue] = useAtom(
+        torrentRemoveQueueAtom
     );
 
     const latestTorrentsRef = useRef<Torrent[] | null>(null);
@@ -186,6 +198,75 @@ export default function SocketProvider() {
             }
         })();
     }, [torrentUploadFileQueue, torrentUploadMagnetQueue, socket]);
+
+    useEffect(() => {
+        if (torrentPauseQueue.length === 0) return;
+
+        const infoHash = peekQueue(torrentPauseQueue);
+        socket.emit('pause', { infoHash }, (response: any) => {
+            if (response && response.success) {
+                dequeue(torrentPauseQueue, setTorrentPauseQueue);
+                console.log(
+                    `Paused torrent: ${infoHash}`,
+                    'Response:',
+                    response
+                );
+            } else {
+                console.error(
+                    'Failed to pause torrent:',
+                    infoHash,
+                    'Response:',
+                    response
+                );
+            }
+        });
+    });
+
+    useEffect(() => {
+        if (torrentResumeQueue.length === 0) return;
+
+        const infoHash = peekQueue(torrentResumeQueue);
+        socket.emit('resume', { infoHash }, (response: any) => {
+            if (response && response.success) {
+                dequeue(torrentResumeQueue, setTorrentResumeQueue);
+                console.log(
+                    `Resumed torrent: ${infoHash}`,
+                    'Response:',
+                    response
+                );
+            } else {
+                console.error(
+                    'Failed to resume torrent:',
+                    infoHash,
+                    'Response:',
+                    response
+                );
+            }
+        });
+    }, [torrentResumeQueue, socket]);
+
+    useEffect(() => {
+        if (torrentRemoveQueue.length === 0) return;
+
+        const infoHash = peekQueue(torrentRemoveQueue);
+        socket.emit('remove', { infoHash }, (response: any) => {
+            if (response && response.success) {
+                dequeue(torrentRemoveQueue, setTorrentRemoveQueue);
+                console.log(
+                    `Removed torrent: ${infoHash}`,
+                    'Response:',
+                    response
+                );
+            } else {
+                console.error(
+                    'Failed to remove torrent:',
+                    infoHash,
+                    'Response:',
+                    response
+                );
+            }
+        });
+    }, [torrentRemoveQueue, socket]);
 
     return null;
 }

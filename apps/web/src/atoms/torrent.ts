@@ -5,3 +5,7 @@ export const torrentAtom = atom<Torrent[] | null>(null);
 
 export const torrentUploadFileQueueAtom = atom<File[]>(new Array<File>());
 export const torrentUploadMagnetQueueAtom = atom<string[]>(new Array<string>());
+
+export const torrentPauseQueueAtom = atom<string[]>(new Array<string>());
+export const torrentResumeQueueAtom = atom<string[]>(new Array<string>());
+export const torrentRemoveQueueAtom = atom<string[]>(new Array<string>());

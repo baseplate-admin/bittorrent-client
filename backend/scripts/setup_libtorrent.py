@@ -2,7 +2,8 @@ import sys
 import os
 import platform
 import re
-import requests
+import asyncio
+import aiohttp
 import zipfile
 import shutil
 from io import BytesIO
@@ -13,9 +14,9 @@ def get_os_name_for_asset():
     if system == "darwin":
         return "macos"
     elif system == "linux":
-        return "ubuntu"  # per the example, ubuntu used for Linux builds
+        return "ubuntu"  # per example, Linux builds use ubuntu naming
     elif system == "windows":
-        return "windows"  # if they have windows builds, else adapt
+        return "windows"
     else:
         raise RuntimeError(f"Unsupported OS: {system}")
 
@@ -25,10 +26,9 @@ def get_python_minor_version():
 
 
 def get_venv_site_packages():
-    prefix = sys.prefix  # usually the venv root when running inside venv
+    prefix = sys.prefix  # venv root when inside venv
     py_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
 
-    # Possible site-packages paths depending on OS
     candidate_paths = [
         os.path.join(prefix, "lib", py_version, "site-packages"),  # Unix/macOS
         os.path.join(prefix, "Lib", "site-packages"),  # Windows
@@ -36,18 +36,14 @@ def get_venv_site_packages():
     for path in candidate_paths:
         if os.path.isdir(path):
             return path
-
-    # fallback to prefix if nothing found
     return prefix
 
 
-def download_and_extract_zip(url, extract_to):
-    print(f"Downloading {url} ...")
-    r = requests.get(url)
-    r.raise_for_status()
-    with zipfile.ZipFile(BytesIO(r.content)) as z:
-        print(f"Extracting to {extract_to} ...")
-        z.extractall(extract_to)
+def find_libtorrent_folder(root_dir):
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        if "libtorrent" in dirnames:
+            return os.path.join(dirpath, "libtorrent")
+    return None
 
 
 def copy_folder(src_folder, dst_folder):
@@ -57,60 +53,65 @@ def copy_folder(src_folder, dst_folder):
     shutil.copytree(src_folder, dst_folder)
 
 
-def find_libtorrent_folder(root_dir):
-    """Recursively search for a folder named 'libtorrent' inside root_dir."""
-    for dirpath, dirnames, filenames in os.walk(root_dir):
-        if "libtorrent" in dirnames:
-            return os.path.join(dirpath, "libtorrent")
-    return None
+async def fetch_json(session, url):
+    async with session.get(url) as resp:
+        resp.raise_for_status()
+        return await resp.json()
 
 
-def main():
+async def download_file(session, url):
+    print(f"Downloading {url} ...")
+    async with session.get(url) as resp:
+        resp.raise_for_status()
+        data = await resp.read()
+        return data
+
+
+async def main():
     os_name = get_os_name_for_asset()
     py_minor = get_python_minor_version()
-
-    # Compose regex pattern to find the exact matching zip file
     pattern = re.compile(
         rf"python-bindings-{os_name}-latest-py3\.{py_minor}-build\.zip"
     )
-
     print(f"Looking for assets matching OS='{os_name}', Python 3.{py_minor}")
 
-    # GitHub API URL for latest release
     GITHUB_API_RELEASES_URL = (
         "https://api.github.com/repos/baseplate-admin/libtorrent-python/releases/latest"
     )
-    resp = requests.get(GITHUB_API_RELEASES_URL)
-    resp.raise_for_status()
-    release_data = resp.json()
 
-    assets = release_data.get("assets", [])
-    matching_asset = None
+    async with aiohttp.ClientSession() as session:
+        release_data = await fetch_json(session, GITHUB_API_RELEASES_URL)
 
-    for asset in assets:
-        name = asset.get("name", "")
-        if pattern.fullmatch(name):
-            matching_asset = asset
-            break
+        assets = release_data.get("assets", [])
+        matching_asset = None
 
-    if not matching_asset:
-        print("No matching asset found for pattern:", pattern.pattern)
-        return
+        for asset in assets:
+            name = asset.get("name", "")
+            if pattern.fullmatch(name):
+                matching_asset = asset
+                break
 
-    print(f"Found asset: {matching_asset['name']}")
+        if not matching_asset:
+            print("No matching asset found for pattern:", pattern.pattern)
+            return
 
-    download_url = matching_asset["browser_download_url"]
+        print(f"Found asset: {matching_asset['name']}")
+        download_url = matching_asset["browser_download_url"]
 
-    # Create temp extraction folder
+        # Download zip file bytes
+        zip_bytes = await download_file(session, download_url)
+
+    # Extract zip synchronously
     tmp_extract_dir = "tmp_extract"
     if os.path.exists(tmp_extract_dir):
         shutil.rmtree(tmp_extract_dir)
     os.makedirs(tmp_extract_dir)
 
-    # Download and extract
-    download_and_extract_zip(download_url, tmp_extract_dir)
+    with zipfile.ZipFile(BytesIO(zip_bytes)) as z:
+        print(f"Extracting to {tmp_extract_dir} ...")
+        z.extractall(tmp_extract_dir)
 
-    # Copy libtorrent folder to venv site-packages
+    # Find nested libtorrent folder and copy it
     libtorrent_src = find_libtorrent_folder(tmp_extract_dir)
     if not libtorrent_src:
         print("Error: 'libtorrent' folder not found in extracted content.")
@@ -129,4 +130,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

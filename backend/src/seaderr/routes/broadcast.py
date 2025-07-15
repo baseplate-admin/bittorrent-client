@@ -1,7 +1,6 @@
 import asyncio
 import libtorrent as lt
 from seaderr.singletons import SIO, LibtorrentSession, Logger
-import json
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
@@ -54,6 +53,19 @@ def serialize_alert(alert) -> dict | None:
                 "message": alert.message(),  # CALL the method!
                 "endpoint": str(alert.endpoint),
             }
+        case lt.state_update_alert():
+            statuses = [
+                {
+                    "name": st.name,
+                    "progress": st.progress,
+                    "download_rate": st.download_rate,
+                    "upload_rate": st.upload_rate,
+                    "num_peers": st.num_peers,
+                    "state": st.state,
+                }
+                for st in alert.status
+            ]
+            return {"type": "state_update", "statuses": statuses}
         case _:
             raise ValueError(f"Unsupported alert type: {type(alert)}")
 
@@ -65,6 +77,7 @@ async def shared_poll_and_broadcast():
             await asyncio.sleep(1)
             continue
 
+        lt_ses.post_torrent_updates()
         alerts = lt_ses.pop_alerts()
         for alert in alerts:
             data = serialize_alert(alert)

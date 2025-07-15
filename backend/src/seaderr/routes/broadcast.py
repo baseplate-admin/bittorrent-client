@@ -78,8 +78,13 @@ async def shared_poll_and_broadcast():
             await asyncio.sleep(1)
             continue
 
+        # Get all types of alerts
         lt_ses.post_torrent_updates()
+        lt_ses.post_dht_stats()
+        lt_ses.post_session_stats()
+
         alerts = lt_ses.pop_alerts()
+
         for alert in alerts:
             data = serialize_alert(alert)
             if data:

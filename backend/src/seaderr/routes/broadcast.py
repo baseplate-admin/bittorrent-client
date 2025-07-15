@@ -4,8 +4,8 @@ from seaderr.singletons import SIO, LibtorrentSession
 
 sio = SIO.get_instance()
 
-
-client_tasks = {}
+active_clients: set[str] = set()
+poller_started = False
 
 
 def serialize_alert(alert) -> dict | None:
@@ -33,43 +33,45 @@ def serialize_alert(alert) -> dict | None:
         return None
 
 
-async def send_alerts_to_client(sid: str):
+async def shared_poll_and_broadcast():
     lt_ses = await LibtorrentSession.get_session()
-    try:
-        while True:
-            alerts = lt_ses.pop_alerts()
-            for alert in alerts:
-                data = serialize_alert(alert)
-                if data:
-                    await sio.emit("broadcast", data, room=sid)
+    while True:
+        if not active_clients:
             await asyncio.sleep(1)
-    except asyncio.CancelledError:
-        print(f"Alert sending task for client {sid} cancelled")
-        raise
+            continue
+
+        alerts = lt_ses.pop_alerts()
+        for alert in alerts:
+            data = serialize_alert(alert)
+            if data:
+                for sid in active_clients:
+                    await sio.emit("broadcast", data, room=sid)
+        await asyncio.sleep(1)
 
 
 @sio.on("broadcast")  # type: ignore
-async def start_alerts(sid: str, data: dict):
-    event = data.get("event", None)
+async def handle_broadcast_request(sid: str, data: dict):
+    global poller_started
+
+    event = data.get("event")
     if not event:
         return {"status": "error", "message": "No event specified"}
 
     if event == "start":
-        if sid in client_tasks:
-            return
+        active_clients.add(sid)
 
-        task = sio.start_background_task(send_alerts_to_client, sid)
-        client_tasks[sid] = task
+        if not poller_started:
+            sio.start_background_task(shared_poll_and_broadcast)
+            poller_started = True
+
         return {
             "status": "success",
             "message": f"Started alert stream for client {sid}",
         }
 
     elif event == "stop":
-        task = client_tasks.pop(sid, None)
-        if task:
-            task.cancel()
-            print(f"Stopped alert stream for client {sid}")
+        if sid in active_clients:
+            active_clients.remove(sid)
             return {
                 "status": "success",
                 "message": f"Stopped alert stream for client {sid}",

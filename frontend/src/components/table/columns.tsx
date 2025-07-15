@@ -3,13 +3,13 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { Torrent } from '@/types/Torrent';
 import { formatBytes } from '@/lib/formatBytes';
+import { TorrentInfo } from '@/types/socket/get_all';
 
-const countPeersByType = (
-    peers: Torrent['peers'],
-    types: ('seeder' | 'leecher' | 'unknown')[]
-) => peers.filter((p) => types.includes(p.type)).length;
+// const countPeersByType = (
+//     peers: TorrentInfo['peers'],
+//     types: ('seeder' | 'leecher' | 'unknown')[]
+// ) => peers.filter((p) => types.includes(p.type)).length;
 
 const columnsMetadata: {
     key: string;
@@ -58,7 +58,7 @@ const columnsMetadata: {
         cell: ({ row }) => {
             return (
                 <center>
-                    {countPeersByType(row.original.peers, ['seeder'])}
+                    {/* {countPeersByType(row.original.peers, ['seeder'])} */}
                 </center>
             );
         },
@@ -66,7 +66,9 @@ const columnsMetadata: {
     {
         key: 'leeches',
         cell: ({ row }) => (
-            <center>{countPeersByType(row.original.peers, ['leecher'])}</center>
+            <center>
+                {/* {countPeersByType(row.original.peers, ['leecher'])} */}
+                </center>
         ),
     },
     {
@@ -101,7 +103,7 @@ const columnsMetadata: {
     },
 ];
 
-export const columns: ColumnDef<Torrent>[] = columnsMetadata.map(
+export const columns: ColumnDef<TorrentInfo>[] = columnsMetadata.map(
     ({ key, cell, keyName }) => ({
         accessorKey: key,
         size: 300,

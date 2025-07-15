@@ -11,12 +11,12 @@ import {
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
 } from '@/atoms/torrent';
-import type { Torrent } from '@/types/Torrent';
 import { fileToBuffer } from '@/lib/fileToBuffer';
 import { safeJsonParse } from '@/lib/safeJsonParse';
 import { dequeue, peekQueue } from '@/lib/queue';
+import { GetAllResponse, TorrentInfo } from '@/types/socket/get_all';
 
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'http://localhost:5000';
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:8080";
 const socket = io(socketUrl);
 
 export default function SocketProvider() {
@@ -37,6 +37,16 @@ export default function SocketProvider() {
         torrentRemoveQueueAtom
     );
 
-    const latestTorrentsRef = useRef<Torrent[] | null>(null);
+    const latestTorrentsRef = useRef<TorrentInfo[] | null>(null);
 
+    useEffect(()=>{
+        socket.emit("get_all",(response:GetAllResponse)=>{
+            if(response){
+                setTorrent(response.torrents)
+            }
+        })
+
+    },[setTorrent])
+
+    return <></>
 }

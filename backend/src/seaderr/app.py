@@ -26,8 +26,7 @@ async def on_shutdown():
 async def create_app():
     await SIO.init()
     sio = SIO.get_instance()
-    app = socketio.ASGIApp(sio)
-
-    app.on_startup = on_startup
-    app.on_shutdown = on_shutdown
-    return app
+    sio_app = socketio.ASGIApp(sio)
+    sio_app.on_startup = on_startup
+    sio_app.on_shutdown = on_shutdown
+    return sio_app

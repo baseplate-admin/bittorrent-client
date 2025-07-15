@@ -26,13 +26,13 @@ import {
 } from '@/components/ui/context-menu';
 
 import { Fragment, useState } from 'react';
-import { Torrent } from '@/types/Torrent';
 import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
 } from '@/atoms/torrent';
 import { useSetAtom } from 'jotai';
+import { TorrentInfo } from '@/types/socket/get_all';
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -43,17 +43,17 @@ function RowContextMenu({
     rowData,
     children,
 }: {
-    rowData: Torrent;
+    rowData: TorrentInfo;
     children: React.ReactNode;
 }) {
-    const data = rowData as Torrent;
+    const data = rowData as TorrentInfo;
 
     const setTorrentPauseQueue = useSetAtom(torrentPauseQueueAtom);
     const setTorrentResumeQueue = useSetAtom(torrentResumeQueueAtom);
     const setTorrentRemoveQueue = useSetAtom(torrentRemoveQueueAtom);
 
     const handleDeleteButtonClick = () => {
-        setTorrentRemoveQueue((prev) => [...prev, data.infoHash]);
+        setTorrentRemoveQueue((prev) => [...prev, data.info_hash]);
     };
 
     return (
@@ -119,7 +119,7 @@ export function DataTable<TData, TValue>({
                         table.getRowModel().rows.map((row) => (
                             <Fragment key={row.id}>
                                 <RowContextMenu
-                                    rowData={row.original as Torrent}
+                                    rowData={row.original as TorrentInfo}
                                 >
                                     <TableRow
                                         data-state={

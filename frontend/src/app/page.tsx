@@ -3,9 +3,13 @@ import { torrentAtom } from '@/atoms/torrent';
 import { columns } from '@/components/table/columns';
 import { DataTable } from '@/components/table/data-table';
 import { useAtomValue } from 'jotai';
+import { Skeleton } from "@/components/ui/skeleton"
+
 
 export default function AllPage() {
     const data = useAtomValue(torrentAtom);
-    if (data === null) return <>{/* TODO: Add a skeleton here */}</>;
+	   if (data === null) {
+        return <>Loading </>
+    }
     return <DataTable columns={columns} data={data} />;
 }

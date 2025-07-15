@@ -1,24 +1,25 @@
 import asyncio
 import libtorrent as lt
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.singletons import SIO, LibtorrentSession, Logger
+import json
 
 sio = SIO.get_instance()
+logger = Logger.get_logger()
 
 active_clients: set[str] = set()
 poller_started = False
 
 
 def serialize_alert(alert) -> dict | None:
-    if isinstance(alert, lt.torrent_finished_alert):
-        return {"type": "torrent_finished", "message": str(alert)}
-    elif isinstance(alert, lt.metadata_received_alert):
-        return {"type": "metadata_received", "message": str(alert)}
-    elif isinstance(alert, lt.peer_connect_alert):
-        return {"type": "peer_connected", "message": str(alert.ip)}
-    elif isinstance(alert, lt.state_update_alert):
-        statuses = []
-        for st in alert.status:
-            statuses.append(
+    match alert:
+        case lt.torrent_finished_alert():
+            return {"type": "torrent_finished", "message": str(alert)}
+        case lt.metadata_received_alert():
+            return {"type": "metadata_received", "message": str(alert)}
+        case lt.peer_connect_alert():
+            return {"type": "peer_connected", "message": str(alert.ip)}
+        case lt.state_update_alert():
+            statuses = [
                 {
                     "name": st.name,
                     "progress": st.progress,
@@ -27,10 +28,34 @@ def serialize_alert(alert) -> dict | None:
                     "num_peers": st.num_peers,
                     "state": st.state,
                 }
-            )
-        return {"type": "state_update", "statuses": statuses}
-    else:
-        return None
+                for st in alert.status
+            ]
+            return {"type": "state_update", "statuses": statuses}
+        case lt.tracker_error_alert():
+            return {
+                "type": "tracker_error",
+                "message": alert.message(),  # CALL the method!
+                "url": str(alert.url),
+                "error": str(alert.error),
+            }
+
+        case lt.add_torrent_alert():
+            info_hash = None
+            if hasattr(alert.handle, "info_hash"):
+                info_hash = str(alert.handle.info_hash())
+            return {
+                "type": "add_torrent",
+                "message": str(alert),
+                "info_hash": info_hash,
+            }
+        case lt.udp_error_alert():
+            return {
+                "type": "udp_error",
+                "message": alert.message(),  # CALL the method!
+                "endpoint": str(alert.endpoint),
+            }
+        case _:
+            raise ValueError(f"Unsupported alert type: {type(alert)}")
 
 
 async def shared_poll_and_broadcast():
@@ -44,8 +69,17 @@ async def shared_poll_and_broadcast():
         for alert in alerts:
             data = serialize_alert(alert)
             if data:
-                for sid in active_clients:
-                    await sio.emit("broadcast", data, room=sid)
+                try:
+                    for sid in active_clients:
+                        logger.info(
+                            f"Broadcasting {len(alerts)} alerts to {len(active_clients)} clients"
+                        )
+                        await sio.emit("broadcast", data, room=sid)
+                except TypeError as e:
+                    logger.error(f"JSON serialization failed for alert data: {data}")
+                    logger.error(f"Serialization error: {e}")
+                    continue
+
         await asyncio.sleep(1)
 
 

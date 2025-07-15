@@ -7,7 +7,7 @@ class SIO:
     _sio: socketio.AsyncServer
 
     def __init__(self) -> None:
-        self._sio = socketio.AsyncServer(logger=True, async_mode="asgi")
+        self._sio = socketio.AsyncServer(async_mode="asgi")
 
     @classmethod
     async def init(cls: Type["SIO"]) -> None:

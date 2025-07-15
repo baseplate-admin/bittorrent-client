@@ -1,5 +1,6 @@
 from seaderr.singletons import SIO, LibtorrentSession
 from seaderr.utilities import is_valid_magnet
+from seaderr.utilities import serialize_torrent_info
 import libtorrent as lt
 import asyncio
 
@@ -33,10 +34,13 @@ async def add(sid: str, data: dict):
         while not handle.has_metadata():
             await asyncio.sleep(1)
 
+        ti = handle.get_torrent_info()
+        metadata = await serialize_torrent_info(ti)
+
         return {
             "status": "success",
             "message": f"Processed {data}",
-            "metadata": handle.get_torrent_info(),
+            "metadata": metadata,
         }
 
     except Exception as e:

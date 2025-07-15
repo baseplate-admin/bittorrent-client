@@ -25,7 +25,7 @@ async def run_app(host: str, port: int, debug: bool):
 @click.command()
 @click.option("--host", default="127.0.0.1", help="Host to listen on")
 @click.option("--port", default=8080, type=int, help="Port to listen on")
-@click.option("--debug", is_flag=False, type=bool, help="Run in debug mode")
+@click.option("--debug", is_flag=True, type=bool, help="Run in debug mode")
 def main(host: str, port: int, debug: bool):
     asyncio.run(run_app(host, port, debug))
 

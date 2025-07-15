@@ -22,15 +22,11 @@ class ColorFormatter(logging.Formatter):
 
 class Logger:
     _instance: Optional[logging.Logger] = None
+    _log_level = logging.INFO
 
     @classmethod
     def set_level(cls, level: int) -> None:
-        """
-        Set the logging level for the logger singleton.
-        """
-        if not cls._instance:
-            raise RuntimeError("Logger session is not initialized.")
-        cls._instance.setLevel(level)
+        cls._log_level = level
 
     @classmethod
     def init(cls, name: str = "seaderr") -> None:

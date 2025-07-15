@@ -67,6 +67,31 @@ def serialize_alert(alert) -> dict:
                 for st in alert.status
             ]
             return {"type": "state_update", "statuses": statuses}
+
+        case lt.dht_stats_alert():
+            active_requests = [
+                {
+                    "endpoint": str(getattr(r, "endpoint", "")),
+                    "type": getattr(r, "type", -1),
+                }
+                for r in alert.active_requests
+            ]
+
+            routing_table = [
+                {
+                    "node_id": str(getattr(node, "id", "")),
+                    "num_peers": getattr(node, "num_peers", -1),
+                    "bucket": getattr(node, "bucket", -1),
+                }
+                for node in alert.routing_table
+            ]
+
+            return {
+                "type": "dht_stats",
+                "active_requests": active_requests,
+                "routing_table": routing_table,
+            }
+
         case _:
             raise ValueError(f"Unsupported alert type: {type(alert)}")
 

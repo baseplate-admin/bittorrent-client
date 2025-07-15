@@ -8,7 +8,6 @@ dependencies = [
     "aiosqlite>=0.21.0",
     "click>=8.2.1",
     "colorama>=0.4.6",
-    "orjson>=3.10.18; platform.python_implementation == 'CPython'",
     "python-socketio>=5.13.0",
     "uvicorn>=0.35.0",
 ]

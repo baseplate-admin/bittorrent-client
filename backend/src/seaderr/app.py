@@ -1,11 +1,14 @@
 import socketio
 
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.utilities import import_submodules
 
 
 async def on_startup():
     # Initialize the database connection
+
+    # Initialize the logger singleton
+    Logger.init()
 
     # Initialize the libtorrent session
     await LibtorrentSession.init()

@@ -1,11 +1,12 @@
 import asyncio
 import libtorrent as lt
 from seaderr.singletons import SIO, LibtorrentSession, Logger
+from seaderr.managers import BroadcastClientManager
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
+broadcast_client_manager = BroadcastClientManager()
 
-active_clients: set[str] = set()
 poller_started = False
 
 
@@ -73,7 +74,7 @@ def serialize_alert(alert) -> dict | None:
 async def shared_poll_and_broadcast():
     lt_ses = await LibtorrentSession.get_session()
     while True:
-        if not active_clients:
+        if broadcast_client_manager.count() == 0:
             await asyncio.sleep(1)
             continue
 
@@ -83,9 +84,10 @@ async def shared_poll_and_broadcast():
             data = serialize_alert(alert)
             if data:
                 try:
-                    for sid in active_clients:
+                    clients = broadcast_client_manager.get_clients()
+                    for sid in clients:
                         logger.info(
-                            f"Broadcasting {len(alerts)} alerts to {len(active_clients)} clients"
+                            f"Broadcasting {len(alerts)} alerts to {broadcast_client_manager.count()} clients"
                         )
                         await sio.emit("broadcast", data, room=sid)
                 except TypeError as e:
@@ -105,7 +107,7 @@ async def handle_broadcast_request(sid: str, data: dict):
         return {"status": "error", "message": "No event specified"}
 
     if event == "start":
-        active_clients.add(sid)
+        broadcast_client_manager.add_client(sid)
 
         if not poller_started:
             sio.start_background_task(shared_poll_and_broadcast)
@@ -117,8 +119,8 @@ async def handle_broadcast_request(sid: str, data: dict):
         }
 
     elif event == "stop":
-        if sid in active_clients:
-            active_clients.remove(sid)
+        if sid in broadcast_client_manager.get_clients():
+            broadcast_client_manager.remove_client(sid)
             return {
                 "status": "success",
                 "message": f"Stopped alert stream for client {sid}",

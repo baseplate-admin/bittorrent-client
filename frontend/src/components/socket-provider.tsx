@@ -34,9 +34,9 @@ function findTorrentByInfoHash(
 
 function getSpecificTorrentFromSocket(info_hash:string){
     return new Promise<TorrentInfo>((resolve, reject) => {
-        socket.emit('get_specific', { info_hash }, (response: TorrentInfo) => {
+        socket.emit('get_specific', { info_hash }, (response:any) => {
             if (response) {
-                resolve(response);
+                resolve(response.torrent);
             } else {
                 reject(new Error(`Torrent with info_hash ${info_hash} not found`));
             }
@@ -69,8 +69,12 @@ export default function SocketProvider() {
 
         socket.emit("get_all",(response:GetAllResponse)=>{
             if(response){
-                setTorrent(response.torrents)
+                setTorrent([...response.torrents])
+                setTimeout(()=>{
+                    setTorrent([]);
+                },1000)
             }
+      
         })        
         return () => {
             socket.disconnect();
@@ -97,15 +101,20 @@ export default function SocketProvider() {
                     const torrentInformation = await getSpecificTorrentFromSocket(newTorrentInfoHash);
                     setTorrent((prevTorrents) => {
                         if (!prevTorrents) return [torrentInformation];
+                        const exists = prevTorrents.some(t => t.info_hash === torrentInformation.info_hash);
+                        if (exists) {
+                            console.log('Torrent already exists, skipping add:', torrentInformation.info_hash);
+                            return prevTorrents;
+                        }
                         return [...prevTorrents, torrentInformation];
                     });
                     console.log('New torrent added:', torrentInformation);
                     break;
-                
+
                 case 'metadata_received':
                     console.log('Metadata received for torrent:', response);
                     break;
-
+         
                 case "state_update":
                     const message = response.statuses;
 

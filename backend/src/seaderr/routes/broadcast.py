@@ -145,11 +145,12 @@ async def shared_poll_and_broadcast():
             if data:
                 try:
                     clients = broadcast_client_manager.get_clients()
-                    for sid in clients:
-                        logger.info(
-                            f"Broadcasting {len(alerts)} alerts to {broadcast_client_manager.count()} clients"
-                        )
-                        await sio.emit("broadcast", data, room=sid)
+                    if clients:
+                        for sid in clients:
+                            logger.info(
+                                f"Broadcasting {len(alerts)} alerts to {broadcast_client_manager.count()} clients"
+                            )
+                            await sio.emit("broadcast", data, room=sid)
                 except TypeError as e:
                     logger.error(f"JSON serialization failed for alert data: {data}")
                     logger.error(f"Serialization error: {e}")

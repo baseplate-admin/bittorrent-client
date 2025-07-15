@@ -15,7 +15,7 @@ async def get_specific(sid: str, data: dict):
     for handle in handles:
         if not handle.is_valid():
             continue
-
+            
         if str(handle.info_hash()) == info_hash:
             status = handle.status()
             try:

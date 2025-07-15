@@ -25,7 +25,7 @@ import {
     ContextMenuItem,
 } from '@/components/ui/context-menu';
 
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,

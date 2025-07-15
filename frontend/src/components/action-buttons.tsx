@@ -15,7 +15,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useSetAtom } from 'jotai';
@@ -32,7 +32,7 @@ export default function ActionButtons() {
 
     const setTorrentUploadFileQueue = useSetAtom(torrentUploadFileQueueAtom);
     const setTorrentUploadMagnetQueue = useSetAtom(
-        torrentUploadMagnetQueueAtom
+        torrentUploadMagnetQueueAtom,
     );
 
     const handleDownloadButtonClick = (closeDialog: () => void) => {
@@ -46,6 +46,16 @@ export default function ActionButtons() {
         setTorrentUploadFileQueue([...uploadedFiles]);
         closeDialog();
     };
+
+    // Cleanup
+    useEffect(() => {
+        if (openDialogIndex === null) {
+            setTimeout(() => {
+                setUploadedFiles([]);
+                setTextareaValue('');
+            }, 1000);
+        }
+    }, [openDialogIndex]);
 
     const mapping = [
         {
@@ -61,7 +71,7 @@ export default function ActionButtons() {
                             className="h-32"
                             placeholder="Type your message here."
                         />
-                        <p className="italic text-sm">
+                        <p className="text-sm italic">
                             One link per line (Magnet links are supported)
                         </p>
                         <div className="flex w-full items-center justify-center gap-4">
@@ -102,7 +112,7 @@ export default function ActionButtons() {
                             accept=".torrent"
                             multiple
                         />
-                        <p className="italic text-sm">
+                        <p className="text-sm italic">
                             You can select multiple torrent files.
                         </p>
                         <div className="flex w-full items-center justify-center gap-4">
@@ -133,7 +143,7 @@ export default function ActionButtons() {
     ];
 
     return (
-        <div className="flex mb-4 border p-4 rounded-md">
+        <div className="mb-4 flex rounded-md border p-4">
             <div className="flex gap-5">
                 {mapping.map((item, index) => {
                     const isOpen = openDialogIndex === index;

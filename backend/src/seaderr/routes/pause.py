@@ -1,5 +1,5 @@
 from seaderr.singletons import SIO, LibtorrentSession
-from libtorrent import sha1_hash
+import libtorrent as lt
 
 sio = SIO.get_instance()
 
@@ -23,7 +23,7 @@ async def pause(sid: str, data: dict):
 
     # Convert hex string to sha1 hash
     try:
-        ih = sha1_hash(bytes.fromhex(info_hash))
+        ih = lt.sha1_hash(bytes.fromhex(info_hash))
     except ValueError:
         return {"status": "error", "message": "Invalid info_hash format"}
 

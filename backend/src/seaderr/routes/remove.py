@@ -23,10 +23,8 @@ async def remove(sid: str, data: dict):
     if not info_hash:
         return {"status": "error", "message": "Missing 'info_hash'"}
 
-    from libtorrent import sha1_hash
-
     try:
-        ih = sha1_hash(bytes.fromhex(info_hash))
+        ih = lt.sha1_hash(bytes.fromhex(info_hash))
     except ValueError:
         return {"status": "error", "message": "Invalid info_hash format"}
 

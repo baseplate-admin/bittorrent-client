@@ -24,7 +24,7 @@ class BroadcastClientManager:
         self._clients.clear()
 
     def get_clients(self) -> Set[str]:
-        return self._clients
+        return self._clients.copy()
 
     def __repr__(self):
         return f"<BroadcastClientManager clients={self.count()}>"

@@ -69,10 +69,7 @@ export default function SocketProvider() {
 
         socket.emit("get_all",(response:GetAllResponse)=>{
             if(response){
-                setTorrent([...response.torrents])
-                setTimeout(()=>{
-                    setTorrent([]);
-                },1000)
+                setTorrent(response.torrents)
             }
       
         })        
@@ -83,7 +80,6 @@ export default function SocketProvider() {
     },[])
 
     useEffect(()=>{
-        if(torrent!== null){
             socket.emit("broadcast",{"event":"start"},(response:BroadcastResponse)=>{
                 if (response.status === 'success') {
                     console.log('Broadcast started successfully');
@@ -91,7 +87,6 @@ export default function SocketProvider() {
                     console.error('Failed to start broadcast:', response.message);
                 }
             })
-        }
 
         socket.on('broadcast',async (response :SerializedAlert)=>{
             switch (response.type) {
@@ -116,19 +111,18 @@ export default function SocketProvider() {
                     break;
          
                 case "state_update":
-                    const message = response.statuses;
-
-                    for(const status of message){
-                        const torrent = findTorrentByInfoHash(latestTorrentsRef.current, status.info_hash);
-                        if (torrent) {
-                            torrent.progress = status.progress;
-                            torrent.download_rate = status.download_rate;
-                            torrent.upload_rate = status.upload_rate;
-                            torrent.num_peers = status.num_peers;
-                            // @ts-expect-error : FIXME: state is a number, but it should be a string
-                            torrent.state = status.state;
-                        }
-                    }
+                    // const message = response.statuses;
+                    // for(const status of message){
+                    //     const torrent = findTorrentByInfoHash(latestTorrentsRef.current, status.info_hash);
+                    //     if (torrent) {
+                    //         torrent.progress = status.progress;
+                    //         torrent.download_rate = status.download_rate;
+                    //         torrent.upload_rate = status.upload_rate;
+                    //         torrent.num_peers = status.num_peers;
+                    //         // @ts-expect-error : FIXME: state is a number, but it should be a string
+                    //         torrent.state = status.state;
+                    //     }
+                    // }
 
                     break;
                 default:
@@ -137,7 +131,7 @@ export default function SocketProvider() {
 
             }
         })
-    },[torrent])
+    },[])
 
   useEffect(() => {
     if (torrentUploadMagnetQueue.length > 0) {
@@ -158,5 +152,8 @@ export default function SocketProvider() {
     }
 
 }, [torrentUploadMagnetQueue]);
+useEffect(() => {
+  console.log('Torrent atom updated:', torrent);
+}, [torrent]);
     return <></>
 }

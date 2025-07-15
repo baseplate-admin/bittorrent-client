@@ -118,7 +118,6 @@ async def shared_poll_and_broadcast():
             await asyncio.sleep(1)
             continue
 
-        # Get all types of alerts
         lt_ses.post_torrent_updates()
         lt_ses.post_dht_stats()
         lt_ses.post_session_stats()

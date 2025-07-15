@@ -22,7 +22,7 @@ class ColorFormatter(logging.Formatter):
 
 class Logger:
     _instance: Optional[logging.Logger] = None
-    _log_level = logging.INFO
+    _log_level: int = logging.INFO
 
     @classmethod
     def set_level(cls, level: int) -> None:
@@ -40,6 +40,7 @@ class Logger:
         colorama_init(autoreset=True)
 
         logger = logging.getLogger(name)
+        logger.setLevel(cls._log_level)
 
         formatter = ColorFormatter(
             "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s", "%Y-%m-%d %H:%M:%S"

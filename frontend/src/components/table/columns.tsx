@@ -68,7 +68,7 @@ const columnsMetadata: {
         cell: ({ row }) => (
             <center>
                 {/* {countPeersByType(row.original.peers, ['leecher'])} */}
-                </center>
+            </center>
         ),
     },
     {

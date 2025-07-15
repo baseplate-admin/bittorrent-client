@@ -6,5 +6,10 @@ import { useAtomValue } from 'jotai';
 
 export default function AllPage() {
     const data = useAtomValue(torrentAtom);
-    return <DataTable columns={columns} data={data ?? []} />;
+
+    if (data === null) {
+        return <>Loading </>;
+    }
+
+    return <DataTable columns={columns} data={data} />;
 }

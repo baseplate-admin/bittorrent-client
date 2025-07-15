@@ -71,19 +71,24 @@ def serialize_alert(alert) -> dict:
         case lt.dht_stats_alert():
             active_requests = [
                 {
-                    "endpoint": str(getattr(r, "endpoint", "")),
-                    "type": getattr(r, "type", -1),
+                    "type": r["type"],
+                    "outstanding_requests": r["outstanding_requests"],
+                    "timeouts": r["timeouts"],
+                    "responses": r["responses"],
+                    "branch_factor": r["branch_factor"],
+                    "nodes_left": r["nodes_left"],
+                    "last_sent": r["last_sent"],
+                    "first_timeout": r["first_timeout"],
                 }
                 for r in alert.active_requests
             ]
 
             routing_table = [
                 {
-                    "node_id": str(getattr(node, "id", "")),
-                    "num_peers": getattr(node, "num_peers", -1),
-                    "bucket": getattr(node, "bucket", -1),
+                    "num_nodes": bucket["num_nodes"],
+                    "num_replacements": bucket["num_replacements"],
                 }
-                for node in alert.routing_table
+                for bucket in alert.routing_table
             ]
 
             return {
@@ -92,6 +97,16 @@ def serialize_alert(alert) -> dict:
                 "routing_table": routing_table,
             }
 
+        case lt.session_stats_header_alert():
+            return {
+                "type": "session_stats_header",
+                "counters": list(alert.message().split("\t")),
+            }
+        case lt.session_stats_alert():
+            return {
+                "type": "session_stats",
+                "values": list(alert.values),
+            }
         case _:
             raise ValueError(f"Unsupported alert type: {type(alert)}")
 

@@ -10,7 +10,7 @@ broadcast_client_manager = BroadcastClientManager()
 poller_started = False
 
 
-def serialize_alert(alert) -> dict | None:
+def serialize_alert(alert) -> dict:
     match alert:
         case lt.torrent_finished_alert():
             return {"type": "torrent_finished", "message": str(alert)}

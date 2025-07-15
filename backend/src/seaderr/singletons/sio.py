@@ -1,13 +1,39 @@
 import socketio
-from typing import Optional, Type
+from typing import Type
+
+try:
+    import orjson
+
+    HAS_ORJSON = True
+except ImportError:
+    orjson = None
+
+    HAS_ORJSON = False
+
+
+class ORJSONWrapper:
+    @staticmethod
+    def dumps(obj):
+        if not HAS_ORJSON or orjson is None:
+            raise RuntimeError("orjson is not available")
+        return orjson.dumps(obj).decode("utf-8")
+
+    @staticmethod
+    def loads(s):
+        if not HAS_ORJSON or orjson is None:
+            raise RuntimeError("orjson is not available")
+        return orjson.loads(s)
 
 
 class SIO:
-    _instance: Optional["SIO"] = None
+    _instance: "SIO | None" = None
     _sio: socketio.AsyncServer
 
     def __init__(self) -> None:
-        self._sio = socketio.AsyncServer(async_mode="asgi")
+        self._sio = socketio.AsyncServer(
+            async_mode="asgi",
+            json=ORJSONWrapper if HAS_ORJSON else None,
+        )
 
     @classmethod
     async def init(cls: Type["SIO"]) -> None:

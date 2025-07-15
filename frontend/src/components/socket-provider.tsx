@@ -17,12 +17,24 @@ import { dequeue, peekQueue } from '@/lib/queue';
 import { TorrentInfo } from '@/types/socket/torrent_info';
 import { GetAllResponse } from '@/types/socket/get_all';
 import {MagnetResponse} from '@/types/socket/add_magnet';
+import { BroadcastResponse,SerializedAlert } from '@/types/socket/broadcast';
 
 const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? "ws://localhost:8080";
 const socket = io(socketUrl);
 
+function findTorrentByInfoHash(
+  torrents: TorrentInfo[] | null,
+  info_hash: string
+): TorrentInfo | null {
+  if (!torrents) return null;
+  const found = torrents.find(torrent => torrent.info_hash === info_hash);
+  if (!found) throw new Error(`Torrent with info_hash ${info_hash} not found`);
+  return found;
+}
+
+
 export default function SocketProvider() {
-    const setTorrent = useSetAtom(torrentAtom);
+    const [torrent,setTorrent] = useAtom(torrentAtom);
     const [torrentUploadFileQueue, setTorrentUploadFileQueue] = useAtom(
         torrentUploadFileQueueAtom
     );
@@ -48,13 +60,54 @@ export default function SocketProvider() {
             }
         })
 
-    },[setTorrent])
+    },[])
+
+    useEffect(()=>{
+        if(torrent!== null){
+            socket.emit("broadcast",{"event":"start"},(response:BroadcastResponse)=>{
+                if (response.status === 'success') {
+                    console.log('Broadcast started successfully');
+                } else {
+                    console.error('Failed to start broadcast:', response.message);
+                }
+            })
+        }
+
+        socket.on('broadcast',(response :SerializedAlert)=>{
+            switch (response.type) {
+                case "state_update":
+                    const message = response.statuses;
+
+                    for(const status of message){
+                        const torrent = findTorrentByInfoHash(latestTorrentsRef.current, status.info_hash);
+                        if (torrent) {
+                            torrent.progress = status.progress;
+                            torrent.download_rate = status.download_rate;
+                            torrent.upload_rate = status.upload_rate;
+                            torrent.num_peers = status.num_peers;
+                            // @ts-expect-error : FIXME: state is a number, but it should be a string
+                            torrent.state = status.state;
+                        }
+                    }
+
+                    break;
+                default:
+                    // console.error("Unknown broadcast type:", response.type);    
+                    break;
+
+            }
+        })
+    },[torrent])
 
   useEffect(() => {
     if (torrentUploadMagnetQueue.length > 0) {
         const magnet = peekQueue(torrentUploadMagnetQueue);
-        if (magnet) {
-            socket.emit('upload_magnet', { magnet }, (response: MagnetResponse) => {
+        if (!magnet) {
+            return
+        }
+        console.log('Uploading magnet:', magnet);
+        
+        socket.emit('add_magnet', { magnet }, (response: MagnetResponse) => {
                 if (response.status === 'success') {
                     dequeue(torrentUploadMagnetQueue, setTorrentUploadMagnetQueue);
                 } else if (response.status === 'error') {
@@ -63,7 +116,6 @@ export default function SocketProvider() {
                     console.error('Unknown response status:', response.status);
                 }
             });
-        }
     }
 }, [torrentUploadMagnetQueue]);
     return <></>

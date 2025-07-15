@@ -9,6 +9,7 @@ export type SerializedAlert =
         progress: number;
         download_rate: number;
         upload_rate: number;
+        info_hash: string;
         num_peers: number;
         state: number;
       }[];

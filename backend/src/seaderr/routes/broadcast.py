@@ -57,6 +57,7 @@ def serialize_alert(alert) -> dict:
         case lt.state_update_alert():
             statuses = [
                 {
+                    "info_hash": st.info_hash,
                     "name": st.name,
                     "progress": st.progress,
                     "download_rate": st.download_rate,

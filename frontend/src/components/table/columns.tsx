@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { formatBytes } from '@/lib/formatBytes';
-import { TorrentInfo } from '@/types/socket/get_all';
+import { TorrentInfo } from '@/types/socket/torrent_info';
 
 // const countPeersByType = (
 //     peers: TorrentInfo['peers'],

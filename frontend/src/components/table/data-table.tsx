@@ -32,7 +32,7 @@ import {
     torrentRemoveQueueAtom,
 } from '@/atoms/torrent';
 import { useSetAtom } from 'jotai';
-import { TorrentInfo } from '@/types/socket/get_all';
+import { TorrentInfo } from '@/types/socket/torrent_info';
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];

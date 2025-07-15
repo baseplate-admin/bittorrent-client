@@ -14,9 +14,11 @@ import {
 import { fileToBuffer } from '@/lib/fileToBuffer';
 import { safeJsonParse } from '@/lib/safeJsonParse';
 import { dequeue, peekQueue } from '@/lib/queue';
-import { GetAllResponse, TorrentInfo } from '@/types/socket/get_all';
+import { TorrentInfo } from '@/types/socket/torrent_info';
+import { GetAllResponse } from '@/types/socket/get_all';
+import {MagnetResponse} from '@/types/socket/add_magnet';
 
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:8080";
+const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? "ws://localhost:8080";
 const socket = io(socketUrl);
 
 export default function SocketProvider() {
@@ -48,5 +50,21 @@ export default function SocketProvider() {
 
     },[setTorrent])
 
+  useEffect(() => {
+    if (torrentUploadMagnetQueue.length > 0) {
+        const magnet = peekQueue(torrentUploadMagnetQueue);
+        if (magnet) {
+            socket.emit('upload_magnet', { magnet }, (response: MagnetResponse) => {
+                if (response.status === 'success') {
+                    dequeue(torrentUploadMagnetQueue, setTorrentUploadMagnetQueue);
+                } else if (response.status === 'error') {
+                    console.error('Failed to upload magnet:', response.message);
+                }else{
+                    console.error('Unknown response status:', response.status);
+                }
+            });
+        }
+    }
+}, [torrentUploadMagnetQueue]);
     return <></>
 }

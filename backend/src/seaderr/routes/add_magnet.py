@@ -8,7 +8,7 @@ sio = SIO.get_instance()
 
 
 @sio.on("add_magnet")  # type: ignore
-async def add(sid: str, data: dict):
+async def add_magnet(sid: str, data: dict):
     """
     Handle the 'add_magnet' event from the client.
 
@@ -17,7 +17,7 @@ async def add(sid: str, data: dict):
         data (dict): The data sent from the client.
     """
 
-    magnet = data.get("magnet", None)
+    magnet = data.get("magnet")
     if not magnet:
         return {"status": "error", "message": "No magnet link provided"}
 

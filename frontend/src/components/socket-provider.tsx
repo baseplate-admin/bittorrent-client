@@ -29,7 +29,7 @@ function getSpecificTorrentFromSocket(info_hash: string) {
                 resolve(response.torrent);
             } else {
                 reject(
-                    new Error(`Torrent with info_hash ${info_hash} not found`)
+                    new Error(`Torrent with info_hash ${info_hash} not found`),
                 );
             }
         });
@@ -39,19 +39,19 @@ function getSpecificTorrentFromSocket(info_hash: string) {
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
     const [torrentUploadFileQueue, setTorrentUploadFileQueue] = useAtom(
-        torrentUploadFileQueueAtom
+        torrentUploadFileQueueAtom,
     );
     const [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue] = useAtom(
-        torrentUploadMagnetQueueAtom
+        torrentUploadMagnetQueueAtom,
     );
     const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(
-        torrentPauseQueueAtom
+        torrentPauseQueueAtom,
     );
     const [torrentResumeQueue, setTorrentResumeQueue] = useAtom(
-        torrentResumeQueueAtom
+        torrentResumeQueueAtom,
     );
     const [torrentRemoveQueue, setTorrentRemoveQueue] = useAtom(
-        torrentRemoveQueueAtom
+        torrentRemoveQueueAtom,
     );
 
     const writeBackToAtom = () => {
@@ -90,10 +90,10 @@ export default function SocketProvider() {
                     if (response.status !== 'success') {
                         console.error(
                             'Failed to start broadcast:',
-                            response.message
+                            response.message,
                         );
                     }
-                }
+                },
             );
         }
 
@@ -107,7 +107,7 @@ export default function SocketProvider() {
                         latestTorrentsRef.current = [torrentInformation];
                     } else {
                         const exists = latestTorrentsRef.current.some(
-                            (t) => t.info_hash === torrentInformation.info_hash
+                            (t) => t.info_hash === torrentInformation.info_hash,
                         );
                         if (!exists) {
                             latestTorrentsRef.current.push(torrentInformation);
@@ -126,7 +126,7 @@ export default function SocketProvider() {
 
                     for (const status of message) {
                         const t = latestTorrentsRef.current.find(
-                            (t) => t.info_hash === status.info_hash
+                            (t) => t.info_hash === status.info_hash,
                         );
                         if (t) {
                             t.progress = status.progress;
@@ -159,15 +159,15 @@ export default function SocketProvider() {
                     if (response.status === 'success') {
                         dequeue(
                             torrentUploadMagnetQueue,
-                            setTorrentUploadMagnetQueue
+                            setTorrentUploadMagnetQueue,
                         );
                     } else {
                         console.error(
                             'Failed to upload magnet:',
-                            response.message
+                            response.message,
                         );
                     }
-                }
+                },
             );
         }
     }, [torrentUploadMagnetQueue]);

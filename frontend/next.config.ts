@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+  transpilePackages: ['jotai-devtools'],
 };
 
 export default nextConfig;

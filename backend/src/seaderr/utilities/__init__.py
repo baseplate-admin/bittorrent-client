@@ -5,5 +5,5 @@ from .import_helper import (
 
 from .libtorrent import (
     is_valid_magnet as is_valid_magnet,
-    serialize_torrent_info as serialize_torrent_info,
+    serialize_magnet_torrent_info as serialize_magnet_torrent_info,
 )

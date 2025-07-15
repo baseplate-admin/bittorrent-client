@@ -2,6 +2,7 @@ import asyncio
 import libtorrent as lt
 from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.managers import BroadcastClientManager
+from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
@@ -10,12 +11,20 @@ broadcast_client_manager = BroadcastClientManager()
 poller_started = False
 
 
-def serialize_alert(alert) -> dict:
+async def serialize_alert(alert) -> dict:
     match alert:
         case lt.torrent_finished_alert():
             return {"type": "torrent_finished", "message": str(alert)}
-        case lt.metadata_received_alert():
-            return {"type": "metadata_received", "message": str(alert)}
+        case lt.add_torrent_alert():
+            info_hash = None
+            if hasattr(alert.handle, "info_hash"):
+                info_hash = str(alert.handle.info_hash())
+            return {
+                "type": "add_torrent",
+                "message": str(alert),
+                "info_hash": info_hash,
+            }
+
         case lt.peer_connect_alert():
             return {"type": "peer_connected", "message": str(alert.ip)}
         case lt.state_update_alert():
@@ -48,6 +57,7 @@ def serialize_alert(alert) -> dict:
                 "message": str(alert),
                 "info_hash": info_hash,
             }
+
         case lt.udp_error_alert():
             return {
                 "type": "udp_error",
@@ -108,8 +118,13 @@ def serialize_alert(alert) -> dict:
                 "type": "session_stats",
                 "values": list(alert.values),
             }
+
         case _:
-            raise ValueError(f"Unsupported alert type: {type(alert)}")
+            try:
+                raise ValueError(f"Unsupported alert type: {type(alert)}")
+            except Exception as e:
+                print(e)
+                return {}
 
 
 async def shared_poll_and_broadcast():
@@ -126,7 +141,7 @@ async def shared_poll_and_broadcast():
         alerts = lt_ses.pop_alerts()
 
         for alert in alerts:
-            data = serialize_alert(alert)
+            data = await serialize_alert(alert)
             if data:
                 try:
                     clients = broadcast_client_manager.get_clients()
@@ -140,7 +155,7 @@ async def shared_poll_and_broadcast():
                     logger.error(f"Serialization error: {e}")
                     continue
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
 
 
 @sio.on("broadcast")  # type: ignore

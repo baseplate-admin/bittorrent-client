@@ -1,6 +1,6 @@
 from seaderr.singletons import SIO, LibtorrentSession
 from seaderr.utilities import is_valid_magnet
-from seaderr.utilities import serialize_torrent_info
+from seaderr.utilities import serialize_magnet_torrent_info
 import libtorrent as lt
 import asyncio
 
@@ -35,7 +35,7 @@ async def add_magnet(sid: str, data: dict):
             await asyncio.sleep(1)
 
         ti = handle.get_torrent_info()
-        metadata = await serialize_torrent_info(ti)
+        metadata = await serialize_magnet_torrent_info(ti)
 
         return {
             "status": "success",

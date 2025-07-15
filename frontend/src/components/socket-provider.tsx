@@ -32,6 +32,18 @@ function findTorrentByInfoHash(
   return found;
 }
 
+function getSpecificTorrentFromSocket(info_hash:string){
+    return new Promise<TorrentInfo>((resolve, reject) => {
+        socket.emit('get_specific', { info_hash }, (response: TorrentInfo) => {
+            if (response) {
+                resolve(response);
+            } else {
+                reject(new Error(`Torrent with info_hash ${info_hash} not found`));
+            }
+        });
+    });
+
+}
 
 export default function SocketProvider() {
     const [torrent,setTorrent] = useAtom(torrentAtom);
@@ -54,12 +66,16 @@ export default function SocketProvider() {
     const latestTorrentsRef = useRef<TorrentInfo[] | null>(null);
 
     useEffect(()=>{
+
         socket.emit("get_all",(response:GetAllResponse)=>{
             if(response){
                 setTorrent(response.torrents)
             }
-        })
-
+        })        
+        return () => {
+            socket.disconnect();
+        };
+    
     },[])
 
     useEffect(()=>{
@@ -73,8 +89,23 @@ export default function SocketProvider() {
             })
         }
 
-        socket.on('broadcast',(response :SerializedAlert)=>{
+        socket.on('broadcast',async (response :SerializedAlert)=>{
             switch (response.type) {
+                case "add_torrent":
+                    console.log("add_torrent event received:", response);
+                    const newTorrentInfoHash = response.info_hash;
+                    const torrentInformation = await getSpecificTorrentFromSocket(newTorrentInfoHash);
+                    setTorrent((prevTorrents) => {
+                        if (!prevTorrents) return [torrentInformation];
+                        return [...prevTorrents, torrentInformation];
+                    });
+                    console.log('New torrent added:', torrentInformation);
+                    break;
+                
+                case 'metadata_received':
+                    console.log('Metadata received for torrent:', response);
+                    break;
+
                 case "state_update":
                     const message = response.statuses;
 
@@ -105,7 +136,6 @@ export default function SocketProvider() {
         if (!magnet) {
             return
         }
-        console.log('Uploading magnet:', magnet);
         
         socket.emit('add_magnet', { magnet }, (response: MagnetResponse) => {
                 if (response.status === 'success') {
@@ -117,6 +147,7 @@ export default function SocketProvider() {
                 }
             });
     }
+
 }, [torrentUploadMagnetQueue]);
     return <></>
 }

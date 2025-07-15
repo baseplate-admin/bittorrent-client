@@ -1,7 +1,7 @@
 import libtorrent as lt
 
 
-async def serialize_torrent_info(ti: lt.torrent_info) -> dict:
+async def serialize_magnet_torrent_info(ti: lt.torrent_info) -> dict:
     info = {
         "name": ti.name(),
         "comment": ti.comment(),

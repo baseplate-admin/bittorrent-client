@@ -23,7 +23,7 @@ export type SerializedAlert =
   | {
       type: "add_torrent";
       message: string;
-      info_hash: string | null;
+      info_hash: string;
     }
   | {
       type: "udp_error";

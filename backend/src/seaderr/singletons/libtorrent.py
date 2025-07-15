@@ -33,6 +33,15 @@ class LibtorrentSession:
     def _create_session(self) -> lt.session:
         ses = lt.session()
         ses.listen_on(6881, 6891)
+        ses.start_dht()
+        ses.add_dht_router("router.bittorrent.com", 6881)
+        ses.add_dht_router("router.utorrent.com", 6881)
+        ses.add_dht_router("router.openbittorrent.org", 2710)
+        ses.set_alert_mask(
+            lt.alert.category_t.status_notification
+            | lt.alert.category_t.error_notification
+            | lt.alert.category_t.dht_notification
+        )
         return ses
 
     @classmethod

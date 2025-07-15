@@ -10,6 +10,8 @@ async def add_file(sid: str, data: dict):
     lt_session = await LibtorrentSession.get_session()
 
     file = data.get("file")
+    save_path = data.get("save_path", ".")
+
     if not file:
         return {"status": "error", "message": "File not provided"}
 
@@ -17,13 +19,10 @@ async def add_file(sid: str, data: dict):
         return {"status": "error", "message": "File must be a byte string"}
 
     try:
-        # Decode torrent bytes to dict, then load torrent_info
         torrent_dict = lt.bdecode(file)
-        torrent_info = lt.torrent_info(torrent_dict) # pyright: ignore[reportArgumentType, reportCallIssue]
+        torrent_info = lt.torrent_info(torrent_dict)  # type:ignore
     except Exception as e:
         return {"status": "error", "message": f"Failed to decode torrent file: {e}"}
-
-    save_path = data.get("save_path", ".")
 
     params = {
         "ti": torrent_info,

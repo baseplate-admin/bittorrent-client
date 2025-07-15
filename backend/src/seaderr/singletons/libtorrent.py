@@ -1,43 +1,50 @@
 import libtorrent as lt
 import asyncio
+from typing import Optional, Type
 
 
 class LibtorrentSession:
-    _instance = None
+    _instance: Optional["LibtorrentSession"] = None
     _lock = asyncio.Lock()
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
+    def __init__(self) -> None:
+        self._initialized = False
+        self.session: Optional[lt.session] = None  # <-- Add this line
 
-    async def init_session(self):
-        async with self._lock:
-            if not self._initialized:
-                self.session = await asyncio.to_thread(self._create_session)
-                self._initialized = True
+    @classmethod
+    async def init(cls: Type["LibtorrentSession"]) -> None:
+        async with cls._lock:
+            if cls._instance is None:
+                cls._instance = cls()
+            if not cls._instance._initialized:
+                cls._instance.session = await asyncio.to_thread(
+                    cls._instance._create_session
+                )
+                cls._instance._initialized = True
 
-    def _create_session(self):
+    @classmethod
+    async def get_session(cls) -> lt.session:
+        if cls._instance is None or not cls._instance._initialized:
+            await cls.init()
+        if cls._instance is None or cls._instance.session is None:
+            raise RuntimeError("Libtorrent session is not initialized.")
+        return cls._instance.session
+
+    def _create_session(self) -> lt.session:
         ses = lt.session()
         ses.listen_on(6881, 6891)
         return ses
 
-    async def get_session(self):
-        if not self._initialized:
-            await self.init_session()
-        return self.session
-
-    async def close(self):
-        async with self._lock:
-            if not self._initialized:
+    @classmethod
+    async def close(cls) -> None:
+        async with cls._lock:
+            if cls._instance is None or not cls._instance._initialized:
                 return
-            # Pause all torrents (blocking, so run in thread)
-            await asyncio.to_thread(self._pause_all_torrents)
-            # Wait a bit for graceful shutdown
+            await asyncio.to_thread(cls._instance._pause_all_torrents)
             await asyncio.sleep(1)
-            self._initialized = False
+            cls._instance._initialized = False
 
-    def _pause_all_torrents(self):
-        for handle in self.session.get_torrents():
-            handle.pause()
+    def _pause_all_torrents(self) -> None:
+        if self.session is not None:
+            for handle in self.session.get_torrents():
+                handle.pause()

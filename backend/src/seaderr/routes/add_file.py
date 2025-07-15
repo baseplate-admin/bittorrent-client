@@ -1,7 +1,5 @@
 from seaderr.singletons import SIO, LibtorrentSession, Logger
 import libtorrent as lt
-import tempfile
-import os
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
@@ -21,7 +19,7 @@ async def add_file(sid: str, data: dict):
     try:
         # Decode torrent bytes to dict, then load torrent_info
         torrent_dict = lt.bdecode(file)
-        torrent_info = lt.torrent_info(torrent_dict)
+        torrent_info = lt.torrent_info(torrent_dict) # pyright: ignore[reportArgumentType, reportCallIssue]
     except Exception as e:
         return {"status": "error", "message": f"Failed to decode torrent file: {e}"}
 

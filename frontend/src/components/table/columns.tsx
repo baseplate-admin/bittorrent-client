@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { snakeToSpace } from "@/lib/snakeToSpace";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const columnsMetadata: {

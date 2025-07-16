@@ -29,7 +29,21 @@ import {
     ContextMenuSubTrigger,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-
+import {
+    PlayIcon,
+    StopCircle,
+    PlayCircle,
+    Trash2,
+    Pencil,
+    FolderOpen,
+    Tag,
+    Folder,
+    RefreshCcw,
+    UploadCloud,
+    Settings,
+    CheckCircle,
+    Plus,
+} from "lucide-react";
 import { Fragment, useState } from "react";
 import {
     torrentPauseQueueAtom,
@@ -57,52 +71,101 @@ function RowContextMenu({
     const setTorrentResumeQueue = useSetAtom(torrentResumeQueueAtom);
     const setTorrentRemoveQueue = useSetAtom(torrentRemoveQueueAtom);
 
-    const handleDeleteButtonClick = () => {
-        setTorrentRemoveQueue((prev) => [...prev, data.info_hash]);
-    };
-
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
             <ContextMenuContent className="w-68">
-                <ContextMenuItem inset>Start</ContextMenuItem>
-                <ContextMenuItem inset disabled>
+                <ContextMenuItem>
+                    <PlayIcon className="mr-2 h-4 w-4" />
+                    Start
+                </ContextMenuItem>
+                <ContextMenuItem disabled>
+                    <StopCircle className="mr-2 h-4 w-4" />
                     Stop
                 </ContextMenuItem>
-                <ContextMenuItem inset>Force Start</ContextMenuItem>
-                <ContextMenuItem inset>Remove</ContextMenuItem>
-                <ContextMenuItem inset>Rename</ContextMenuItem>
+                <ContextMenuItem>
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Force Start
+                </ContextMenuItem>
+                <ContextMenuItem>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove
+                </ContextMenuItem>
+                <ContextMenuItem>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Rename
+                </ContextMenuItem>
+
                 <ContextMenuSeparator />
-                <ContextMenuItem inset>Set Location</ContextMenuItem>
+
+                <ContextMenuItem>
+                    <FolderOpen className="mr-2 h-4 w-4" />
+                    Set Location
+                </ContextMenuItem>
+
                 <ContextMenuSeparator />
+
                 <ContextMenuSub>
-                    <ContextMenuSubTrigger inset>Tags</ContextMenuSubTrigger>
+                    <ContextMenuSubTrigger>
+                        <Tag className="mr-2 h-4 w-4" />
+                        Tags
+                    </ContextMenuSubTrigger>
                     <ContextMenuSubContent className="w-44">
-                        <ContextMenuItem>Add</ContextMenuItem>
-                        <ContextMenuItem>Edit</ContextMenuItem>
-                        <ContextMenuItem>Remove All</ContextMenuItem>
+                        <ContextMenuItem>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add
+                        </ContextMenuItem>
+                        <ContextMenuItem>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                        </ContextMenuItem>
+                        <ContextMenuItem>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove All
+                        </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
+
                 <ContextMenuSub>
-                    <ContextMenuSubTrigger inset>
+                    <ContextMenuSubTrigger>
+                        <Folder className="mr-2 h-4 w-4" />
                         Category
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent className="w-44">
-                        <ContextMenuItem>Add</ContextMenuItem>
-                        <ContextMenuItem>Edit</ContextMenuItem>
-                        <ContextMenuItem>Remove All</ContextMenuItem>
+                        <ContextMenuItem>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add
+                        </ContextMenuItem>
+                        <ContextMenuItem>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                        </ContextMenuItem>
+                        <ContextMenuItem>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Remove All
+                        </ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
+
                 <ContextMenuSeparator />
+
                 <ContextMenuCheckboxItem>
                     Automatic Torrent Management
                 </ContextMenuCheckboxItem>
                 <ContextMenuCheckboxItem>
                     Super Seeding Mode
                 </ContextMenuCheckboxItem>
+
                 <ContextMenuSeparator />
-                <ContextMenuItem inset>Force Recheck</ContextMenuItem>
-                <ContextMenuItem inset>Force Reannounce</ContextMenuItem>
+
+                <ContextMenuItem>
+                    <RefreshCcw className="mr-2 h-4 w-4" />
+                    Force Recheck
+                </ContextMenuItem>
+                <ContextMenuItem>
+                    <UploadCloud className="mr-2 h-4 w-4" />
+                    Force Reannounce
+                </ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
     );

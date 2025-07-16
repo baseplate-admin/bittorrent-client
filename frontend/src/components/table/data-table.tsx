@@ -20,9 +20,18 @@ import {
 
 import {
     ContextMenu,
-    ContextMenuTrigger,
+    ContextMenuCheckboxItem,
     ContextMenuContent,
     ContextMenuItem,
+    ContextMenuLabel,
+    ContextMenuRadioGroup,
+    ContextMenuRadioItem,
+    ContextMenuSeparator,
+    ContextMenuShortcut,
+    ContextMenuSub,
+    ContextMenuSubContent,
+    ContextMenuSubTrigger,
+    ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
 import { Fragment, useEffect, useState } from "react";
@@ -42,10 +51,10 @@ interface DataTableProps<TData, TValue> {
 function RowContextMenu({
     rowData,
     children,
-}: {
+}: Readonly<{
     rowData: TorrentInfo;
     children: React.ReactNode;
-}) {
+}>) {
     const data = rowData as TorrentInfo;
 
     const setTorrentPauseQueue = useSetAtom(torrentPauseQueueAtom);
@@ -59,16 +68,52 @@ function RowContextMenu({
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-            <ContextMenuContent className="w-48">
-                <ContextMenuItem onClick={() => console.log("View", rowData)}>
-                    View
+            <ContextMenuContent className="w-52">
+                <ContextMenuItem inset>
+                    Back
+                    <ContextMenuShortcut>⌘[</ContextMenuShortcut>
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => console.log("Edit", rowData)}>
-                    Edit
+                <ContextMenuItem inset disabled>
+                    Forward
+                    <ContextMenuShortcut>⌘]</ContextMenuShortcut>
                 </ContextMenuItem>
-                <ContextMenuItem onClick={handleDeleteButtonClick}>
-                    Delete
+                <ContextMenuItem inset>
+                    Reload
+                    <ContextMenuShortcut>⌘R</ContextMenuShortcut>
                 </ContextMenuItem>
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger inset>
+                        More Tools
+                    </ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="w-44">
+                        <ContextMenuItem>Save Page...</ContextMenuItem>
+                        <ContextMenuItem>Create Shortcut...</ContextMenuItem>
+                        <ContextMenuItem>Name Window...</ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem>Developer Tools</ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem variant="destructive">
+                            Delete
+                        </ContextMenuItem>
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
+                <ContextMenuSeparator />
+                <ContextMenuCheckboxItem checked>
+                    Show Bookmarks
+                </ContextMenuCheckboxItem>
+                <ContextMenuCheckboxItem>
+                    Show Full URLs
+                </ContextMenuCheckboxItem>
+                <ContextMenuSeparator />
+                <ContextMenuRadioGroup value="pedro">
+                    <ContextMenuLabel inset>People</ContextMenuLabel>
+                    <ContextMenuRadioItem value="pedro">
+                        Pedro Duarte
+                    </ContextMenuRadioItem>
+                    <ContextMenuRadioItem value="colm">
+                        Colm Tuite
+                    </ContextMenuRadioItem>
+                </ContextMenuRadioGroup>
             </ContextMenuContent>
         </ContextMenu>
     );

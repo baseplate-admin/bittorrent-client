@@ -2,7 +2,6 @@ import asyncio
 import libtorrent as lt
 from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.managers import BroadcastClientManager
-from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
@@ -27,20 +26,7 @@ async def serialize_alert(alert) -> dict:
 
         case lt.peer_connect_alert():
             return {"type": "peer_connected", "message": str(alert.ip)}
-        case lt.state_update_alert():
-            statuses = [
-                {
-                    "info_hash": str(st.info_hash),
-                    "name": st.name,
-                    "progress": st.progress,
-                    "download_rate": st.download_rate,
-                    "upload_rate": st.upload_rate,
-                    "num_peers": st.num_peers,
-                    "state": st.state,
-                }
-                for st in alert.status
-            ]
-            return {"type": "state_update", "statuses": statuses}
+
         case lt.tracker_error_alert():
             return {
                 "type": "tracker_error",
@@ -62,22 +48,59 @@ async def serialize_alert(alert) -> dict:
         case lt.udp_error_alert():
             return {
                 "type": "udp_error",
-                "message": alert.message(),  # CALL the method!
+                "message": alert.message(),
                 "endpoint": str(alert.endpoint),
             }
+
         case lt.state_update_alert():
-            statuses = [
-                {
-                    "info_hash": st.info_hash,
-                    "name": st.name,
-                    "progress": st.progress,
-                    "download_rate": st.download_rate,
-                    "upload_rate": st.upload_rate,
-                    "num_peers": st.num_peers,
-                    "state": st.state,
-                }
-                for st in alert.status
-            ]
+            statuses = []
+            for st in alert.status:
+                peers_info = []
+                seeders = 0
+                leechers = 0
+                try:
+                    peers = st.handle.get_peer_info()
+                    for p in peers:
+                        is_seed = bool(p.flags & lt.peer_info.seed)
+                        if is_seed:
+                            seeders += 1
+                        else:
+                            leechers += 1
+
+                        peers_info.append(
+                            {
+                                "ip": str(p.ip),
+                                "progress": p.progress,
+                                "total_download": p.total_download,
+                                "total_upload": p.total_upload,
+                                "is_seed": is_seed,
+                            }
+                        )
+                except Exception:
+                    peers_info = []
+                    seeders = 0
+                    leechers = 0
+
+                unknown_peers = st.num_peers - (seeders + leechers)
+                if unknown_peers < 0:
+                    unknown_peers = 0
+
+                statuses.append(
+                    {
+                        "info_hash": str(st.info_hash),
+                        "name": st.name,
+                        "progress": st.progress,
+                        "download_rate": st.download_rate,
+                        "upload_rate": st.upload_rate,
+                        "num_peers": st.num_peers,
+                        "seeders": seeders,
+                        "leechers": leechers,
+                        "unknown_peers": unknown_peers,
+                        "state": st.state,
+                        "peers": peers_info,
+                    }
+                )
+
             return {"type": "state_update", "statuses": statuses}
 
         case lt.dht_stats_alert():

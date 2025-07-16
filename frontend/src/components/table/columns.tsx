@@ -6,11 +6,6 @@ import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 
-// const countPeersByType = (
-//     peers: TorrentInfo['peers'],
-//     types: ('seeder' | 'leecher' | 'unknown')[]
-// ) => peers.filter((p) => types.includes(p.type)).length;
-
 const columnsMetadata: {
     key: string;
     cell?: (context: { getValue: () => any; row: any }) => React.ReactNode;
@@ -54,22 +49,16 @@ const columnsMetadata: {
         },
     },
     {
-        key: "seeds",
-        cell: ({ row }) => {
-            return (
-                <center>
-                    {/* {countPeersByType(row.original.peers, ['seeder'])} */}
-                </center>
-            );
+        key: "seeders",
+        cell: ({ getValue }) => {
+            return <center>{getValue() || 0}</center>;
         },
     },
     {
-        key: "leeches",
-        cell: ({ row }) => (
-            <center>
-                {/* {countPeersByType(row.original.peers, ['leecher'])} */}
-            </center>
-        ),
+        key: "leechers",
+        cell: ({ getValue }) => {
+            return <center>{getValue() || 0}</center>;
+        },
     },
     {
         key: "num_peers",

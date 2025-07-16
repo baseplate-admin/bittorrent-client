@@ -1,5 +1,5 @@
-import { TorrentInfo } from '@/types/socket/torrent_info';
-import { atom } from 'jotai';
+import { TorrentInfo } from "@/types/socket/torrent_info";
+import { atom } from "jotai";
 
 export const torrentAtom = atom<TorrentInfo[] | null>(null);
 

@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { ColumnDef } from '@tanstack/react-table';
-import { Button } from '../ui/button';
-import { cn } from '@/lib/utils';
-import { formatBytes } from '@/lib/formatBytes';
-import { TorrentInfo } from '@/types/socket/torrent_info';
+import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
+import { formatBytes } from "@/lib/formatBytes";
+import { TorrentInfo } from "@/types/socket/torrent_info";
 
 // const countPeersByType = (
 //     peers: TorrentInfo['peers'],
@@ -17,7 +17,7 @@ const columnsMetadata: {
     keyName?: string;
 }[] = [
     {
-        key: 'name',
+        key: "name",
         cell: ({ getValue }) => (
             <div className="flex items-center gap-2">
                 <p className="pl-2">{getValue()}</p>
@@ -25,8 +25,8 @@ const columnsMetadata: {
         ),
     },
     {
-        key: 'totalSize',
-        keyName: 'Total Size',
+        key: "totalSize",
+        keyName: "Total Size",
 
         cell: ({ getValue }) => (
             <div className="flex items-center justify-center gap-2">
@@ -35,26 +35,26 @@ const columnsMetadata: {
         ),
     },
     {
-        key: 'progress',
+        key: "progress",
         cell: ({ getValue }) => {
             const progress = getValue();
             return (
                 <progress
                     max={100}
                     value={progress}
-                    className="w-full h-3 rounded bg-muted"
+                    className="bg-muted h-3 w-full rounded"
                 />
             );
         },
     },
     {
-        key: 'status',
+        key: "status",
         cell: ({ getValue }) => {
             return <center className="capitalize">{getValue()}</center>;
         },
     },
     {
-        key: 'seeds',
+        key: "seeds",
         cell: ({ row }) => {
             return (
                 <center>
@@ -64,7 +64,7 @@ const columnsMetadata: {
         },
     },
     {
-        key: 'leeches',
+        key: "leeches",
         cell: ({ row }) => (
             <center>
                 {/* {countPeersByType(row.original.peers, ['leecher'])} */}
@@ -72,15 +72,15 @@ const columnsMetadata: {
         ),
     },
     {
-        key: 'peers',
+        key: "peers",
         cell: ({ getValue }) => {
             const items = getValue().length;
             return <center>{items}</center>;
         },
     },
     {
-        key: 'uploadSpeed',
-        keyName: 'Upload Speed',
+        key: "uploadSpeed",
+        keyName: "Upload Speed",
 
         cell: ({ getValue }) => (
             <div className="flex items-center justify-center gap-2">
@@ -91,8 +91,8 @@ const columnsMetadata: {
         ),
     },
     {
-        key: 'downloadSpeed',
-        keyName: 'Download Speed',
+        key: "downloadSpeed",
+        keyName: "Download Speed",
         cell: ({ getValue }) => (
             <div className="flex items-center justify-center gap-2">
                 <span>
@@ -110,9 +110,9 @@ export const columns: ColumnDef<TorrentInfo>[] = columnsMetadata.map(
         header: ({ column }) => (
             <Button
                 variant="ghost"
-                className={cn('capitalize')}
+                className={cn("capitalize")}
                 onClick={() =>
-                    column.toggleSorting(column.getIsSorted() === 'asc')
+                    column.toggleSorting(column.getIsSorted() === "asc")
                 }
             >
                 {keyName ? keyName : key}
@@ -120,5 +120,5 @@ export const columns: ColumnDef<TorrentInfo>[] = columnsMetadata.map(
         ),
         enableResizing: true,
         ...(cell ? { cell } : {}),
-    })
+    }),
 );

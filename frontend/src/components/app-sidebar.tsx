@@ -1,5 +1,5 @@
-'use client';
-import { usePathname } from 'next/navigation';
+"use client";
+import { usePathname } from "next/navigation";
 import {
     ArrowUpDown,
     Check,
@@ -9,10 +9,10 @@ import {
     Play,
     Shuffle,
     Square,
-} from 'lucide-react';
-import Link from 'next/link';
-import styles from '@/styles/logos/arrow-up-down.module.css';
-import React, { useState } from 'react';
+} from "lucide-react";
+import Link from "next/link";
+import styles from "@/styles/logos/arrow-up-down.module.css";
+import React, { useState } from "react";
 import {
     Sidebar,
     SidebarContent,
@@ -22,26 +22,26 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-} from '@/components/ui/sidebar';
+} from "@/components/ui/sidebar";
 import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { Button } from './ui/button';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/collapsible";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     {
-        title: 'All',
-        url: '/',
+        title: "All",
+        url: "/",
         icon: (
             <Shuffle size={28} strokeWidth={2.8} className="text-orange-400" />
         ),
     },
     {
-        title: 'Downloading',
-        url: '/downloading',
+        title: "Downloading",
+        url: "/downloading",
         icon: (
             <ChevronsDown
                 size={40}
@@ -51,42 +51,42 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
         ),
     },
     {
-        title: 'Uploading',
-        url: '/uploading',
+        title: "Uploading",
+        url: "/uploading",
         icon: (
             <ChevronsUp size={40} strokeWidth={4.5} className="text-blue-500" />
         ),
     },
     {
-        title: 'Completed',
-        url: '/completed',
+        title: "Completed",
+        url: "/completed",
         icon: <Check size={40} strokeWidth={4.0} className="text-purple-500" />,
     },
     {
-        title: 'Running',
-        url: '/running',
+        title: "Running",
+        url: "/running",
         icon: (
             <Play
                 size={40}
                 strokeWidth={4.5}
-                className="text-green-500 fill-current"
+                className="fill-current text-green-500"
             />
         ),
     },
     {
-        title: 'Stopped',
-        url: '/stopped',
+        title: "Stopped",
+        url: "/stopped",
         icon: (
             <Square
                 size={40}
                 strokeWidth={3}
-                className="text-red-500 fill-current"
+                className="fill-current text-red-500"
             />
         ),
     },
     {
-        title: 'Active',
-        url: '/active',
+        title: "Active",
+        url: "/active",
         icon: (
             <ArrowUpDown
                 strokeWidth={4}
@@ -95,8 +95,8 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
         ),
     },
     {
-        title: 'Inactive',
-        url: '/inactive',
+        title: "Inactive",
+        url: "/inactive",
         icon: (
             <ArrowUpDown
                 strokeWidth={4}
@@ -139,9 +139,9 @@ export function AppSidebar() {
                                                 variant="ghost"
                                                 size="icon"
                                                 className={cn(
-                                                    'size-8',
+                                                    "size-8",
                                                     panelsOpen.status &&
-                                                        'rotate-180'
+                                                        "rotate-180",
                                                 )}
                                             >
                                                 <ChevronDown />
@@ -164,9 +164,9 @@ export function AppSidebar() {
                                                             <Link
                                                                 href={item.url}
                                                                 className={cn(
-                                                                    'flex items-center gap-2 justify-start text-foreground/80',
+                                                                    "text-foreground/80 flex items-center justify-start gap-2",
                                                                     isActive &&
-                                                                        'bg-muted/70'
+                                                                        "bg-muted/70",
                                                                 )}
                                                             >
                                                                 {item.icon}

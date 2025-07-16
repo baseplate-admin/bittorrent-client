@@ -5,7 +5,7 @@ export function fileToBuffer(file: File): Promise<Buffer> {
         reader.onload = () => {
             const arrayBuffer = reader.result;
             if (!(arrayBuffer instanceof ArrayBuffer)) {
-                reject(new Error('Unexpected result type'));
+                reject(new Error("Unexpected result type"));
                 return;
             }
             const buffer = Buffer.from(arrayBuffer);

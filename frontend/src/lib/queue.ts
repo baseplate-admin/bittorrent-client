@@ -1,4 +1,4 @@
-import { SetStateAction } from 'jotai';
+import { SetStateAction } from "jotai";
 
 export const peekQueue = <T>(queue: T[]): T | null => {
     if (queue.length === 0) return null;
@@ -7,7 +7,7 @@ export const peekQueue = <T>(queue: T[]): T | null => {
 
 export const dequeue = <T>(
     queue: T[],
-    setQueue: (update: SetStateAction<T[]>) => void
+    setQueue: (update: SetStateAction<T[]>) => void,
 ) => {
     const newQueue = [...queue];
     newQueue.shift();

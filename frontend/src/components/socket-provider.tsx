@@ -1,8 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import { io } from 'socket.io-client';
-import { useAtom, useSetAtom } from 'jotai';
+import { useEffect, useRef, useCallback } from "react";
+import { useAtom } from "jotai";
 import {
     torrentAtom,
     torrentUploadMagnetQueueAtom,
@@ -10,121 +9,91 @@ import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
-} from '@/atoms/torrent';
-import { fileToBuffer } from '@/lib/fileToBuffer';
-import { safeJsonParse } from '@/lib/safeJsonParse';
-import { dequeue, peekQueue } from '@/lib/queue';
-import { TorrentInfo } from '@/types/socket/torrent_info';
-import { GetAllResponse } from '@/types/socket/get_all';
-import { MagnetResponse } from '@/types/socket/add_magnet';
-import { BroadcastResponse, SerializedAlert } from '@/types/socket/broadcast';
-
-const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL ?? 'ws://localhost:8080';
-const socket = io(socketUrl);
-
-function getSpecificTorrentFromSocket(info_hash: string) {
-    return new Promise<TorrentInfo>((resolve, reject) => {
-        socket.emit('get_specific', { info_hash }, (response: any) => {
-            if (response) {
-                resolve(response.torrent);
-            } else {
-                reject(
-                    new Error(`Torrent with info_hash ${info_hash} not found`),
-                );
-            }
-        });
-    });
-}
+} from "@/atoms/torrent";
+import { dequeue, peekQueue } from "@/lib/queue";
+import { TorrentInfo } from "@/types/socket/torrent_info";
+import { GetAllResponse } from "@/types/socket/get_all";
+import { MagnetResponse } from "@/types/socket/add_magnet";
+import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
+import { useSocketConnection } from "@/hooks/use-socket";
 
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
-    const [torrentUploadFileQueue, setTorrentUploadFileQueue] = useAtom(
-        torrentUploadFileQueueAtom,
-    );
     const [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue] = useAtom(
         torrentUploadMagnetQueueAtom,
     );
-    const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(
-        torrentPauseQueueAtom,
-    );
-    const [torrentResumeQueue, setTorrentResumeQueue] = useAtom(
-        torrentResumeQueueAtom,
-    );
-    const [torrentRemoveQueue, setTorrentRemoveQueue] = useAtom(
-        torrentRemoveQueueAtom,
-    );
+    const [torrentUploadFileQueue] = useAtom(torrentUploadFileQueueAtom);
+    const [torrentPauseQueue] = useAtom(torrentPauseQueueAtom);
+    const [torrentResumeQueue] = useAtom(torrentResumeQueueAtom);
+    const [torrentRemoveQueue] = useAtom(torrentRemoveQueueAtom);
 
-    const writeBackToAtom = () => {
-        if (latestTorrentsRef.current) {
-            setTorrent([...latestTorrentsRef.current]);
-        }
-    };
-    const latestTorrentsRef = useRef<TorrentInfo[] | null>(null);
+    const latestTorrentsRef = useRef<TorrentInfo[]>([]);
+    const socketRef = useSocketConnection();
+
+    const updateTorrentsAtom = useCallback(() => {
+        setTorrent([...latestTorrentsRef.current]);
+    }, [setTorrent]);
+
     useEffect(() => {
-        const interval = setInterval(() => {
-            writeBackToAtom();
-        }, 1000);
+        const interval = setInterval(updateTorrentsAtom, 1000);
         return () => clearInterval(interval);
-    }, []);
+    }, [updateTorrentsAtom]);
 
-    // OnMount
+    const getSpecificTorrentFromSocket = useCallback(
+        (info_hash: string): Promise<TorrentInfo> => {
+            return new Promise((resolve, reject) => {
+                socketRef.current?.emit(
+                    "get_specific",
+                    { info_hash },
+                    (response: any) => {
+                        if (response?.torrent) {
+                            resolve(response.torrent);
+                        } else {
+                            reject(
+                                new Error(
+                                    `Torrent with info_hash ${info_hash} not found`,
+                                ),
+                            );
+                        }
+                    },
+                );
+            });
+        },
+        [],
+    );
+
     useEffect(() => {
-        socket.emit('get_all', (response: GetAllResponse) => {
-            if (response) {
-                latestTorrentsRef?.current?.push(...response.torrents);
-                setTorrent([...response.torrents]);
+        if (!socketRef.current) return;
+
+        const socket = socketRef.current;
+
+        socket.emit("get_all", (response: GetAllResponse) => {
+            if (response?.torrents) {
+                latestTorrentsRef.current = [...response.torrents];
+                setTorrent(response.torrents);
             }
         });
 
-        return () => {
-            socket.disconnect();
-        };
-    }, []);
-
-    useEffect(() => {
-        if (torrent !== null) {
-            socket.emit(
-                'broadcast',
-                { event: 'start' },
-                (response: BroadcastResponse) => {
-                    if (response.status !== 'success') {
-                        console.error(
-                            'Failed to start broadcast:',
-                            response.message,
-                        );
-                    }
-                },
-            );
-        }
-
-        socket.on('broadcast', async (response: SerializedAlert) => {
+        const handleBroadcast = async (response: SerializedAlert) => {
             switch (response.type) {
-                case 'add_torrent': {
-                    const newTorrentInfoHash = response.info_hash;
-                    const torrentInformation =
-                        await getSpecificTorrentFromSocket(newTorrentInfoHash);
-                    if (!latestTorrentsRef.current) {
-                        latestTorrentsRef.current = [torrentInformation];
-                    } else {
+                case "add_torrent": {
+                    try {
+                        const newTorrent = await getSpecificTorrentFromSocket(
+                            response.info_hash,
+                        );
                         const exists = latestTorrentsRef.current.some(
-                            (t) => t.info_hash === torrentInformation.info_hash,
+                            (t) => t.info_hash === newTorrent.info_hash,
                         );
                         if (!exists) {
-                            latestTorrentsRef.current.push(torrentInformation);
+                            latestTorrentsRef.current.push(newTorrent);
                         }
+                    } catch (e) {
+                        console.error(e);
                     }
                     break;
                 }
-
-                case 'metadata_received':
-                    // optionally log or update metadata flag
-                    break;
-
-                case 'state_update': {
-                    const message = response.statuses;
-                    if (!latestTorrentsRef.current) return;
-
-                    for (const status of message) {
+                case "state_update": {
+                    for (const status of response.statuses ?? []) {
                         const t = latestTorrentsRef.current.find(
                             (t) => t.info_hash === status.info_hash,
                         );
@@ -133,44 +102,61 @@ export default function SocketProvider() {
                             t.download_rate = status.download_rate;
                             t.upload_rate = status.upload_rate;
                             t.num_peers = status.num_peers;
-                            // @ts-expect-error: assuming type mismatch
+                            // @ts-expect-error
                             t.state = status.state;
                         }
                     }
                     break;
                 }
-
-                default:
-                    break;
             }
-        });
+        };
+
+        socket.on("broadcast", handleBroadcast);
+
+        return () => {
+            socket.off("broadcast", handleBroadcast);
+        };
+    }, [getSpecificTorrentFromSocket, setTorrent]);
+
+    useEffect(() => {
+        if (!socketRef.current || torrent === null) return;
+
+        socketRef.current.emit(
+            "broadcast",
+            { event: "start" },
+            (response: BroadcastResponse) => {
+                if (response.status !== "success") {
+                    console.error(
+                        "Failed to start broadcast:",
+                        response.message,
+                    );
+                }
+            },
+        );
     }, [torrent]);
 
-    // Magnet queue processing
+    // Magnet upload queue
     useEffect(() => {
-        if (torrentUploadMagnetQueue.length > 0) {
-            const magnet = peekQueue(torrentUploadMagnetQueue);
-            if (!magnet) return;
+        if (!socketRef.current || torrentUploadMagnetQueue.length === 0) return;
 
-            socket.emit(
-                'add_magnet',
-                { magnet },
-                (response: MagnetResponse) => {
-                    if (response.status === 'success') {
-                        dequeue(
-                            torrentUploadMagnetQueue,
-                            setTorrentUploadMagnetQueue,
-                        );
-                    } else {
-                        console.error(
-                            'Failed to upload magnet:',
-                            response.message,
-                        );
-                    }
-                },
-            );
-        }
-    }, [torrentUploadMagnetQueue]);
+        const magnet = peekQueue(torrentUploadMagnetQueue);
+        if (!magnet) return;
 
-    return <></>;
+        socketRef.current.emit(
+            "add_magnet",
+            { magnet },
+            (response: MagnetResponse) => {
+                if (response.status === "success") {
+                    dequeue(
+                        torrentUploadMagnetQueue,
+                        setTorrentUploadMagnetQueue,
+                    );
+                } else {
+                    console.error("Failed to upload magnet:", response.message);
+                }
+            },
+        );
+    }, [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue]);
+
+    return null;
 }

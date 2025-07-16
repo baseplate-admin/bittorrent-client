@@ -18,12 +18,12 @@ export type Peer = {
     downloaded: number;
     uploaded: number;
     relevance: number;
-    type: 'seeder' | 'leecher' | 'unknown';
+    type: "seeder" | "leecher" | "unknown";
 };
 
 export type Torrent = {
     name: string | null;
-    status: 'downloading' | 'paused' | 'seeding' | 'error' | null;
+    status: "downloading" | "paused" | "seeding" | "error" | null;
     files: File[] | null;
     infoHash: string;
     totalSize: number | null;

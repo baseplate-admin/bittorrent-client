@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
     ColumnDef,
@@ -7,7 +7,7 @@ import {
     useReactTable,
     SortingState,
     getSortedRowModel,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";
 
 import {
     Table,
@@ -16,23 +16,23 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 
 import {
     ContextMenu,
     ContextMenuTrigger,
     ContextMenuContent,
     ContextMenuItem,
-} from '@/components/ui/context-menu';
+} from "@/components/ui/context-menu";
 
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from "react";
 import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
-} from '@/atoms/torrent';
-import { useSetAtom } from 'jotai';
-import { TorrentInfo } from '@/types/socket/torrent_info';
+} from "@/atoms/torrent";
+import { useSetAtom } from "jotai";
+import { TorrentInfo } from "@/types/socket/torrent_info";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -60,10 +60,10 @@ function RowContextMenu({
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
             <ContextMenuContent className="w-48">
-                <ContextMenuItem onClick={() => console.log('View', rowData)}>
+                <ContextMenuItem onClick={() => console.log("View", rowData)}>
                     View
                 </ContextMenuItem>
-                <ContextMenuItem onClick={() => console.log('Edit', rowData)}>
+                <ContextMenuItem onClick={() => console.log("Edit", rowData)}>
                     Edit
                 </ContextMenuItem>
                 <ContextMenuItem onClick={handleDeleteButtonClick}>
@@ -85,7 +85,7 @@ export function DataTable<TData, TValue>({
         columns,
         getCoreRowModel: getCoreRowModel(),
         onSortingChange: setSorting,
-        columnResizeMode: 'onChange',
+        columnResizeMode: "onChange",
         getSortedRowModel: getSortedRowModel(),
         state: {
             sorting,
@@ -107,7 +107,7 @@ export function DataTable<TData, TValue>({
                                         ? null
                                         : flexRender(
                                               header.column.columnDef.header,
-                                              header.getContext()
+                                              header.getContext(),
                                           )}
                                 </TableHead>
                             ))}
@@ -123,14 +123,14 @@ export function DataTable<TData, TValue>({
                                 >
                                     <TableRow
                                         data-state={
-                                            row.getIsSelected() && 'selected'
+                                            row.getIsSelected() && "selected"
                                         }
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
                                                 {flexRender(
                                                     cell.column.columnDef.cell,
-                                                    cell.getContext()
+                                                    cell.getContext(),
                                                 )}
                                             </TableCell>
                                         ))}

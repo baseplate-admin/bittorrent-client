@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Link2, Plus, Settings } from 'lucide-react';
+import { Link2, Plus, Settings } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Button } from './ui/button';
+} from "@/components/ui/tooltip";
+import { Button } from "./ui/button";
 
 import {
     Dialog,
@@ -14,21 +14,21 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import React, { useEffect, useState } from 'react';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { useSetAtom } from 'jotai';
+} from "@/components/ui/dialog";
+import React, { useEffect, useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { useSetAtom } from "jotai";
 import {
     torrentUploadFileQueueAtom,
     torrentUploadMagnetQueueAtom,
-} from '@/atoms/torrent';
+} from "@/atoms/torrent";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
 
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-    const [textareaValue, setTextareaValue] = useState<string>('');
+    const [textareaValue, setTextareaValue] = useState<string>("");
 
     const setTorrentUploadFileQueue = useSetAtom(torrentUploadFileQueueAtom);
     const setTorrentUploadMagnetQueue = useSetAtom(
@@ -36,7 +36,7 @@ export default function ActionButtons() {
     );
 
     const handleDownloadButtonClick = (closeDialog: () => void) => {
-        const magnets = textareaValue.split('\n');
+        const magnets = textareaValue.split("\n");
         setTorrentUploadMagnetQueue([...magnets]);
 
         closeDialog();
@@ -52,7 +52,7 @@ export default function ActionButtons() {
         if (openDialogIndex === null) {
             setTimeout(() => {
                 setUploadedFiles([]);
-                setTextareaValue('');
+                setTextareaValue("");
             }, 1000);
         }
     }, [openDialogIndex]);
@@ -60,9 +60,9 @@ export default function ActionButtons() {
     const mapping = [
         {
             icon: <Link2 strokeWidth={4} className="text-teal-500" />,
-            tooltip: 'Add Torrent Link',
+            tooltip: "Add Torrent Link",
             getDialog: (closeDialog: () => void) => ({
-                title: 'Add torrent links',
+                title: "Add torrent links",
                 content: (
                     <div className="flex flex-col gap-4 py-3">
                         <Textarea
@@ -93,9 +93,9 @@ export default function ActionButtons() {
         },
         {
             icon: <Plus strokeWidth={4.7} className="text-teal-500" />,
-            tooltip: 'Add Torrent File',
+            tooltip: "Add Torrent File",
             getDialog: (closeDialog: () => void) => ({
-                title: 'Add torrent file',
+                title: "Add torrent file",
                 content: (
                     <div className="flex flex-col gap-4 py-3">
                         <Input
@@ -134,9 +134,9 @@ export default function ActionButtons() {
         },
         {
             icon: <Settings strokeWidth={3} className="text-indigo-300" />,
-            tooltip: 'Settings',
+            tooltip: "Settings",
             getDialog: () => ({
-                title: 'Settings',
+                title: "Settings",
                 content: <div>Settings go here</div>,
             }),
         },

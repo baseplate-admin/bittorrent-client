@@ -34,14 +34,14 @@ import { cn } from "@/lib/utils";
 const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     {
         title: "All",
-        url: "/",
+        url: "./all",
         icon: (
             <Shuffle size={28} strokeWidth={2.8} className="text-orange-400" />
         ),
     },
     {
         title: "Downloading",
-        url: "/downloading",
+        url: "./downloading",
         icon: (
             <ChevronsDown
                 size={40}
@@ -52,7 +52,7 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     },
     {
         title: "Uploading",
-        url: "/uploading",
+        url: "./uploading",
         icon: (
             <ChevronsUp size={40} strokeWidth={4.5} className="text-blue-500" />
         ),
@@ -64,7 +64,7 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     },
     {
         title: "Running",
-        url: "/running",
+        url: "./running",
         icon: (
             <Play
                 size={40}
@@ -75,7 +75,7 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     },
     {
         title: "Stopped",
-        url: "/stopped",
+        url: "./stopped",
         icon: (
             <Square
                 size={40}
@@ -86,7 +86,7 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     },
     {
         title: "Active",
-        url: "/active",
+        url: "./active",
         icon: (
             <ArrowUpDown
                 strokeWidth={4}
@@ -96,7 +96,7 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     },
     {
         title: "Inactive",
-        url: "/inactive",
+        url: "./inactive",
         icon: (
             <ArrowUpDown
                 strokeWidth={4}

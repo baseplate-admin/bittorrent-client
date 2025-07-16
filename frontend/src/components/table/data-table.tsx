@@ -71,17 +71,36 @@ function RowContextMenu({
     const setTorrentResumeQueue = useSetAtom(torrentResumeQueueAtom);
     const setTorrentRemoveQueue = useSetAtom(torrentRemoveQueueAtom);
 
+    const handlePauseButtonClick = () => {
+        setTorrentPauseQueue((prev) => {
+            if (!prev) return [data.info_hash];
+            return [...prev, data.info_hash];
+        });
+    };
+    const handleResumeButtonClick = () => {
+        setTorrentResumeQueue((prev) => {
+            if (!prev) return [data.info_hash];
+            return [...prev, data.info_hash];
+        });
+    };
+
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
             <ContextMenuContent className="w-68">
-                <ContextMenuItem disabled={!data.paused}>
+                <ContextMenuItem
+                    disabled={!data.paused}
+                    onClick={handleResumeButtonClick}
+                >
                     <PlayIcon className="mr-2 h-4 w-4" />
-                    Start
+                    Resume
                 </ContextMenuItem>
-                <ContextMenuItem disabled={data.paused}>
+                <ContextMenuItem
+                    onClick={handlePauseButtonClick}
+                    disabled={data.paused}
+                >
                     <StopCircle className="mr-2 h-4 w-4" />
-                    Stop
+                    Pause
                 </ContextMenuItem>
                 <ContextMenuItem>
                     <PlayCircle className="mr-2 h-4 w-4" />

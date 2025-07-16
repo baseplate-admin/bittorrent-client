@@ -90,8 +90,13 @@ const columnsMetadata: {
     },
     {
         key: "state",
-        cell: ({ getValue }) => {
-            const value = snakeToSpace(getValue());
+        cell: ({ getValue, row }) => {
+            let value: string | null = null;
+            if (row.original.paused) {
+                value = "Paused";
+            } else {
+                value = snakeToSpace(getValue());
+            }
             return <center className="capitalize">{value}</center>;
         },
     },

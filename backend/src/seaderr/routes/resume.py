@@ -31,7 +31,9 @@ async def resume(sid: str, data: dict):
         return {"status": "error", "message": "Torrent not found"}
 
     if handle.is_paused():
+        handle.set_upload_mode(False)  # Re-enable uploading
+        handle.auto_managed(True)  # Re-enable auto management
         handle.resume()
-        return {"status": "success", "message": "Torrent resumed"}
+        return {"status": "success", "message": "Torrent resumed and upload enabled"}
 
     return {"status": "info", "message": "Torrent is already active"}

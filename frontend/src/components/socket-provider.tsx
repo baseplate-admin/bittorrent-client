@@ -16,6 +16,7 @@ import { GetAllResponse } from "@/types/socket/get_all";
 import { MagnetResponse } from "@/types/socket/add_magnet";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
+import { PauseResponse } from "@/types/socket/pause";
 
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
@@ -23,8 +24,12 @@ export default function SocketProvider() {
         torrentUploadMagnetQueueAtom,
     );
     const [torrentUploadFileQueue] = useAtom(torrentUploadFileQueueAtom);
-    const [torrentPauseQueue] = useAtom(torrentPauseQueueAtom);
-    const [torrentResumeQueue] = useAtom(torrentResumeQueueAtom);
+    const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(
+        torrentPauseQueueAtom,
+    );
+    const [torrentResumeQueue, setTorrentResumeQueue] = useAtom(
+        torrentResumeQueueAtom,
+    );
     const [torrentRemoveQueue] = useAtom(torrentRemoveQueueAtom);
 
     const latestTorrentsRef = useRef<TorrentInfo[]>([]);
@@ -33,12 +38,11 @@ export default function SocketProvider() {
     const updateTorrentsAtom = useCallback(() => {
         setTorrent([...latestTorrentsRef.current]);
     }, [setTorrent]);
-
-    useEffect(() => {
-        const interval = setInterval(updateTorrentsAtom, 1000);
-        return () => clearInterval(interval);
-    }, [updateTorrentsAtom]);
-
+    const findTorrentByInfoHash = (
+        infoHash: string,
+    ): TorrentInfo | undefined => {
+        return latestTorrentsRef.current.find((t) => t.info_hash === infoHash);
+    };
     const getSpecificTorrentFromSocket = useCallback(
         (info_hash: string): Promise<TorrentInfo> => {
             return new Promise((resolve, reject) => {
@@ -61,6 +65,11 @@ export default function SocketProvider() {
         },
         [],
     );
+
+    useEffect(() => {
+        const interval = setInterval(updateTorrentsAtom, 1000);
+        return () => clearInterval(interval);
+    }, [updateTorrentsAtom]);
 
     useEffect(() => {
         if (!socketRef.current) return;
@@ -148,6 +157,54 @@ export default function SocketProvider() {
             },
         );
     }, [torrent]);
+
+    // Resume torrent queue
+    useEffect(() => {
+        if (!socketRef.current || torrentResumeQueue.length === 0) return;
+
+        const infoHash = peekQueue(torrentResumeQueue);
+        if (!infoHash) return;
+
+        socketRef.current.emit(
+            "resume",
+            { info_hash: infoHash },
+            (response: PauseResponse) => {
+                if (response.status === "success") {
+                    dequeue(torrentResumeQueue, setTorrentResumeQueue);
+                    const torrent = findTorrentByInfoHash(infoHash);
+                    if (torrent) {
+                        torrent.paused = false;
+                    }
+                } else {
+                    console.error("Failed to upload magnet:", response.message);
+                }
+            },
+        );
+    }, [torrentResumeQueue]);
+
+    // Pause torrent queue
+    useEffect(() => {
+        if (!socketRef.current || torrentPauseQueue.length === 0) return;
+
+        const infoHash = peekQueue(torrentPauseQueue);
+        if (!infoHash) return;
+
+        socketRef.current.emit(
+            "pause",
+            { info_hash: infoHash },
+            (response: PauseResponse) => {
+                if (response.status === "success") {
+                    dequeue(torrentPauseQueue, setTorrentPauseQueue);
+                    const torrent = findTorrentByInfoHash(infoHash);
+                    if (torrent) {
+                        torrent.paused = true;
+                    }
+                } else {
+                    console.error("Failed to upload magnet:", response.message);
+                }
+            },
+        );
+    }, [torrentPauseQueue]);
 
     // Magnet upload queue
     useEffect(() => {

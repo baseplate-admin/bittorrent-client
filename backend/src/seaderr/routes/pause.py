@@ -21,7 +21,6 @@ async def pause(sid: str, data: dict):
     if not info_hash:
         return {"status": "error", "message": "Missing 'info_hash'"}
 
-    # Convert hex string to sha1 hash
     try:
         ih = lt.sha1_hash(bytes.fromhex(info_hash))
     except ValueError:
@@ -32,7 +31,9 @@ async def pause(sid: str, data: dict):
         return {"status": "error", "message": "Torrent not found"}
 
     if not handle.is_paused():
+        handle.auto_managed(False)  # Disable auto-resume
+        handle.set_upload_mode(True)  # Prevent seeding
         handle.pause()
-        return {"status": "success", "message": "Torrent paused"}
+        return {"status": "success", "message": "Torrent paused and upload disabled"}
 
     return {"status": "info", "message": "Torrent is already paused"}

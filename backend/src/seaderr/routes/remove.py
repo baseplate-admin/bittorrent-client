@@ -30,6 +30,8 @@ async def remove(sid: str, data: dict):
 
     handle = ses.find_torrent(ih)
     if not handle.is_valid():
+        handle.auto_managed(False)  # Disable auto-resume
+        handle.set_upload_mode(False)  # Prevent seeding
         return {"status": "error", "message": "Torrent not found"}
 
     flags = lt.options_t.delete_files if remove_data else 0

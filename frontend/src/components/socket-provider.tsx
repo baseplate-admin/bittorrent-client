@@ -94,8 +94,6 @@ export default function SocketProvider() {
         });
 
         const handleBroadcast = async (response: SerializedAlert) => {
-            console.log(response);
-
             switch (response.type) {
                 case "add_torrent": {
                     const newTorrent = await getSpecificTorrentFromSocket(
@@ -140,8 +138,10 @@ export default function SocketProvider() {
 
         socket.on("libtorrent:broadcast", handleBroadcast);
 
-        return () => {};
-    }, [getSpecificTorrentFromSocket, setTorrent]);
+        return () => {
+            socket.off("libtorrent:broadcast", handleBroadcast);
+        };
+    }, [socketRef]);
 
     useEffect(() => {
         if (broadcastStarted) return;

@@ -20,16 +20,20 @@ async def add_magnet(sid: str, data: dict):
         params = {
             "save_path": data.get("save_path", "."),
             "storage_mode": lt.storage_mode_t(lt.storage_mode_t.storage_mode_sparse),
+            "flags": (
+                lt.add_torrent_params_flags_t.flag_paused
+                | lt.add_torrent_params_flags_t.flag_auto_managed
+                | lt.add_torrent_params_flags_t.flag_upload_mode
+            ),
         }
         handle = lt.add_magnet_uri(ses, magnet, params)
+
         while not handle.has_metadata():
             await asyncio.sleep(1)
-        handle.pause()
 
         torrent_info = handle.get_torrent_info()
         metadata = await serialize_magnet_torrent_info(torrent_info)
 
-        # Extract file info list
         files = []
         for f in torrent_info.files():
             files.append(
@@ -47,18 +51,25 @@ async def add_magnet(sid: str, data: dict):
             "message": "Metadata fetched. Confirm add or cancel.",
             "torrent_id": torrent_id,
             "metadata": metadata,
-            "files": files,  # Added here
+            "files": files,
         }
+
     elif action in ("add", "cancel"):
         torrent_id = data.get("torrent_id")
         if not torrent_id or sid not in pending or torrent_id not in pending[sid]:
             return {"status": "error", "message": "Invalid torrent_id"}
 
         handle = pending[sid].pop(torrent_id)
+
         if action == "cancel":
             ses.remove_torrent(handle)
             return {"status": "success", "message": "Torrent cancelled"}
 
-        return {"status": "success", "message": "Torrent added"}
+        if action == "add":
+            # Resume the torrent to start downloading
+            handle.resume()
+            # Make sure the handle is added to the session if needed
+            # Usually adding magnet uri already adds handle to session, so no need to re-add.
+            return {"status": "success", "message": "Torrent added"}
 
     return {"status": "error", "message": "Unknown action"}

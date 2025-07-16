@@ -25,7 +25,7 @@ const columnsMetadata: {
         ),
     },
     {
-        key: "totalSize",
+        key: "total_size",
         keyName: "Total Size",
 
         cell: ({ getValue }) => (
@@ -48,7 +48,7 @@ const columnsMetadata: {
         },
     },
     {
-        key: "status",
+        key: "state",
         cell: ({ getValue }) => {
             return <center className="capitalize">{getValue()}</center>;
         },
@@ -72,16 +72,16 @@ const columnsMetadata: {
         ),
     },
     {
-        key: "peers",
+        key: "num_peers",
+        keyName: "Peers",
         cell: ({ getValue }) => {
-            const items = getValue().length;
-            return <center>{items}</center>;
+            return <center>{getValue()}</center>;
         },
     },
-    {
-        key: "uploadSpeed",
-        keyName: "Upload Speed",
 
+    {
+        key: "download_rate",
+        keyName: "Download Speed",
         cell: ({ getValue }) => (
             <div className="flex items-center justify-center gap-2">
                 <span>
@@ -91,8 +91,9 @@ const columnsMetadata: {
         ),
     },
     {
-        key: "downloadSpeed",
-        keyName: "Download Speed",
+        key: "upload_rate",
+        keyName: "Upload Speed",
+
         cell: ({ getValue }) => (
             <div className="flex items-center justify-center gap-2">
                 <span>

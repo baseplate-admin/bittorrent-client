@@ -94,18 +94,26 @@ export default function SocketProvider() {
                 }
                 case "state_update": {
                     for (const status of response.statuses ?? []) {
-                        const t = latestTorrentsRef.current.find(
+                        const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,
                         );
-                        if (t) {
-                            t.progress = status.progress;
-                            t.download_rate = status.download_rate;
-                            t.upload_rate = status.upload_rate;
-                            t.num_peers = status.num_peers;
-                            // @ts-expect-error
-                            t.state = status.state;
+
+                        if (index !== -1) {
+                            const t = latestTorrentsRef.current[index];
+
+                            // Clone to avoid mutating the same object (preserves React reactivity)
+                            latestTorrentsRef.current[index] = {
+                                ...t,
+                                progress: Number(status.progress * 100),
+                                download_rate: status.download_rate,
+                                upload_rate: status.upload_rate,
+                                num_peers: status.num_peers,
+                                // @ts-expect-error: might not match type
+                                state: status.state,
+                            };
                         }
                     }
+
                     break;
                 }
             }

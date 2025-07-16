@@ -75,11 +75,11 @@ function RowContextMenu({
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
             <ContextMenuContent className="w-68">
-                <ContextMenuItem>
+                <ContextMenuItem disabled={!data.paused}>
                     <PlayIcon className="mr-2 h-4 w-4" />
                     Start
                 </ContextMenuItem>
-                <ContextMenuItem disabled>
+                <ContextMenuItem disabled={data.paused}>
                     <StopCircle className="mr-2 h-4 w-4" />
                     Stop
                 </ContextMenuItem>
@@ -107,7 +107,7 @@ function RowContextMenu({
 
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
-                        <Tag className="mr-2 h-4 w-4" />
+                        <Tag className="mr-4 h-4 w-4" />
                         Tags
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent className="w-44">
@@ -128,7 +128,7 @@ function RowContextMenu({
 
                 <ContextMenuSub>
                     <ContextMenuSubTrigger>
-                        <Folder className="mr-2 h-4 w-4" />
+                        <Folder className="mr-4 h-4 w-4" />
                         Category
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent className="w-44">

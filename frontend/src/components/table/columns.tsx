@@ -82,7 +82,7 @@ const columnsMetadata: {
                         />
                     </TooltipTrigger>
                     <TooltipContent side="top" align="center">
-                        {progress}%
+                        {progress.toFixed(2)}%
                     </TooltipContent>
                 </Tooltip>
             );

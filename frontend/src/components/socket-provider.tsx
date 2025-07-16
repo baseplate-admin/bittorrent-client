@@ -164,18 +164,19 @@ export default function SocketProvider() {
     useEffect(() => {
         if (!socketRef.current || torrentRemoveQueue.length === 0) return;
 
-        const infoHash = peekQueue(torrentRemoveQueue);
-        if (!infoHash) return;
+        const removeItem = peekQueue(torrentRemoveQueue);
+        if (!removeItem) return;
+        const { info_hash, remove_content } = removeItem;
 
         socketRef.current.emit(
             "remove",
-            { info_hash: infoHash },
+            { info_hash, remove_content },
             (response: PauseResponse) => {
                 if (response.status === "success") {
                     dequeue(torrentRemoveQueue, setTorrentRemoveQueue);
                     latestTorrentsRef.current =
                         latestTorrentsRef.current.filter(
-                            (t) => t.info_hash !== infoHash,
+                            (t) => t.info_hash !== info_hash,
                         );
                 } else {
                     console.error(

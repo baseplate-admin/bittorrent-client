@@ -8,4 +8,6 @@ export const torrentUploadMagnetQueueAtom = atom<string[]>(new Array<string>());
 
 export const torrentPauseQueueAtom = atom<string[]>(new Array<string>());
 export const torrentResumeQueueAtom = atom<string[]>(new Array<string>());
-export const torrentRemoveQueueAtom = atom<string[]>(new Array<string>());
+export const torrentRemoveQueueAtom = atom<
+    Array<{ info_hash: string; remove_content: boolean }>
+>(new Array<{ info_hash: string; remove_content: boolean }>());

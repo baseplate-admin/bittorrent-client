@@ -69,8 +69,15 @@ export default function SocketProvider() {
 
         socket.emit("get_all", (response: GetAllResponse) => {
             if (response?.torrents) {
-                latestTorrentsRef.current = [...response.torrents];
-                setTorrent([...response.torrents]);
+                latestTorrentsRef.current = response.torrents.map(
+                    (torrent) => ({
+                        ...torrent,
+                        seeders: torrent.seeders ?? 0,
+                        leechers:
+                            (torrent.num_peers ?? 0) - (torrent.seeders ?? 0),
+                    }),
+                );
+                setTorrent([...latestTorrentsRef.current]);
             }
         });
 

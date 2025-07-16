@@ -107,6 +107,7 @@ async def serialize_alert(alert) -> dict:
                 )
 
             return {"type": "state_update", "statuses": statuses}
+
         case lt.dht_stats_alert():
             active_requests = [
                 {

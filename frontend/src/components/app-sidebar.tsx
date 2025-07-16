@@ -59,7 +59,7 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     },
     {
         title: "Completed",
-        url: "/completed",
+        url: "./completed",
         icon: <Check size={40} strokeWidth={4.0} className="text-purple-500" />,
     },
     {

@@ -77,19 +77,16 @@ export default function SocketProvider() {
         const handleBroadcast = async (response: SerializedAlert) => {
             switch (response.type) {
                 case "add_torrent": {
-                    try {
-                        const newTorrent = await getSpecificTorrentFromSocket(
-                            response.info_hash,
-                        );
-                        const exists = latestTorrentsRef.current.some(
-                            (t) => t.info_hash === newTorrent.info_hash,
-                        );
-                        if (!exists) {
-                            latestTorrentsRef.current.push(newTorrent);
-                        }
-                    } catch (e) {
-                        console.error(e);
+                    const newTorrent = await getSpecificTorrentFromSocket(
+                        response.info_hash,
+                    );
+                    const exists = latestTorrentsRef.current.some(
+                        (t) => t.info_hash === newTorrent.info_hash,
+                    );
+                    if (!exists) {
+                        latestTorrentsRef.current.push(newTorrent);
                     }
+                    console.log("Received Torrent Event");
                     break;
                 }
                 case "state_update": {

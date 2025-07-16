@@ -148,44 +148,43 @@ async def serialize_alert(alert) -> dict:
             }
 
         case _:
-            raise ValueError(f"Unsupported alert type: {type(alert)}")
+            try:
+                raise ValueError(f"Unsupported alert type: {type(alert)}")
+            except Exception as e:
+                print(e)
+                return {}
 
 
 async def shared_poll_and_broadcast():
     lt_ses = await LibtorrentSession.get_session()
     while True:
-        try:
-            if broadcast_client_manager.count() == 0:
-                await asyncio.sleep(1)
-                continue
+        if broadcast_client_manager.count() == 0:
+            await asyncio.sleep(1)
+            continue
 
-            lt_ses.post_torrent_updates()
-            lt_ses.post_dht_stats()
-            lt_ses.post_session_stats()
+        lt_ses.post_torrent_updates()
+        lt_ses.post_dht_stats()
+        lt_ses.post_session_stats()
 
-            alerts = lt_ses.pop_alerts()
+        alerts = lt_ses.pop_alerts()
 
-            for alert in alerts:
-                data = await serialize_alert(alert)
-                if data:
-                    try:
-                        clients = broadcast_client_manager.get_clients()
-                        if clients:
-                            for sid in clients:
-                                logger.info(
-                                    f"Broadcasting {len(alerts)} alerts to {broadcast_client_manager.count()} clients"
-                                )
-                                await sio.emit("broadcast", data, room=sid)
-                    except TypeError as e:
-                        logger.error(
-                            f"JSON serialization failed for alert data: {data}"
-                        )
-                        logger.error(f"Serialization error: {e}")
-                        continue
+        for alert in alerts:
+            data = await serialize_alert(alert)
+            if data:
+                try:
+                    clients = broadcast_client_manager.get_clients()
+                    if clients:
+                        for sid in clients:
+                            logger.info(
+                                f"Broadcasting {len(alerts)} alerts to {broadcast_client_manager.count()} clients"
+                            )
+                            await sio.emit("broadcast", data, room=sid)
+                except TypeError as e:
+                    logger.error(f"JSON serialization failed for alert data: {data}")
+                    logger.error(f"Serialization error: {e}")
+                    continue
 
-            await asyncio.sleep(0.5)
-        except Exception as e:
-            logger.error(f"Exception in shared_poll_and_broadcast: {e}")
+        await asyncio.sleep(0.5)
 
 
 @sio.on("broadcast")  # type: ignore

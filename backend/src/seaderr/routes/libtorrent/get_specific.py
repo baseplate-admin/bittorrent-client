@@ -3,7 +3,7 @@ from seaderr.singletons import SIO, LibtorrentSession
 sio = SIO.get_instance()
 
 
-@sio.on("get_specific")  # type: ignore
+@sio.on("libtorrent:get_specific")  # type: ignore
 async def get_specific(sid: str, data: dict):
     info_hash = data.get("info_hash")
     if not info_hash:
@@ -15,7 +15,7 @@ async def get_specific(sid: str, data: dict):
     for handle in handles:
         if not handle.is_valid():
             continue
-            
+
         if str(handle.info_hash()) == info_hash:
             status = handle.status()
             try:

@@ -49,7 +49,7 @@ export default function SocketProvider() {
         (info_hash: string): Promise<TorrentInfo> => {
             return new Promise((resolve, reject) => {
                 socketRef.current?.emit(
-                    "get_specific",
+                    "libtorrent:get_specific",
                     { info_hash },
                     (response: any) => {
                         if (response?.torrent) {
@@ -78,7 +78,7 @@ export default function SocketProvider() {
 
         const socket = socketRef.current;
 
-        socket.emit("get_all", (response: GetAllResponse) => {
+        socket.emit("libtorrent:get_all", (response: GetAllResponse) => {
             if (response?.torrents) {
                 latestTorrentsRef.current = response.torrents.map(
                     (torrent) => ({
@@ -136,10 +136,10 @@ export default function SocketProvider() {
             }
         };
 
-        socket.on("broadcast", handleBroadcast);
+        socket.on("libtorrent:broadcast", handleBroadcast);
 
         return () => {
-            socket.off("broadcast", handleBroadcast);
+            socket.off("libtorrent:broadcast", handleBroadcast);
         };
     }, [getSpecificTorrentFromSocket, setTorrent]);
 
@@ -147,7 +147,7 @@ export default function SocketProvider() {
         if (!socketRef.current || torrent === null) return;
 
         socketRef.current.emit(
-            "broadcast",
+            "libtorrent:broadcast",
             { event: "start" },
             (response: BroadcastResponse) => {
                 if (response.status !== "success") {
@@ -169,7 +169,7 @@ export default function SocketProvider() {
         const { info_hash, remove_data } = removeItem;
 
         socketRef.current.emit(
-            "remove",
+            "libtorrent:remove",
             { info_hash, remove_data },
             (response: PauseResponse) => {
                 if (response.status === "success") {
@@ -196,7 +196,7 @@ export default function SocketProvider() {
         if (!infoHash) return;
 
         socketRef.current.emit(
-            "resume",
+            "libtorrent:resume",
             { info_hash: infoHash },
             (response: PauseResponse) => {
                 if (response.status === "success") {
@@ -220,7 +220,7 @@ export default function SocketProvider() {
         if (!infoHash) return;
 
         socketRef.current.emit(
-            "pause",
+            "libtorrent:pause",
             { info_hash: infoHash },
             (response: PauseResponse) => {
                 if (response.status === "success") {
@@ -244,7 +244,7 @@ export default function SocketProvider() {
         if (!magnet) return;
 
         socketRef.current.emit(
-            "add_magnet",
+            "libtorrent:add_magnet",
             { magnet },
             (response: MagnetResponse) => {
                 if (response.status === "success") {

@@ -7,7 +7,7 @@ import asyncio
 sio = SIO.get_instance()
 
 
-@sio.on("add_magnet")  # type: ignore
+@sio.on("libtorrent:add_magnet")  # type: ignore
 async def add_magnet(sid: str, data: dict):
     """
     Handle the 'add_magnet' event from the client.

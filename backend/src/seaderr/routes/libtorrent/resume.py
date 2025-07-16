@@ -4,7 +4,7 @@ import libtorrent as lt
 sio = SIO.get_instance()
 
 
-@sio.on("resume")  # type: ignore
+@sio.on("libtorrent:resume")  # type: ignore
 async def resume(sid: str, data: dict):
     """
     Handle the 'resume' event from the client.

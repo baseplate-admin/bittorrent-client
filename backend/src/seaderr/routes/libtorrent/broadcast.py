@@ -192,7 +192,7 @@ async def shared_poll_and_broadcast():
         await asyncio.sleep(0.5)
 
 
-@sio.on("broadcast")  # type: ignore
+@sio.on("libtorrent:broadcast")  # type: ignore
 async def handle_broadcast_request(sid: str, data: dict):
     global poller_started
 

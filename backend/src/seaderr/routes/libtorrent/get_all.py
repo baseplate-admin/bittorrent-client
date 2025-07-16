@@ -4,7 +4,7 @@ import libtorrent as lt
 sio = SIO.get_instance()
 
 
-@sio.on("get_all")  # type: ignore
+@sio.on("libtorrent:get_all")  # type: ignore
 async def get_all(sid: str):
     ses = await LibtorrentSession.get_session()
     handles = ses.get_torrents()

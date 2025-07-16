@@ -4,7 +4,7 @@ import libtorrent as lt
 sio = SIO.get_instance()
 
 
-@sio.on("pause")  # type: ignore
+@sio.on("libtorrent:pause")  # type: ignore
 async def pause(sid: str, data: dict):
     """
     Handle the 'pause' event from the client.

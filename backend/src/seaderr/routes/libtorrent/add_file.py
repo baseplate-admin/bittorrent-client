@@ -5,7 +5,7 @@ sio = SIO.get_instance()
 logger = Logger.get_logger()
 
 
-@sio.on("add_file")  # type: ignore
+@sio.on("libtorrent:add_file")  # type: ignore
 async def add_file(sid: str, data: dict):
     lt_session = await LibtorrentSession.get_session()
 

@@ -5,7 +5,7 @@ from cross_platform_folder_picker import open_folder_picker
 sio = SIO.get_instance()
 
 
-@sio.on("pick_folder")  # type: ignore
+@sio.on("bridge:pick_folder")  # type: ignore
 async def pick_folder(sid: str):
     """
     Handle the 'pick_folder' event from the client.

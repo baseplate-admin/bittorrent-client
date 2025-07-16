@@ -210,7 +210,7 @@ const FileDialog = () => {
     const socket = useSocketConnection();
     const [folderValue, setFolderValue] = useState<string>("");
     const handleFolderLocationClick = () => {
-        socket.current?.emit("pick_folder", (response: any) => {
+        socket.current?.emit("bridge:pick_folder", (response: any) => {
             console.log(response);
 
             if (response.status === "success") {
@@ -228,22 +228,27 @@ const FileDialog = () => {
                     <DialogHeader>
                         <DialogTitle>Save Torrent</DialogTitle>
                     </DialogHeader>
-                    <div className="grid gap-3">
-                        <Label htmlFor="save-location">Save at</Label>
-                        <div className="flex items-center gap-3">
-                            <Input
-                                id="save-location"
-                                value={folderValue}
-                                onChange={(e) => setFolderValue(e.target.value)}
-                                placeholder="Select a folder to save the torrent"
-                            />
-                            <Button
-                                size="icon"
-                                onClick={handleFolderLocationClick}
-                            >
-                                <Folder />
-                            </Button>
+                    <div className="flex">
+                        <div className="grid gap-3">
+                            <Label htmlFor="save-location">Save at</Label>
+                            <div className="flex items-center gap-3">
+                                <Input
+                                    id="save-location"
+                                    value={folderValue}
+                                    onChange={(e) =>
+                                        setFolderValue(e.target.value)
+                                    }
+                                    placeholder="Select a folder to save the torrent"
+                                />
+                                <Button
+                                    size="icon"
+                                    onClick={handleFolderLocationClick}
+                                >
+                                    <Folder />
+                                </Button>
+                            </div>
                         </div>
+                        <div>hello</div>
                     </div>
 
                     <DialogFooter>

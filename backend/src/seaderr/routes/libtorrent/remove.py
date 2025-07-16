@@ -4,7 +4,7 @@ import libtorrent as lt
 sio = SIO.get_instance()
 
 
-@sio.on("remove")  # type: ignore
+@sio.on("libtorrent:remove")  # type: ignore
 async def remove(sid: str, data: dict):
     ses = await LibtorrentSession.get_session()
     info_hash = data.get("info_hash")

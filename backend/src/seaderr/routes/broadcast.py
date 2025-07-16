@@ -53,6 +53,16 @@ async def serialize_alert(alert) -> dict:
             }
 
         case lt.state_update_alert():
+            lt_state_map = {
+                lt.torrent_status.queued_for_checking: "queued_for_checking",
+                lt.torrent_status.checking_files: "checking_files",
+                lt.torrent_status.downloading_metadata: "downloading_metadata",
+                lt.torrent_status.downloading: "downloading",
+                lt.torrent_status.finished: "finished",
+                lt.torrent_status.seeding: "seeding",
+                lt.torrent_status.allocating: "allocating",
+                lt.torrent_status.checking_resume_data: "checking_resume_data",
+            }
             statuses = []
             for st in alert.status:
                 peers_info = []
@@ -77,22 +87,24 @@ async def serialize_alert(alert) -> dict:
                     peers_info = []
                     seeders = 0
 
+                state_str = lt_state_map.get(st.state, "unknown")
+
                 statuses.append(
                     {
                         "info_hash": str(st.info_hash),
                         "name": st.name,
+                        
                         "progress": st.progress,
                         "download_rate": st.download_rate,
                         "upload_rate": st.upload_rate,
                         "num_peers": st.num_peers,
                         "seeders": seeders,
-                        "state": st.state,
+                        "state": state_str,  # <-- use string here
                         "peers": peers_info,
                     }
                 )
 
             return {"type": "state_update", "statuses": statuses}
-
         case lt.dht_stats_alert():
             active_requests = [
                 {

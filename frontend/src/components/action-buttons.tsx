@@ -12,8 +12,10 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import React, { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
@@ -74,20 +76,22 @@ export default function ActionButtons() {
                         <p className="text-sm italic">
                             One link per line (Magnet links are supported)
                         </p>
-                        <div className="flex w-full items-center justify-center gap-4">
-                            <Button
-                                onClick={() =>
-                                    handleDownloadButtonClick(closeDialog)
-                                }
-                                variant="outline"
-                            >
-                                Download
-                            </Button>
-                            <Button variant="outline" onClick={closeDialog}>
-                                Cancel
-                            </Button>
-                        </div>
                     </div>
+                ),
+                footer: (
+                    <>
+                        <Button
+                            onClick={() =>
+                                handleDownloadButtonClick(closeDialog)
+                            }
+                            variant="outline"
+                        >
+                            Download
+                        </Button>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogTrigger>
+                    </>
                 ),
             }),
         },
@@ -115,20 +119,22 @@ export default function ActionButtons() {
                         <p className="text-sm italic">
                             You can select multiple torrent files.
                         </p>
-                        <div className="flex w-full items-center justify-center gap-4">
-                            <Button
-                                onClick={() =>
-                                    handleTorrentAddButtonClick(closeDialog)
-                                }
-                                variant="outline"
-                            >
-                                Add
-                            </Button>
-                            <Button variant="outline" onClick={closeDialog}>
-                                Cancel
-                            </Button>
-                        </div>
                     </div>
+                ),
+                footer: (
+                    <>
+                        <Button
+                            onClick={() =>
+                                handleTorrentAddButtonClick(closeDialog)
+                            }
+                            variant="outline"
+                        >
+                            Add
+                        </Button>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogTrigger>
+                    </>
                 ),
             }),
         },
@@ -138,6 +144,7 @@ export default function ActionButtons() {
             getDialog: () => ({
                 title: "Settings",
                 content: <div>Settings go here</div>,
+                footer: <></>,
             }),
         },
     ];
@@ -153,7 +160,8 @@ export default function ActionButtons() {
                     };
 
                     const closeDialog = () => setOpenDialogIndex(null);
-                    const { title, content } = item.getDialog(closeDialog);
+                    const { title, content, footer } =
+                        item.getDialog(closeDialog);
 
                     return (
                         <Dialog
@@ -185,6 +193,7 @@ export default function ActionButtons() {
                                         {content}
                                     </DialogDescription>
                                 </DialogHeader>
+                                <DialogFooter>{footer}</DialogFooter>
                             </DialogContent>
                         </Dialog>
                     );

@@ -88,8 +88,12 @@ async def serialize_alert(alert) -> dict:
                     seeders = 0
 
                 state_str = lt_state_map.get(st.state, "unknown")
-                torrent_info = st.handle.get_torrent_info()
-                total_size = torrent_info.total_size() if torrent_info else 0
+
+                try:
+                    total_size = st.handle.get_torrent_info().total_size()
+                except (RuntimeError, AttributeError):
+                    # Torrent removed while broadcasting
+                    total_size = 0
 
                 statuses.append(
                     {

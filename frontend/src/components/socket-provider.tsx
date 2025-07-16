@@ -166,11 +166,11 @@ export default function SocketProvider() {
 
         const removeItem = peekQueue(torrentRemoveQueue);
         if (!removeItem) return;
-        const { info_hash, remove_content } = removeItem;
+        const { info_hash, remove_data } = removeItem;
 
         socketRef.current.emit(
             "remove",
-            { info_hash, remove_content },
+            { info_hash, remove_data },
             (response: PauseResponse) => {
                 if (response.status === "success") {
                     dequeue(torrentRemoveQueue, setTorrentRemoveQueue);

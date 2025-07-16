@@ -173,6 +173,14 @@ function RowContextMenu({
         setOpen: (open: boolean) => void;
         remove_data: boolean;
     }) => {
+        setTorrentRemoveQueue((prev) => {
+            const object = {
+                info_hash: data.info_hash,
+                remove_data: remove_data,
+            };
+            if (!prev) return [object];
+            return [...prev, object];
+        });
         setOpen(false);
     };
 

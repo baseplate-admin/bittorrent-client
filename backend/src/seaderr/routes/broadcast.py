@@ -57,15 +57,12 @@ async def serialize_alert(alert) -> dict:
             for st in alert.status:
                 peers_info = []
                 seeders = 0
-                leechers = 0
                 try:
                     peers = st.handle.get_peer_info()
                     for p in peers:
                         is_seed = bool(p.flags & lt.peer_info.seed)
                         if is_seed:
                             seeders += 1
-                        else:
-                            leechers += 1
 
                         peers_info.append(
                             {
@@ -79,11 +76,6 @@ async def serialize_alert(alert) -> dict:
                 except Exception:
                     peers_info = []
                     seeders = 0
-                    leechers = 0
-
-                unknown_peers = st.num_peers - (seeders + leechers)
-                if unknown_peers < 0:
-                    unknown_peers = 0
 
                 statuses.append(
                     {
@@ -94,8 +86,6 @@ async def serialize_alert(alert) -> dict:
                         "upload_rate": st.upload_rate,
                         "num_peers": st.num_peers,
                         "seeders": seeders,
-                        "leechers": leechers,
-                        "unknown_peers": unknown_peers,
                         "state": st.state,
                         "peers": peers_info,
                     }

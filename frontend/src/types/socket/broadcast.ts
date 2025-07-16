@@ -13,8 +13,6 @@ export type SerializedAlert =
               num_peers: number;
               state: number;
               seeders: number;
-              leechers: number;
-              unknown_peers: number;
           }[];
       }
     | {

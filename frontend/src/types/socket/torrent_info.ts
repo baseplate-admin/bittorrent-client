@@ -13,6 +13,5 @@ export interface TorrentInfo {
     num_peers: number;
     seeders: number;
     leechers: number;
-    unknown_peers: number;
     peers: TorrentPeer[]; // New field
 }

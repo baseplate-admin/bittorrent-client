@@ -339,7 +339,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
             <DialogTrigger asChild>
                 <Button variant="outline">Add Torrent</Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[480px] overflow-auto sm:max-w-[700px]">
+            <DialogContent className="min-w-[40vw] sm:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Save Torrent</DialogTitle>
                 </DialogHeader>
@@ -373,59 +373,6 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                                 </Button>
                             </div>
                         </div>
-
-                        {/* Torrent Metadata and Information */}
-                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
-                            <legend className="font-medium text-gray-300">
-                                Torrent Information
-                            </legend>
-                            <div>
-                                <strong>Name:</strong>{" "}
-                                {metadata?.name || "Not Available"}
-                            </div>
-                            <div>
-                                <strong>Size:</strong>{" "}
-                                {metadata?.size ||
-                                    "Not available (Free space on disk: 736.55 GiB)"}
-                            </div>
-                            <div>
-                                <strong>Date:</strong> Not Available
-                            </div>
-                            <div>
-                                <strong>Info hash v1:</strong>{" "}
-                                {metadata?.info_hash ||
-                                    "c37c904c8bc99ef12a674b105748cdb3f6609e04"}
-                            </div>
-                            <div>
-                                <strong>Info hash v2:</strong> N/A
-                            </div>
-                            <div>
-                                <strong>Comment:</strong> Not Available
-                            </div>
-                        </fieldset>
-
-                        {/* Confirm / Cancel buttons */}
-                        {metadata && (
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={confirmAddTorrent}
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <Loader2Icon className="animate-spin" />
-                                    ) : (
-                                        "Add Torrent"
-                                    )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={cancelTorrent}
-                                    disabled={loading}
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
-                        )}
 
                         {/* Incomplete torrent path checkbox and input */}
                         <div className="grid gap-1">
@@ -528,23 +475,35 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                                 </Select>
                             </div>
                         </fieldset>
-
-                        {/* Never show again checkbox */}
-                        <div className="flex items-center gap-2 text-sm">
-                            <Checkbox
-                                id="never-show"
-                                checked={neverShowAgain}
-                                onCheckedChange={(checked) =>
-                                    setNeverShowAgain(!!checked)
-                                }
-                            />
-                            <Label
-                                htmlFor="never-show"
-                                className="cursor-pointer"
-                            >
-                                Never show again
-                            </Label>
-                        </div>
+                        {/* Torrent Metadata and Information */}
+                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
+                            <legend className="font-medium text-gray-300">
+                                Torrent Information
+                            </legend>
+                            <div>
+                                <strong>Name:</strong>{" "}
+                                {metadata?.name || "Not Available"}
+                            </div>
+                            <div>
+                                <strong>Size:</strong>{" "}
+                                {metadata?.size ||
+                                    "Not available (Free space on disk: 736.55 GiB)"}
+                            </div>
+                            <div>
+                                <strong>Date:</strong> Not Available
+                            </div>
+                            <div>
+                                <strong>Info hash v1:</strong>{" "}
+                                {metadata?.info_hash ||
+                                    "c37c904c8bc99ef12a674b105748cdb3f6609e04"}
+                            </div>
+                            <div>
+                                <strong>Info hash v2:</strong> N/A
+                            </div>
+                            <div>
+                                <strong>Comment:</strong> Not Available
+                            </div>
+                        </fieldset>
                     </div>
 
                     {/* Right side file list preview */}
@@ -582,12 +541,28 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
 
                 <DialogFooter className="mt-6 flex justify-end gap-3">
                     <DialogClose asChild>
-                        <Button
-                            variant="outline"
-                            disabled={loading || folderLoading}
-                        >
-                            Close
-                        </Button>
+                        {/* Confirm / Cancel buttons */}
+                        {metadata && (
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={confirmAddTorrent}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <Loader2Icon className="animate-spin" />
+                                    ) : (
+                                        "Add Torrent"
+                                    )}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={cancelTorrent}
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        )}
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>

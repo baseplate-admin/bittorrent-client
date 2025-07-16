@@ -5,12 +5,12 @@ import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-type RowData = TorrentInfo[0];
+
 const columnsMetadata: {
     key: string;
     cell?: (context: {
         getValue: () => any;
-        row: { original: RowData };
+        row: { original: TorrentInfo };
     }) => React.ReactNode;
     keyName?: string;
 }[] = [

@@ -28,6 +28,15 @@ import {
 } from "@/atoms/torrent";
 import { Label } from "./ui/label";
 import { useSocketConnection } from "@/hooks/use-socket";
+import { Checkbox } from "./ui/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "./ui/select";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -206,59 +215,212 @@ export default function ActionButtons() {
         </div>
     );
 }
-const FileDialog = () => {
+export const FileDialog = () => {
     const socket = useSocketConnection();
-    const [folderValue, setFolderValue] = useState<string>("");
+    const [folderValue, setFolderValue] = useState("");
+    const [incompletePathEnabled, setIncompletePathEnabled] = useState(false);
+    const [rememberPath, setRememberPath] = useState(false);
+    const [neverShowAgain, setNeverShowAgain] = useState(false);
+
     const handleFolderLocationClick = () => {
         socket.current?.emit("bridge:pick_folder", (response: any) => {
-            console.log(response);
-
             if (response.status === "success") {
                 setFolderValue(response.path);
             }
         });
     };
+
     return (
         <Dialog>
-            <form>
-                <DialogTrigger asChild>
-                    <Button variant="outline">Open Dialog</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Save Torrent</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex">
-                        <div className="grid gap-3">
+            <DialogTrigger asChild>
+                <Button variant="outline">Add Torrent</Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[480px] overflow-auto sm:max-w-[700px]">
+                <DialogHeader>
+                    <DialogTitle>Save Torrent</DialogTitle>
+                </DialogHeader>
+
+                <div className="flex gap-6">
+                    <div className="flex w-[350px] flex-col gap-6">
+                        {/* Save at input */}
+                        <div className="grid gap-1">
                             <Label htmlFor="save-location">Save at</Label>
-                            <div className="flex items-center gap-3">
+                            <div className="flex gap-2">
                                 <Input
                                     id="save-location"
                                     value={folderValue}
                                     onChange={(e) =>
                                         setFolderValue(e.target.value)
                                     }
-                                    placeholder="Select a folder to save the torrent"
+                                    placeholder="Select folder to save torrent"
+                                    className="flex-grow"
                                 />
                                 <Button
                                     size="icon"
                                     onClick={handleFolderLocationClick}
+                                    aria-label="Pick folder"
                                 >
                                     <Folder />
                                 </Button>
                             </div>
                         </div>
-                        <div>hello</div>
+
+                        {/* Incomplete torrent path checkbox and input */}
+                        <div className="grid gap-1">
+                            <Label
+                                className="inline-flex cursor-pointer items-center gap-2"
+                                htmlFor="incomplete-path-checkbox"
+                            >
+                                <Checkbox
+                                    id="incomplete-path-checkbox"
+                                    checked={incompletePathEnabled}
+                                    onCheckedChange={(checked) =>
+                                        setIncompletePathEnabled(!!checked)
+                                    }
+                                />
+                                Use another path for incomplete torrent
+                            </Label>
+                            <Input
+                                placeholder="Folder for incomplete files"
+                                disabled={!incompletePathEnabled}
+                                className="mt-1"
+                            />
+                        </div>
+
+                        {/* Remember last path */}
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="remember-path"
+                                checked={rememberPath}
+                                onCheckedChange={(checked) =>
+                                    setRememberPath(!!checked)
+                                }
+                            />
+                            <Label
+                                htmlFor="remember-path"
+                                className="cursor-pointer"
+                            >
+                                Remember last used save path
+                            </Label>
+                        </div>
+
+                        {/* Torrent options */}
+                        <fieldset className="space-y-2 rounded border p-3">
+                            <legend className="font-medium">
+                                Torrent options
+                            </legend>
+                            <div className="grid gap-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Input
+                                    id="category"
+                                    placeholder="Select category"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="tags">Tags</Label>
+                                <Input
+                                    id="tags"
+                                    placeholder="Add/remove tags"
+                                />
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                    <Checkbox />
+                                    Start torrent
+                                </Label>
+                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                    <Checkbox />
+                                    Add to top of queue
+                                </Label>
+                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                    <Checkbox />
+                                    Download in sequential order
+                                </Label>
+                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                    <Checkbox />
+                                    Skip hash check
+                                </Label>
+                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                    <Checkbox />
+                                    Download first and last pieces first
+                                </Label>
+                            </div>
+                            <div className="grid max-w-xs gap-2">
+                                <Label htmlFor="content-layout">
+                                    Content layout
+                                </Label>
+                                <Select defaultValue="Original">
+                                    <SelectTrigger className="rounded border px-2 py-1">
+                                        <SelectValue placeholder="Select content layout" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectItem value="Original">
+                                                Original
+                                            </SelectItem>
+                                            <SelectItem value="Custom">
+                                                Custom
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </fieldset>
+
+                        {/* Torrent information */}
+                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
+                            <legend className="font-medium text-gray-300">
+                                Torrent information
+                            </legend>
+                            <div>
+                                <strong>Size:</strong> Not available (Free space
+                                on disk: 736.55 GiB)
+                            </div>
+                            <div>
+                                <strong>Date:</strong> Not Available
+                            </div>
+                            <div>
+                                <strong>Info hash v1:</strong>{" "}
+                                c37c904c8bc99ef12a674b105748cdb3f6609e04
+                            </div>
+                            <div>
+                                <strong>Info hash v2:</strong> N/A
+                            </div>
+                            <div>
+                                <strong>Comment:</strong> Not Available
+                            </div>
+                        </fieldset>
+
+                        <div className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                                id="never-show"
+                                checked={neverShowAgain}
+                                onCheckedChange={(checked) =>
+                                    setNeverShowAgain(!!checked)
+                                }
+                            />
+                            <Label
+                                htmlFor="never-show"
+                                className="cursor-pointer"
+                            >
+                                Never show again
+                            </Label>
+                        </div>
                     </div>
 
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </form>
+                    {/* Right side placeholder */}
+                    <div className="flex-1 rounded border bg-black/10 p-3 text-center text-gray-500">
+                        File list preview (empty)
+                    </div>
+                </div>
+
+                <DialogFooter className="mt-6 flex justify-end gap-3">
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button type="submit">OK</Button>
+                </DialogFooter>
+            </DialogContent>
         </Dialog>
     );
 };

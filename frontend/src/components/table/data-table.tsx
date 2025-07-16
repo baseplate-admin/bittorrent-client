@@ -23,18 +23,14 @@ import {
     ContextMenuCheckboxItem,
     ContextMenuContent,
     ContextMenuItem,
-    ContextMenuLabel,
-    ContextMenuRadioGroup,
-    ContextMenuRadioItem,
     ContextMenuSeparator,
-    ContextMenuShortcut,
     ContextMenuSub,
     ContextMenuSubContent,
     ContextMenuSubTrigger,
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
@@ -68,52 +64,45 @@ function RowContextMenu({
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-            <ContextMenuContent className="w-52">
-                <ContextMenuItem inset>
-                    Back
-                    <ContextMenuShortcut>⌘[</ContextMenuShortcut>
-                </ContextMenuItem>
+            <ContextMenuContent className="w-68">
+                <ContextMenuItem inset>Start</ContextMenuItem>
                 <ContextMenuItem inset disabled>
-                    Forward
-                    <ContextMenuShortcut>⌘]</ContextMenuShortcut>
+                    Stop
                 </ContextMenuItem>
-                <ContextMenuItem inset>
-                    Reload
-                    <ContextMenuShortcut>⌘R</ContextMenuShortcut>
-                </ContextMenuItem>
+                <ContextMenuItem inset>Force Start</ContextMenuItem>
+                <ContextMenuItem inset>Remove</ContextMenuItem>
+                <ContextMenuItem inset>Rename</ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem inset>Set Location</ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuSub>
+                    <ContextMenuSubTrigger inset>Tags</ContextMenuSubTrigger>
+                    <ContextMenuSubContent className="w-44">
+                        <ContextMenuItem>Add</ContextMenuItem>
+                        <ContextMenuItem>Edit</ContextMenuItem>
+                        <ContextMenuItem>Remove All</ContextMenuItem>
+                    </ContextMenuSubContent>
+                </ContextMenuSub>
                 <ContextMenuSub>
                     <ContextMenuSubTrigger inset>
-                        More Tools
+                        Category
                     </ContextMenuSubTrigger>
                     <ContextMenuSubContent className="w-44">
-                        <ContextMenuItem>Save Page...</ContextMenuItem>
-                        <ContextMenuItem>Create Shortcut...</ContextMenuItem>
-                        <ContextMenuItem>Name Window...</ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem>Developer Tools</ContextMenuItem>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem variant="destructive">
-                            Delete
-                        </ContextMenuItem>
+                        <ContextMenuItem>Add</ContextMenuItem>
+                        <ContextMenuItem>Edit</ContextMenuItem>
+                        <ContextMenuItem>Remove All</ContextMenuItem>
                     </ContextMenuSubContent>
                 </ContextMenuSub>
                 <ContextMenuSeparator />
-                <ContextMenuCheckboxItem checked>
-                    Show Bookmarks
+                <ContextMenuCheckboxItem>
+                    Automatic Torrent Management
                 </ContextMenuCheckboxItem>
                 <ContextMenuCheckboxItem>
-                    Show Full URLs
+                    Super Seeding Mode
                 </ContextMenuCheckboxItem>
                 <ContextMenuSeparator />
-                <ContextMenuRadioGroup value="pedro">
-                    <ContextMenuLabel inset>People</ContextMenuLabel>
-                    <ContextMenuRadioItem value="pedro">
-                        Pedro Duarte
-                    </ContextMenuRadioItem>
-                    <ContextMenuRadioItem value="colm">
-                        Colm Tuite
-                    </ContextMenuRadioItem>
-                </ContextMenuRadioGroup>
+                <ContextMenuItem inset>Force Recheck</ContextMenuItem>
+                <ContextMenuItem inset>Force Reannounce</ContextMenuItem>
             </ContextMenuContent>
         </ContextMenu>
     );

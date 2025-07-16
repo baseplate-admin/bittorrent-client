@@ -108,8 +108,9 @@ export default function SocketProvider() {
                                 upload_rate: status.upload_rate,
                                 num_peers: status.num_peers,
                                 seeders: status.seeders,
+
                                 leechers: status.num_peers - status.seeders,
-                                // @ts-expect-error: might not match type
+                                total_size: status.total_size,
                                 state: status.state,
                             };
                         }

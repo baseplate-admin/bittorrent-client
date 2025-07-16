@@ -11,8 +11,9 @@ export type SerializedAlert =
               upload_rate: number;
               info_hash: string;
               num_peers: number;
-              state: number;
+              state: string;
               seeders: number;
+              total_size: number;
           }[];
       }
     | {

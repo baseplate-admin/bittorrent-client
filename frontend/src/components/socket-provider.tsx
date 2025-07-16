@@ -30,7 +30,9 @@ export default function SocketProvider() {
     const [torrentResumeQueue, setTorrentResumeQueue] = useAtom(
         torrentResumeQueueAtom,
     );
-    const [torrentRemoveQueue] = useAtom(torrentRemoveQueueAtom);
+    const [torrentRemoveQueue, setTorrentRemoveQueue] = useAtom(
+        torrentRemoveQueueAtom,
+    );
 
     const latestTorrentsRef = useRef<TorrentInfo[]>([]);
     const socketRef = useSocketConnection();
@@ -157,6 +159,33 @@ export default function SocketProvider() {
             },
         );
     }, [torrent]);
+
+    // Remove torrent queue
+    useEffect(() => {
+        if (!socketRef.current || torrentRemoveQueue.length === 0) return;
+
+        const infoHash = peekQueue(torrentRemoveQueue);
+        if (!infoHash) return;
+
+        socketRef.current.emit(
+            "remove",
+            { info_hash: infoHash },
+            (response: PauseResponse) => {
+                if (response.status === "success") {
+                    dequeue(torrentRemoveQueue, setTorrentRemoveQueue);
+                    latestTorrentsRef.current =
+                        latestTorrentsRef.current.filter(
+                            (t) => t.info_hash !== infoHash,
+                        );
+                } else {
+                    console.error(
+                        "Failed to remove torrent:",
+                        response.message,
+                    );
+                }
+            },
+        );
+    }, [torrentRemoveQueue, setTorrentRemoveQueue]);
 
     // Resume torrent queue
     useEffect(() => {

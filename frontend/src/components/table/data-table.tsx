@@ -84,6 +84,13 @@ function RowContextMenu({
         });
     };
 
+    const handleRemoveButtonClick = () => {
+        setTorrentRemoveQueue((prev) => {
+            if (!prev) return [data.info_hash];
+            return [...prev, data.info_hash];
+        });
+    };
+
     return (
         <ContextMenu>
             <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
@@ -106,7 +113,7 @@ function RowContextMenu({
                     <PlayCircle className="mr-2 h-4 w-4" />
                     Force Start
                 </ContextMenuItem>
-                <ContextMenuItem>
+                <ContextMenuItem onClick={handleRemoveButtonClick}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Remove
                 </ContextMenuItem>

@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { snakeToSpace } from "@/lib/snakeToSpace";
+import { useEffect, useRef, useState } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const columnsMetadata: {
     key: string;
@@ -37,12 +39,52 @@ const columnsMetadata: {
         key: "progress",
         cell: ({ getValue }) => {
             const progress = getValue();
+            const [open, setOpen] = useState(false);
+            const timerRef = useRef<number | null>(null);
+
+            const startTimer = () => {
+                if (timerRef.current) {
+                    clearTimeout(timerRef.current);
+                }
+                timerRef.current = window.setTimeout(() => {
+                    setOpen(true);
+                }, 200);
+            };
+
+            const handleMouseEnter = () => {
+                startTimer();
+            };
+
+            const handleMouseMove = () => {
+                startTimer();
+            };
+
+            const handleMouseLeave = () => {
+                if (timerRef.current) {
+                    clearTimeout(timerRef.current);
+                    timerRef.current = null;
+                }
+                setOpen(false);
+            };
+
             return (
-                <progress
-                    max={100}
-                    value={progress}
-                    className="bg-muted h-3 w-full rounded"
-                />
+                <Tooltip open={open}>
+                    <TooltipTrigger
+                        asChild
+                        onMouseMove={handleMouseMove}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                    >
+                        <progress
+                            max={100}
+                            value={progress}
+                            className="bg-muted h-3 w-full rounded"
+                        />
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="center">
+                        {progress}%
+                    </TooltipContent>
+                </Tooltip>
             );
         },
     },

@@ -37,6 +37,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "./ui/select";
+import { formatBytes } from "@/lib/formatBytes";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -164,7 +165,7 @@ export default function ActionButtons() {
     return (
         <div className="mb-4 flex rounded-md border p-4">
             <div className="flex gap-5">
-                <FileDialog />
+                <FileDialog magnetLink="magnet:?xt=urn:btih:C37C904C8BC99EF12A674B105748CDB3F6609E04&dn=Ballerina.2025.1080p.WEB-DL.DDP5.1.x265-NeoNoir&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce&tr=http%3A%2F%2Fopen.tracker.cl%3A1337%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Fexplodie.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fexodus.desync.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.ololosh.space%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.dump.cl%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.bittor.pw%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker-udp.gbitt.info%3A80%2Fannounce&tr=udp%3A%2F%2Fretracker01-msk-virt.corbina.net%3A80%2Fannounce&tr=udp%3A%2F%2Fopen.free-tracker.ga%3A6969%2Fannounce&tr=udp%3A%2F%2Fns-1.x-fins.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fcoppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.zer0day.to%3A1337%2Fannounce" />
                 {mapping.map((item, index) => {
                     const isOpen = openDialogIndex === index;
 
@@ -215,28 +216,126 @@ export default function ActionButtons() {
         </div>
     );
 }
-export const FileDialog = () => {
+interface FileInfo {
+    path: string;
+    size: number;
+}
+
+interface Metadata {
+    name?: string;
+    size?: string;
+    info_hash?: string;
+}
+
+const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
     const socket = useSocketConnection();
+
     const [folderValue, setFolderValue] = useState("");
+    const [folderLoading, setFolderLoading] = useState(false);
+
+    const [metadata, setMetadata] = useState<Metadata | null>(null);
+    const [files, setFiles] = useState<FileInfo[]>([]);
+    const [torrentId, setTorrentId] = useState<number | null>(null);
+    const [loading, setLoading] = useState(false);
+
     const [incompletePathEnabled, setIncompletePathEnabled] = useState(false);
     const [rememberPath, setRememberPath] = useState(false);
     const [neverShowAgain, setNeverShowAgain] = useState(false);
-    const [folderLoading, setFolderLoading] = useState(false);
 
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    // Fetch metadata when dialog opens or magnetLink changes
+    useEffect(() => {
+        if (!dialogOpen) return;
+        if (!magnetLink) return;
+
+        setLoading(true);
+        socket.current?.emit(
+            "libtorrent:add_magnet",
+            {
+                action: "fetch_metadata",
+                magnet: magnetLink,
+                save_path: folderValue || ".",
+            },
+            (response: {
+                status: string;
+                message?: string;
+                metadata?: Metadata;
+                torrent_id?: number;
+                files?: FileInfo[];
+            }) => {
+                setLoading(false);
+                if (response.status === "success") {
+                    setMetadata(response.metadata || null);
+                    setTorrentId(response.torrent_id || null);
+                    setFiles(response.files || []);
+                } else {
+                    alert(`Error fetching metadata: ${response.message}`);
+                    setMetadata(null);
+                    setFiles([]);
+                }
+            },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dialogOpen, magnetLink]);
+
+    // Folder picker
     const handleFolderLocationClick = () => {
+        setFolderLoading(true);
         socket.current?.emit("bridge:pick_folder", (response: any) => {
-            if (response) {
-                setFolderLoading(false);
-            }
-
-            if (response.status === "success") {
+            setFolderLoading(false);
+            if (response?.status === "success") {
                 setFolderValue(response.path);
             }
         });
     };
 
+    const confirmAddTorrent = () => {
+        if (!torrentId) return;
+        setLoading(true);
+        socket.current?.emit(
+            "libtorrent:add_magnet",
+            { action: "add", torrent_id: torrentId },
+            (response: any) => {
+                setLoading(false);
+                if (response.status === "success") {
+                    alert("Torrent added successfully!");
+                    resetForm();
+                    setDialogOpen(false);
+                } else {
+                    alert(`Error adding torrent: ${response.message}`);
+                }
+            },
+        );
+    };
+
+    const cancelTorrent = () => {
+        if (!torrentId) return;
+        setLoading(true);
+        socket.current?.emit(
+            "libtorrent:add_magnet",
+            { action: "cancel", torrent_id: torrentId },
+            (response: any) => {
+                setLoading(false);
+                if (response.status === "success") {
+                    alert("Torrent cancelled.");
+                    resetForm();
+                    setDialogOpen(false);
+                } else {
+                    alert(`Error cancelling torrent: ${response.message}`);
+                }
+            },
+        );
+    };
+
+    const resetForm = () => {
+        setMetadata(null);
+        setFiles([]);
+        setTorrentId(null);
+    };
+
     return (
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
                 <Button variant="outline">Add Torrent</Button>
             </DialogTrigger>
@@ -263,10 +362,7 @@ export const FileDialog = () => {
                                 <Button
                                     size="icon"
                                     disabled={folderLoading}
-                                    onClick={() => {
-                                        setFolderLoading(true);
-                                        handleFolderLocationClick();
-                                    }}
+                                    onClick={handleFolderLocationClick}
                                     aria-label="Pick folder"
                                 >
                                     {folderLoading ? (
@@ -277,6 +373,59 @@ export const FileDialog = () => {
                                 </Button>
                             </div>
                         </div>
+
+                        {/* Torrent Metadata and Information */}
+                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
+                            <legend className="font-medium text-gray-300">
+                                Torrent Information
+                            </legend>
+                            <div>
+                                <strong>Name:</strong>{" "}
+                                {metadata?.name || "Not Available"}
+                            </div>
+                            <div>
+                                <strong>Size:</strong>{" "}
+                                {metadata?.size ||
+                                    "Not available (Free space on disk: 736.55 GiB)"}
+                            </div>
+                            <div>
+                                <strong>Date:</strong> Not Available
+                            </div>
+                            <div>
+                                <strong>Info hash v1:</strong>{" "}
+                                {metadata?.info_hash ||
+                                    "c37c904c8bc99ef12a674b105748cdb3f6609e04"}
+                            </div>
+                            <div>
+                                <strong>Info hash v2:</strong> N/A
+                            </div>
+                            <div>
+                                <strong>Comment:</strong> Not Available
+                            </div>
+                        </fieldset>
+
+                        {/* Confirm / Cancel buttons */}
+                        {metadata && (
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={confirmAddTorrent}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <Loader2Icon className="animate-spin" />
+                                    ) : (
+                                        "Add Torrent"
+                                    )}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={cancelTorrent}
+                                    disabled={loading}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        )}
 
                         {/* Incomplete torrent path checkbox and input */}
                         <div className="grid gap-1">
@@ -380,30 +529,7 @@ export const FileDialog = () => {
                             </div>
                         </fieldset>
 
-                        {/* Torrent information */}
-                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
-                            <legend className="font-medium text-gray-300">
-                                Torrent information
-                            </legend>
-                            <div>
-                                <strong>Size:</strong> Not available (Free space
-                                on disk: 736.55 GiB)
-                            </div>
-                            <div>
-                                <strong>Date:</strong> Not Available
-                            </div>
-                            <div>
-                                <strong>Info hash v1:</strong>{" "}
-                                c37c904c8bc99ef12a674b105748cdb3f6609e04
-                            </div>
-                            <div>
-                                <strong>Info hash v2:</strong> N/A
-                            </div>
-                            <div>
-                                <strong>Comment:</strong> Not Available
-                            </div>
-                        </fieldset>
-
+                        {/* Never show again checkbox */}
                         <div className="flex items-center gap-2 text-sm">
                             <Checkbox
                                 id="never-show"
@@ -421,17 +547,48 @@ export const FileDialog = () => {
                         </div>
                     </div>
 
-                    {/* Right side placeholder */}
-                    <div className="flex-1 rounded border bg-black/10 p-3 text-center text-gray-500">
-                        File list preview (empty)
+                    {/* Right side file list preview */}
+                    <div className="max-h-[480px] flex-1 overflow-auto rounded border bg-black/10 p-3 text-left text-gray-800">
+                        <h3 className="mb-2 font-semibold text-gray-700">
+                            File List Preview
+                        </h3>
+                        {loading ? (
+                            <div className="flex items-center justify-center py-10 text-gray-500">
+                                Loading files...
+                            </div>
+                        ) : files.length === 0 ? (
+                            <div className="py-10 text-center text-gray-500">
+                                No files available
+                            </div>
+                        ) : (
+                            <ul className="max-h-[400px] overflow-auto text-sm">
+                                {files.map(({ path, size }, i) => (
+                                    <li
+                                        key={i}
+                                        className="border-b border-gray-300 py-1 last:border-b-0"
+                                    >
+                                        <div className="truncate font-mono text-xs text-gray-600">
+                                            {path}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            {formatBytes({ bytes: size })}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
 
                 <DialogFooter className="mt-6 flex justify-end gap-3">
                     <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                        <Button
+                            variant="outline"
+                            disabled={loading || folderLoading}
+                        >
+                            Close
+                        </Button>
                     </DialogClose>
-                    <Button type="submit">OK</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

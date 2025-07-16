@@ -8,7 +8,7 @@ export default function AllPage() {
     const data = useAtomValue(torrentAtom);
 
     if (data === null) {
-        return <>Loading </>;
+        return <>Loading</>;
     }
 
     return <DataTable columns={columns} data={data} />;

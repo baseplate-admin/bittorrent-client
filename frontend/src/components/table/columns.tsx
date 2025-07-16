@@ -5,10 +5,13 @@ import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-
+type RowData = TorrentInfo[0];
 const columnsMetadata: {
     key: string;
-    cell?: (context: { getValue: () => any; row: any }) => React.ReactNode;
+    cell?: (context: {
+        getValue: () => any;
+        row: { original: RowData };
+    }) => React.ReactNode;
     keyName?: string;
 }[] = [
     {
@@ -71,13 +74,26 @@ const columnsMetadata: {
     {
         key: "download_rate",
         keyName: "Download Speed",
-        cell: ({ getValue }) => (
-            <div className="flex items-center justify-center gap-2">
-                <span>
-                    {formatBytes({ bytes: getValue(), perSecond: true })}
-                </span>
-            </div>
-        ),
+        cell: ({ getValue, row }) => {
+            const progress = row.original.progress;
+            let download_rate = null;
+            if (progress === 100) {
+                download_rate = 0;
+            } else {
+                download_rate = getValue();
+            }
+            return (
+                <div className="flex items-center justify-center gap-2">
+                    <span>
+                        {download_rate !== null &&
+                            formatBytes({
+                                bytes: download_rate,
+                                perSecond: true,
+                            })}
+                    </span>
+                </div>
+            );
+        },
     },
     {
         key: "upload_rate",

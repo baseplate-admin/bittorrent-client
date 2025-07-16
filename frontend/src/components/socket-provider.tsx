@@ -70,7 +70,7 @@ export default function SocketProvider() {
         socket.emit("get_all", (response: GetAllResponse) => {
             if (response?.torrents) {
                 latestTorrentsRef.current = [...response.torrents];
-                setTorrent(response.torrents);
+                setTorrent([...response.torrents]);
             }
         });
 
@@ -101,7 +101,6 @@ export default function SocketProvider() {
                         if (index !== -1) {
                             const t = latestTorrentsRef.current[index];
 
-                            // Clone to avoid mutating the same object (preserves React reactivity)
                             latestTorrentsRef.current[index] = {
                                 ...t,
                                 progress: Number(status.progress * 100),

@@ -10,13 +10,13 @@ pending = {}
 @sio.on("libtorrent:add_magnet")  # type: ignore
 async def add_magnet(sid: str, data: dict):
     action = data.get("action", "fetch_metadata")
+    ses = await LibtorrentSession.get_session()
 
     if action == "fetch_metadata":
         magnet = data.get("magnet")
         if not magnet or not await is_valid_magnet(magnet):
             return {"status": "error", "message": "Invalid or missing magnet link"}
 
-        ses = await LibtorrentSession.get_session()
         params = {
             "save_path": data.get("save_path", "."),
             "storage_mode": lt.storage_mode_t(lt.storage_mode_t.storage_mode_sparse),
@@ -24,6 +24,7 @@ async def add_magnet(sid: str, data: dict):
         handle = lt.add_magnet_uri(ses, magnet, params)
         while not handle.has_metadata():
             await asyncio.sleep(1)
+        handle.pause()
 
         torrent_info = handle.get_torrent_info()
         metadata = await serialize_magnet_torrent_info(torrent_info)
@@ -54,8 +55,6 @@ async def add_magnet(sid: str, data: dict):
             return {"status": "error", "message": "Invalid torrent_id"}
 
         handle = pending[sid].pop(torrent_id)
-        ses = await LibtorrentSession.get_session()
-
         if action == "cancel":
             ses.remove_torrent(handle)
             return {"status": "success", "message": "Torrent cancelled"}

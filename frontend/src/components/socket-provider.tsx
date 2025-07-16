@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useAtom } from "jotai";
 import {
     torrentAtom,
@@ -34,6 +34,7 @@ export default function SocketProvider() {
         torrentRemoveQueueAtom,
     );
 
+    const [broadcastStarted, setBroadcastStarted] = useState<boolean>(false);
     const latestTorrentsRef = useRef<TorrentInfo[]>([]);
     const socketRef = useSocketConnection();
 
@@ -93,6 +94,8 @@ export default function SocketProvider() {
         });
 
         const handleBroadcast = async (response: SerializedAlert) => {
+            console.log(response);
+
             switch (response.type) {
                 case "add_torrent": {
                     const newTorrent = await getSpecificTorrentFromSocket(
@@ -104,7 +107,6 @@ export default function SocketProvider() {
                     if (!exists) {
                         latestTorrentsRef.current.push(newTorrent);
                     }
-                    console.log("Received Torrent Event");
                     break;
                 }
                 case "state_update": {
@@ -138,19 +140,21 @@ export default function SocketProvider() {
 
         socket.on("libtorrent:broadcast", handleBroadcast);
 
-        return () => {
-            socket.off("libtorrent:broadcast", handleBroadcast);
-        };
+        return () => {};
     }, [getSpecificTorrentFromSocket, setTorrent]);
 
     useEffect(() => {
+        if (broadcastStarted) return;
+
         if (!socketRef.current || torrent === null) return;
 
         socketRef.current.emit(
             "libtorrent:broadcast",
             { event: "start" },
             (response: BroadcastResponse) => {
-                if (response.status !== "success") {
+                if (response.status === "success") {
+                    setBroadcastStarted(true);
+                } else {
                     console.error(
                         "Failed to start broadcast:",
                         response.message,
@@ -158,7 +162,7 @@ export default function SocketProvider() {
                 }
             },
         );
-    }, [torrent]);
+    }, [torrent, broadcastStarted, socketRef]);
 
     // Remove torrent queue
     useEffect(() => {

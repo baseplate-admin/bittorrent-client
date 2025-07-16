@@ -1,9 +1,3 @@
-import os
+from cross_platform_folder_picker import open_folder_picker
 
-
-def open_folder(path):
-    os.startfile(path)
-
-
-# Example:
-open_folder(r"C:\\")
+open_folder_picker()

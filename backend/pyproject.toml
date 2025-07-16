@@ -8,6 +8,7 @@ dependencies = [
     "aiosqlite>=0.21.0",
     "click>=8.2.1",
     "colorama>=0.4.6",
+    "cross-platform-folder-picker>=0.0.3",
     "python-socketio>=5.13.0",
     "uvicorn>=0.35.0",
 ]

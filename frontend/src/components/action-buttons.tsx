@@ -1,6 +1,6 @@
 "use client";
 
-import { Link2, Plus, Settings } from "lucide-react";
+import { Folder, Link2, Plus, Settings } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
@@ -10,6 +10,7 @@ import { Button } from "./ui/button";
 
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -25,6 +26,8 @@ import {
     torrentUploadFileQueueAtom,
     torrentUploadMagnetQueueAtom,
 } from "@/atoms/torrent";
+import { Label } from "./ui/label";
+import { useSocketConnection } from "@/hooks/use-socket";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -152,6 +155,7 @@ export default function ActionButtons() {
     return (
         <div className="mb-4 flex rounded-md border p-4">
             <div className="flex gap-5">
+                <FileDialog />
                 {mapping.map((item, index) => {
                     const isOpen = openDialogIndex === index;
 
@@ -202,3 +206,54 @@ export default function ActionButtons() {
         </div>
     );
 }
+const FileDialog = () => {
+    const socket = useSocketConnection();
+    const [folderValue, setFolderValue] = useState<string>("");
+    const handleFolderLocationClick = () => {
+        socket.current?.emit("pick_folder", (response: any) => {
+            console.log(response);
+
+            if (response.status === "success") {
+                setFolderValue(response.path);
+            }
+        });
+    };
+    return (
+        <Dialog>
+            <form>
+                <DialogTrigger asChild>
+                    <Button variant="outline">Open Dialog</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Save Torrent</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-3">
+                        <Label htmlFor="save-location">Save at</Label>
+                        <div className="flex items-center gap-3">
+                            <Input
+                                id="save-location"
+                                value={folderValue}
+                                onChange={(e) => setFolderValue(e.target.value)}
+                                placeholder="Select a folder to save the torrent"
+                            />
+                            <Button
+                                size="icon"
+                                onClick={handleFolderLocationClick}
+                            >
+                                <Folder />
+                            </Button>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button type="submit">Save changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </form>
+        </Dialog>
+    );
+};

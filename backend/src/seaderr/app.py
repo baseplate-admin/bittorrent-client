@@ -15,7 +15,8 @@ async def on_startup():
 
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")
-    import_submodules("seaderr.routes")
+    import_submodules("seaderr.routes.libtorrent")
+    import_submodules("seaderr.routes.bridge")
 
 
 async def on_shutdown():

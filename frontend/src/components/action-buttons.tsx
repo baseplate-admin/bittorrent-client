@@ -1,6 +1,6 @@
 "use client";
 
-import { Folder, Link2, Plus, Settings } from "lucide-react";
+import { Folder, Link2, Loader2Icon, Plus, Settings } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
@@ -221,9 +221,14 @@ export const FileDialog = () => {
     const [incompletePathEnabled, setIncompletePathEnabled] = useState(false);
     const [rememberPath, setRememberPath] = useState(false);
     const [neverShowAgain, setNeverShowAgain] = useState(false);
+    const [folderLoading, setFolderLoading] = useState(false);
 
     const handleFolderLocationClick = () => {
         socket.current?.emit("bridge:pick_folder", (response: any) => {
+            if (response) {
+                setFolderLoading(false);
+            }
+
             if (response.status === "success") {
                 setFolderValue(response.path);
             }
@@ -257,10 +262,18 @@ export const FileDialog = () => {
                                 />
                                 <Button
                                     size="icon"
-                                    onClick={handleFolderLocationClick}
+                                    disabled={folderLoading}
+                                    onClick={() => {
+                                        setFolderLoading(true);
+                                        handleFolderLocationClick();
+                                    }}
                                     aria-label="Pick folder"
                                 >
-                                    <Folder />
+                                    {folderLoading ? (
+                                        <Loader2Icon className="animate-spin" />
+                                    ) : (
+                                        <Folder className="h-4 w-4" />
+                                    )}
                                 </Button>
                             </div>
                         </div>

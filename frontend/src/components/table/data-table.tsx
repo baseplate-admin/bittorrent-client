@@ -40,8 +40,6 @@ import {
     Folder,
     RefreshCcw,
     UploadCloud,
-    Settings,
-    CheckCircle,
     Plus,
 } from "lucide-react";
 import { Fragment, useState } from "react";

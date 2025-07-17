@@ -1,7 +1,19 @@
 import libtorrent as lt
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.datastructures import EventDataclass
+from seaderr.enums import SyntheticEvent
+from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
 sio = SIO.get_instance()
+event_bus = EventBus.get_bus()
+
+
+async def publish_remove_event(handle: lt.torrent_handle):
+    """Publish a synthetic event when a torrent is removed."""
+    event = EventDataclass(
+        event=SyntheticEvent.REMOVED,
+        torrent=handle,
+    )
+    await event_bus.publish(event)
 
 
 @sio.on("libtorrent:remove")  # type: ignore
@@ -24,5 +36,5 @@ async def remove(sid: str, data: dict):
 
     flags = lt.options_t.delete_files if remove_data else 0
     ses.remove_torrent(handle, flags)
-
+    sio.start_background_task(publish_remove_event, handle)
     return {"status": "success", "message": "Torrent removed"}

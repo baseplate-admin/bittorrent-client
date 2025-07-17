@@ -1,9 +1,12 @@
 export type SerializedAlert =
-    | { type: "torrent_finished"; message: string }
-    | { type: "metadata_received"; message: string }
-    | { type: "peer_connected"; message: string } // IP string
+    | { type: "synthetic:resumed"; info_hash: string }
+    | { type: "synthetic:paused"; info_hash: string }
+    | { type: "synthetic:removed"; info_hash: string }
+    | { type: "libtorrent:torrent_finished"; message: string }
+    | { type: "libtorrent:metadata_received"; message: string }
+    | { type: "libtorrent:peer_connected"; message: string } // IP string
     | {
-          type: "state_update";
+          type: "libtorrent:state_update";
           statuses: {
               name: string;
               progress: number;
@@ -17,23 +20,23 @@ export type SerializedAlert =
           }[];
       }
     | {
-          type: "tracker_error";
+          type: "libtorrent:tracker_error";
           message: string;
           url: string;
           error: string;
       }
     | {
-          type: "add_torrent";
+          type: "libtorrent:add_torrent";
           message: string;
           info_hash: string;
       }
     | {
-          type: "udp_error";
+          type: "libtorrent:udp_error";
           message: string;
           endpoint: string;
       }
     | {
-          type: "dht_stats";
+          type: "libtorrent:dht_stats";
           active_requests: {
               type: number;
               outstanding_requests: number;
@@ -50,11 +53,11 @@ export type SerializedAlert =
           }[];
       }
     | {
-          type: "session_stats_header";
+          type: "libtorrent:session_stats_header";
           counters: string[];
       }
     | {
-          type: "session_stats";
+          type: "libtorrent:session_stats";
           values: number[];
       };
 

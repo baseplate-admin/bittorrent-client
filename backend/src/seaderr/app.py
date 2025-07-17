@@ -19,7 +19,7 @@ async def on_startup():
     await LibtorrentSession.init()
 
     # Initialize the event bus
-    EventBus.init_bus()
+    EventBus.init()
 
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")

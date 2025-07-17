@@ -1,7 +1,19 @@
 import libtorrent as lt
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.datastructures import EventDataclass
+from seaderr.enums import SyntheticEvent
+from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
 sio = SIO.get_instance()
+event_bus = EventBus.get_bus()
+
+
+async def publish_resume_event(handle: lt.torrent_handle):
+    """Publish a synthetic event when a torrent is resumed."""
+    event = EventDataclass(
+        event=SyntheticEvent.RESUMED,
+        torrent=handle,
+    )
+    await event_bus.publish(event)
 
 
 @sio.on("libtorrent:resume")  # type: ignore
@@ -34,6 +46,7 @@ async def resume(sid: str, data: dict):
         handle.set_upload_mode(False)  # Re-enable uploading
         handle.auto_managed(True)  # Re-enable auto management
         handle.resume()
+        sio.start_background_task(publish_resume_event, handle)
         return {"status": "success", "message": "Torrent resumed and upload enabled"}
 
     return {"status": "info", "message": "Torrent is already active"}

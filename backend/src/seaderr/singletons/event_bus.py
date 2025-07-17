@@ -5,6 +5,10 @@ from typing import Any, Awaitable, Callable, Optional
 class EventBus:
     _instance: Optional["EventBus"] = None
 
+    _initialized: bool
+    queue: asyncio.Queue
+    _consumer: Optional[Callable[[Any], Awaitable[None]]]
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(EventBus, cls).__new__(cls)
@@ -12,28 +16,43 @@ class EventBus:
         return cls._instance
 
     def __init__(self):
-        # Prevent multiple init calls
-        if self._initialized:
-            return
-        self.queue = asyncio.Queue()
-        self._consumer: Optional[Callable[[Any], Awaitable[None]]] = None
-        self._initialized = True
+        pass
 
     @classmethod
-    def init_bus(cls) -> "EventBus":
-        """
-        Initialize the singleton EventBus instance.
-        Returns the singleton instance.
-        """
+    def get_bus(cls) -> "EventBus":
         return cls()
 
+    @classmethod
+    def init(cls):
+        instance = cls.get_bus()
+        if instance._initialized:
+            return
+        instance.queue = asyncio.Queue()
+        instance._consumer = None
+        instance._initialized = True
+
     def set_consumer(self, consumer: Callable[[Any], Awaitable[None]]):
+        if not self._initialized:
+            raise RuntimeError("Call EventBus.init() before setting consumer")
+        if self._consumer is not None:
+            raise RuntimeError("Consumer is already set and cannot be replaced")
         self._consumer = consumer
 
+    def remove_consumer(self):
+        if not self._initialized:
+            raise RuntimeError("Call EventBus.init() before removing consumer")
+        if self._consumer is None:
+            raise RuntimeError("No consumer is set to remove")
+        self._consumer = None
+
     async def publish(self, event: Any):
+        if not self._initialized:
+            raise RuntimeError("Call EventBus.init() before publishing events")
         await self.queue.put(event)
 
     async def start(self):
+        if not self._initialized:
+            raise RuntimeError("Call EventBus.init() before starting the bus")
         if not self._consumer:
             raise RuntimeError("Consumer not set")
         while True:

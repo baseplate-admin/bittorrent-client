@@ -1,7 +1,19 @@
 import libtorrent as lt
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.datastructures import EventDataclass
+from seaderr.enums import SyntheticEvent
+from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
 sio = SIO.get_instance()
+event_bus = EventBus.get_bus()
+
+
+async def publish_pause_event(handle: lt.torrent_handle):
+    """Publish a synthetic event when a torrent is paused."""
+    event = EventDataclass(
+        event=SyntheticEvent.PAUSED,
+        torrent=handle,
+    )
+    await event_bus.publish(event)
 
 
 @sio.on("libtorrent:pause")  # type: ignore
@@ -34,6 +46,7 @@ async def pause(sid: str, data: dict):
         handle.auto_managed(False)  # Disable auto-resume
         handle.set_upload_mode(True)  # Prevent seeding
         handle.pause()
+        sio.start_background_task(publish_pause_event, handle)
         return {"status": "success", "message": "Torrent paused and upload disabled"}
 
     return {"status": "info", "message": "Torrent is already paused"}

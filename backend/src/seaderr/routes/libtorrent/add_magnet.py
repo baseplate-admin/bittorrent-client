@@ -1,75 +1,103 @@
 from seaderr.singletons import SIO, LibtorrentSession
-from seaderr.utilities import is_valid_magnet, serialize_magnet_torrent_info
+from seaderr.utilities import serialize_magnet_torrent_info
+from seaderr.stores import ExpiringStore
+from seaderr.datastructures import TorrentDataclass
+from datetime import timedelta
 import libtorrent as lt
 import asyncio
 
 sio = SIO.get_instance()
-pending = {}
+torrent_store = ExpiringStore(
+    TorrentDataclass, expiry=int(timedelta(hours=1).total_seconds())
+)
 
 
 @sio.on("libtorrent:add_magnet")  # type: ignore
 async def add_magnet(sid: str, data: dict):
-    action = data.get("action", "fetch_metadata")
     ses = await LibtorrentSession.get_session()
+    action = data.get("action")
 
     if action == "fetch_metadata":
-        magnet = data.get("magnet")
-        if not magnet or not await is_valid_magnet(magnet):
-            return {"status": "error", "message": "Invalid or missing magnet link"}
+        magnet_uri = data.get("magnet_uri")
+        save_path = data.get("save_path", ".")
 
-        params = {
-            "save_path": data.get("save_path", "."),
-            "storage_mode": lt.storage_mode_t(lt.storage_mode_t.storage_mode_sparse),
-            "flags": (
-                lt.add_torrent_params_flags_t.flag_paused
-                | lt.add_torrent_params_flags_t.flag_auto_managed
-                | lt.add_torrent_params_flags_t.flag_upload_mode
-            ),
-        }
-        handle = lt.add_magnet_uri(ses, magnet, params)
+        if not magnet_uri:
+            return {"status": "error", "message": "Magnet URI is required"}
 
-        while not handle.has_metadata():
-            await asyncio.sleep(1)
+        # Add magnet to session
+        params = lt.parse_magnet_uri(magnet_uri)
+        params.save_path = save_path
+        handle = ses.add_torrent(params)
+
+        # Wait for metadata (up to 20s)
+        timeout = 20
+        interval = 0.5
+        waited = 0
+        while not handle.has_metadata() and waited < timeout:
+            await asyncio.sleep(interval)
+            waited += interval
+
+        if not handle.has_metadata():
+            return {
+                "status": "error",
+                "message": "Metadata not available after waiting",
+                "metadata": None,
+            }
+
+        # Pause after fetching metadata
+        handle.auto_managed(False)  # Disable auto-resume
+        handle.set_upload_mode(True)  # Prevent seeding
+        handle.pause()
+
+        # Store handle
+        await torrent_store.set(
+            str(handle.info_hash()), TorrentDataclass(torrent=handle)
+        )
 
         torrent_info = handle.get_torrent_info()
-        metadata = await serialize_magnet_torrent_info(torrent_info)
-
-        files = []
-        for f in torrent_info.files():
-            files.append(
-                {
-                    "path": f.path,
-                    "size": f.size,
-                }
-            )
-
-        torrent_id = id(handle)
-        pending.setdefault(sid, {})[torrent_id] = handle
+        serialized_info = await serialize_magnet_torrent_info(torrent_info)
 
         return {
             "status": "success",
-            "message": "Metadata fetched. Confirm add or cancel.",
-            "torrent_id": torrent_id,
-            "metadata": metadata,
-            "files": files,
+            "message": "Metadata fetched and torrent paused",
+            "metadata": serialized_info,
         }
 
-    elif action in ("add", "cancel"):
-        torrent_id = data.get("torrent_id")
-        if not torrent_id or sid not in pending or torrent_id not in pending[sid]:
-            return {"status": "error", "message": "Invalid torrent_id"}
+    elif action == "add":
+        info_hash = data.get("info_hash")
+        if not info_hash:
+            return {"status": "error", "message": "Info hash is required"}
 
-        handle = pending[sid].pop(torrent_id)
+        torrent_entry = await torrent_store.get(info_hash)
+        if not torrent_entry:
+            return {"status": "error", "message": "Torrent not found in store"}
 
-        if action == "cancel":
-            ses.remove_torrent(handle)
-            return {"status": "success", "message": "Torrent cancelled"}
+        handle = torrent_entry.torrent
+        if not handle.is_valid():
+            return {
+                "status": "error",
+                "message": "Stored torrent handle is invalid",
+            }
 
-        if action == "add":
-            # Resume the torrent to start downloading
-            handle.resume()
-            # Make sure the handle is added to the session if needed
-            # Usually adding magnet uri already adds handle to session, so no need to re-add.
-            return {"status": "success", "message": "Torrent added"}
+        handle.set_upload_mode(False)
+        handle.auto_managed(True)
+        handle.resume()
+        return {"status": "success", "message": "Torrent resumed/started"}
+
+    elif action == "remove":
+        info_hash = data.get("info_hash")
+        if not info_hash:
+            return {"status": "error", "message": "Info hash is required"}
+
+        torrent_entry = await torrent_store.get(info_hash)
+        if not torrent_entry:
+            return {"status": "error", "message": "Torrent not found in store"}
+
+        handle = torrent_entry.torrent
+        if handle.is_valid():
+            ses.remove_torrent(handle, lt.options_t.delete_files)
+
+        await torrent_store.delete(info_hash)
+        return {"status": "success", "message": "Torrent removed successfully"}
 
     return {"status": "error", "message": "Unknown action"}

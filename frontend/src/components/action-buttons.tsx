@@ -259,6 +259,8 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                 files?: FileInfo[];
             }) => {
                 setLoading(false);
+                console.log(response);
+
                 if (response.status === "success") {
                     setMetadata(response.metadata || null);
                     setTorrentId(response.torrent_id || null);
@@ -293,11 +295,11 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    alert("Torrent added successfully!");
+                    // alert("Torrent added successfully!");
                     resetForm();
                     setDialogOpen(false);
                 } else {
-                    alert(`Error adding torrent: ${response.message}`);
+                    // alert(`Error adding torrent: ${response.message}`);
                 }
             },
         );
@@ -333,7 +335,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
             <DialogTrigger asChild>
                 <Button variant="outline">Add Torrent</Button>
             </DialogTrigger>
-            <DialogContent className="min-w-[50vw] sm:max-w-[700px]">
+            <DialogContent className="min-w-[60vw] sm:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Save Torrent</DialogTitle>
                 </DialogHeader>
@@ -426,24 +428,24 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                                     placeholder="Add/remove tags"
                                 />
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                            <div className="flex flex-col flex-wrap gap-2">
+                                <Label className="inline-flex cursor-pointer items-center gap-2">
                                     <Checkbox />
                                     Start torrent
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                <Label className="inline-flex cursor-pointer items-center gap-2">
                                     <Checkbox />
                                     Add to top of queue
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                <Label className="inline-flex cursor-pointer items-center gap-2">
                                     <Checkbox />
                                     Download in sequential order
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                <Label className="inline-flex cursor-pointer items-center gap-2">
                                     <Checkbox />
                                     Skip hash check
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-1">
+                                <Label className="inline-flex cursor-pointer items-center gap-2">
                                     <Checkbox />
                                     Download first and last pieces first
                                 </Label>
@@ -475,11 +477,11 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                                 Torrent Information
                             </legend>
                             <div>
-                                <strong>Name:</strong>
+                                <strong>Name: </strong>
                                 {metadata?.name || "Not Available"}
                             </div>
                             <div>
-                                <strong>Size:</strong>
+                                <strong>Size: </strong>
                                 {metadata?.total_size ? (
                                     <>
                                         {formatBytes({

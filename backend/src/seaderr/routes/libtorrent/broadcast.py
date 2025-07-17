@@ -23,12 +23,10 @@ async def serialize_alert(alert) -> dict:
     if isinstance(alert, EventDataclass):
         match alert.event:
             case SyntheticEvent.RESUMED:
-                data = {
+                return {
                     "type": "synthetic:resumed",
                     "info_hash": str(alert.torrent.info_hash()),
                 }
-                print(data)
-                return data
 
             case SyntheticEvent.PAUSED:
                 print(alert)
@@ -201,9 +199,9 @@ async def alert_consumer(alert):
 
     for sid in clients:
         try:
-            # logger.info(
-            #     f"Broadcasting alert to {broadcast_client_manager.count()} clients"
-            # )
+            logger.info(
+                f"Broadcasting alert to {broadcast_client_manager.count()} clients"
+            )
             await sio.emit("libtorrent:broadcast", data, room=sid)
         except TypeError as e:
             logger.error(f"JSON serialization failed for alert data: {data}")

@@ -1,10 +1,10 @@
-import asyncio
 from datetime import timedelta
 
 import libtorrent as lt
 from seaderr.datastructures import TorrentDataclass
 from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.stores import ExpiringStore
+from seaderr.timers import wait_for
 from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
@@ -48,13 +48,10 @@ async def add_magnet(sid: str, data: dict):
         params.save_path = save_path
         handle = ses.add_torrent(params)
 
-        # Wait for metadata (up to 20s)
-        timeout = 20
-        interval = 0.5
-        waited = 0
-        while not handle.has_metadata() and waited < timeout:
-            await asyncio.sleep(interval)
-            waited += interval
+        async def is_ready():
+            return handle.has_metadata()
+
+        await wait_for(is_ready, timeout=20, backoff="exponential")
 
         if not handle.has_metadata():
             return {
@@ -82,7 +79,7 @@ async def add_magnet(sid: str, data: dict):
             "metadata": serialized_info,
         }
 
-    elif action == "add":
+    elif action in ("add", "remove"):
         info_hash = data.get("info_hash")
         if not info_hash:
             return {"status": "error", "message": "Info hash is required"}
@@ -97,26 +94,15 @@ async def add_magnet(sid: str, data: dict):
                 "status": "error",
                 "message": "Stored torrent handle is invalid",
             }
+        if action == "add":
+            handle.set_upload_mode(False)
+            handle.auto_managed(True)
+            handle.resume()
+            return {"status": "success", "message": "Torrent resumed/started"}
 
-        handle.set_upload_mode(False)
-        handle.auto_managed(True)
-        handle.resume()
-        return {"status": "success", "message": "Torrent resumed/started"}
-
-    elif action == "remove":
-        info_hash = data.get("info_hash")
-        if not info_hash:
-            return {"status": "error", "message": "Info hash is required"}
-
-        torrent_entry = await torrent_store.get(info_hash)
-        if not torrent_entry:
-            return {"status": "error", "message": "Torrent not found in store"}
-
-        handle = torrent_entry.torrent
-        if handle.is_valid():
+        elif action == "remove":
             ses.remove_torrent(handle, lt.options_t.delete_files)
-
-        await torrent_store.delete(info_hash)
-        return {"status": "success", "message": "Torrent removed successfully"}
+            await torrent_store.delete(info_hash)
+            return {"status": "success", "message": "Torrent removed successfully"}
 
     return {"status": "error", "message": "Unknown action"}

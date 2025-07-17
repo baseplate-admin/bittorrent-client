@@ -95,7 +95,8 @@ export default function SocketProvider() {
 
         const handleBroadcast = async (response: SerializedAlert) => {
             switch (response.type) {
-                case "add_torrent": {
+                
+                case "libtorrent:add_torrent": {
                     const newTorrent = await getSpecificTorrentFromSocket(
                         response.info_hash,
                     );
@@ -107,7 +108,7 @@ export default function SocketProvider() {
                     }
                     break;
                 }
-                case "state_update": {
+                case "libtorrent:state_update": {
                     for (const status of response.statuses ?? []) {
                         const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,

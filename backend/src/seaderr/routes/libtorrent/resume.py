@@ -1,7 +1,17 @@
 import libtorrent as lt
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
 sio = SIO.get_instance()
+event_bus = EventBus.get_bus()
+
+
+async def publish_resume_event(handle: lt.torrent_handle):
+    """Publish a synthetic event when a torrent is resumed."""
+    event = {
+        "type": "synthetic:resumed",
+        "info_hash": handle.info_hash(),
+    }
+    await event_bus.publish(event)
 
 
 @sio.on("libtorrent:resume")  # type: ignore

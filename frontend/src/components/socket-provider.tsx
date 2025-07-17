@@ -46,6 +46,7 @@ export default function SocketProvider() {
     ): TorrentInfo | undefined => {
         return latestTorrentsRef.current.find((t) => t.info_hash === infoHash);
     };
+
     const getSpecificTorrentFromSocket = useCallback(
         (info_hash: string): Promise<TorrentInfo> => {
             return new Promise((resolve, reject) => {
@@ -70,17 +71,12 @@ export default function SocketProvider() {
     );
 
     useEffect(() => {
-        const interval = setInterval(updateTorrentsAtom, 1000);
-        return () => clearInterval(interval);
-    }, [updateTorrentsAtom]);
-
-    useEffect(() => {
         if (!socketRef.current) return;
 
         const socket = socketRef.current;
 
         socket.emit("libtorrent:get_all", (response: GetAllResponse) => {
-            if (response?.torrents) {
+            if (response.torrents) {
                 latestTorrentsRef.current = response.torrents.map(
                     (torrent) => ({
                         ...torrent,
@@ -89,13 +85,39 @@ export default function SocketProvider() {
                             (torrent.num_peers ?? 0) - (torrent.seeders ?? 0),
                     }),
                 );
-                setTorrent([...latestTorrentsRef.current]);
+                updateTorrentsAtom();
             }
         });
 
         const handleBroadcast = async (response: SerializedAlert) => {
             switch (response.type) {
-                
+                case "synthetic:paused": {
+                    const torrent = findTorrentByInfoHash(response.info_hash);
+                    if (torrent) {
+                        torrent.paused = true;
+                        updateTorrentsAtom();
+                    }
+                    break;
+                }
+                case "synthetic:resumed": {
+                    const torrent = findTorrentByInfoHash(response.info_hash);
+                    if (torrent) {
+                        torrent.paused = false;
+                        updateTorrentsAtom();
+                    }
+                    break;
+                }
+                case "synthetic:removed": {
+                    const torrent = findTorrentByInfoHash(response.info_hash);
+                    if (torrent) {
+                        latestTorrentsRef.current =
+                            latestTorrentsRef.current.filter(
+                                (t) => t.info_hash !== torrent.info_hash,
+                            );
+                        updateTorrentsAtom();
+                    }
+                    break;
+                }
                 case "libtorrent:add_torrent": {
                     const newTorrent = await getSpecificTorrentFromSocket(
                         response.info_hash,
@@ -109,6 +131,7 @@ export default function SocketProvider() {
                     break;
                 }
                 case "libtorrent:state_update": {
+                    console.log(response);
                     for (const status of response.statuses ?? []) {
                         const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,
@@ -179,10 +202,6 @@ export default function SocketProvider() {
             (response: PauseResponse) => {
                 if (response.status === "success") {
                     dequeue(torrentRemoveQueue, setTorrentRemoveQueue);
-                    latestTorrentsRef.current =
-                        latestTorrentsRef.current.filter(
-                            (t) => t.info_hash !== info_hash,
-                        );
                 } else {
                     console.error(
                         "Failed to remove torrent:",
@@ -206,10 +225,6 @@ export default function SocketProvider() {
             (response: PauseResponse) => {
                 if (response.status === "success") {
                     dequeue(torrentResumeQueue, setTorrentResumeQueue);
-                    const torrent = findTorrentByInfoHash(infoHash);
-                    if (torrent) {
-                        torrent.paused = false;
-                    }
                 } else {
                     console.error("Failed to upload magnet:", response.message);
                 }
@@ -230,10 +245,6 @@ export default function SocketProvider() {
             (response: PauseResponse) => {
                 if (response.status === "success") {
                     dequeue(torrentPauseQueue, setTorrentPauseQueue);
-                    const torrent = findTorrentByInfoHash(infoHash);
-                    if (torrent) {
-                        torrent.paused = true;
-                    }
                 } else {
                     console.error("Failed to upload magnet:", response.message);
                 }

@@ -46,6 +46,7 @@ async def pause(sid: str, data: dict):
         handle.auto_managed(False)  # Disable auto-resume
         handle.set_upload_mode(True)  # Prevent seeding
         handle.pause()
+        sio.start_background_task(publish_pause_event, handle)
         return {"status": "success", "message": "Torrent paused and upload disabled"}
 
     return {"status": "info", "message": "Torrent is already paused"}

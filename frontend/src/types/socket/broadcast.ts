@@ -1,4 +1,7 @@
 export type SerializedAlert =
+    | { type: "synthetic:resumed"; info_hash: string }
+    | { type: "synthetic:paused"; info_hash: string }
+    | { type: "synthetic:removed"; info_hash: string }
     | { type: "libtorrent:torrent_finished"; message: string }
     | { type: "libtorrent:metadata_received"; message: string }
     | { type: "libtorrent:peer_connected"; message: string } // IP string

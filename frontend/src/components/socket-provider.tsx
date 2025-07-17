@@ -41,8 +41,8 @@ export default function SocketProvider() {
     const updateTorrentsAtom = useCallback(() => {
         if (latestTorrentsRef.current.length === 0) return;
 
-        // Clone the array to ensure Jotai sees the change
-        setTorrent([...latestTorrentsRef.current]);
+        // Create a deep clone so Jotai recognizes it as a new value
+        setTorrent(structuredClone(latestTorrentsRef.current));
     }, [setTorrent]);
 
     const findTorrentByInfoHash = (
@@ -284,7 +284,7 @@ export default function SocketProvider() {
     useEffect(() => {
         const interval = setInterval(() => {
             updateTorrentsAtom();
-        }, 1000);
+        }, 750);
 
         return () => clearInterval(interval);
     }, [updateTorrentsAtom]);

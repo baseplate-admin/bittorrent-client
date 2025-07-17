@@ -131,7 +131,6 @@ export default function SocketProvider() {
                     break;
                 }
                 case "libtorrent:state_update": {
-                    console.log(response);
                     for (const status of response.statuses ?? []) {
                         const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,
@@ -147,8 +146,10 @@ export default function SocketProvider() {
                                 upload_rate: status.upload_rate,
                                 num_peers: status.num_peers,
                                 seeders: status.seeders,
-
-                                leechers: status.num_peers - status.seeders,
+                                leechers: Math.max(
+                                    status.num_peers - status.seeders,
+                                    0,
+                                ),
                                 total_size: status.total_size,
                                 state: status.state,
                             };
@@ -275,5 +276,10 @@ export default function SocketProvider() {
         );
     }, [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue]);
 
+    // Sync ref to atom every 1 second using updateTorrentsAtom
+    useEffect(() => {
+        const interval = setInterval(updateTorrentsAtom, 1000);
+        return () => clearInterval(interval);
+    }, [updateTorrentsAtom]);
     return null;
 }

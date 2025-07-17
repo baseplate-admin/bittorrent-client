@@ -40,6 +40,7 @@ import {
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { FileInfo } from "@/types/socket/files";
+import { FileTree } from "./trees/file-tree";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -513,9 +514,10 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
 
                     {/* Right side file list preview */}
                     <div className="max-h-[480px] flex-1 overflow-auto rounded border bg-black/10 p-3 text-left text-gray-800">
-                        <h3 className="mb-2 font-semibold text-gray-700">
+                        <h3 className="mb-2 font-semibold text-gray-100">
                             File List Preview
                         </h3>
+
                         {loading ? (
                             <div className="flex items-center justify-center py-10 text-gray-500">
                                 Loading files...
@@ -525,21 +527,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                                 No files available
                             </div>
                         ) : (
-                            <ul className="max-h-[400px] overflow-auto text-sm">
-                                {files.map(({ path, size }, i) => (
-                                    <li
-                                        key={i}
-                                        className="border-b border-gray-300 py-1 last:border-b-0"
-                                    >
-                                        <div className="truncate font-mono text-xs text-gray-600">
-                                            {path}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                            {formatBytes({ bytes: size })}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
+                            <FileTree files={files} />
                         )}
                     </div>
                 </div>

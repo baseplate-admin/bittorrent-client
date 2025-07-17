@@ -1,5 +1,4 @@
 import asyncio
-import functools
 
 import libtorrent as lt
 from seaderr.datastructures import EventDataclass
@@ -221,9 +220,7 @@ async def handle_broadcast_request(sid: str, data: dict):
         if not poller_started:
             event_bus.set_consumer(alert_consumer)
             sio.start_background_task(event_bus.start)
-            sio.start_background_task(
-                functools.partial(shared_poll_and_publish, event_bus)
-            )
+            sio.start_background_task(shared_poll_and_publish, event_bus)
             poller_started = True
 
         return {

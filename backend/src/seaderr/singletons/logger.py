@@ -2,7 +2,8 @@
 
 import logging
 from typing import Optional
-from colorama import init as colorama_init, Fore, Style
+
+from colorama import Fore, Style, init as colorama_init
 
 
 class ColorFormatter(logging.Formatter):

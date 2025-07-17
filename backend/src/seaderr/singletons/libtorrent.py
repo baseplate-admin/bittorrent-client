@@ -1,6 +1,7 @@
-import libtorrent as lt
 import asyncio
 from typing import Optional, Type
+
+import libtorrent as lt
 
 
 class LibtorrentSession:

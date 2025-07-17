@@ -1,5 +1,6 @@
-import socketio
 from typing import Type
+
+import socketio
 
 
 class SIO:

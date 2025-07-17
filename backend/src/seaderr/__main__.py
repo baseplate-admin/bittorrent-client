@@ -1,9 +1,11 @@
-import click
 import asyncio
+import logging as python_logging
+
+import click
 import uvicorn
+
 from seaderr.app import create_app
 from seaderr.singletons import Logger
-import logging as python_logging
 
 
 async def run_app(host: str, port: int, debug: bool):

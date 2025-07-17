@@ -1,12 +1,13 @@
-import sys
+import asyncio
 import os
 import platform
 import re
-import asyncio
-import aiohttp
-import zipfile
 import shutil
+import sys
+import zipfile
 from io import BytesIO
+
+import aiohttp
 
 
 def get_os_name_for_asset():

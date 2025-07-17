@@ -26,3 +26,13 @@ seaderr = "seaderr.__main__:main"
 
 [tool.uv]
 package = true
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"] # E: pyflakes, F: pycodestyle, I: isort
+
+[tool.ruff.lint.isort]
+known-first-party = ["seaderr"]
+combine-as-imports = true

@@ -1,6 +1,5 @@
 from seaderr.singletons import SIO, Logger
 
-
 sio = SIO.get_instance()
 logger = Logger.get_logger()
 

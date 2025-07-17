@@ -1,6 +1,8 @@
 import asyncio
-from seaderr.singletons import SIO
+
 from cross_platform_folder_picker import open_folder_picker
+
+from seaderr.singletons import SIO
 
 sio = SIO.get_instance()
 

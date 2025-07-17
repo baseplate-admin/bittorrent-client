@@ -1,5 +1,5 @@
-from seaderr.singletons import SIO, LibtorrentSession, Logger
 import libtorrent as lt
+from seaderr.singletons import SIO, LibtorrentSession, Logger
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()

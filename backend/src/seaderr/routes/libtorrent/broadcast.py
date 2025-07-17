@@ -1,7 +1,8 @@
 import asyncio
+
 import libtorrent as lt
-from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.managers import BroadcastClientManager
+from seaderr.singletons import SIO, LibtorrentSession, Logger
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()

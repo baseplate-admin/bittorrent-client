@@ -1,6 +1,7 @@
-import aiosqlite
 import asyncio
 from typing import Optional
+
+import aiosqlite
 
 
 class AioSQLite:

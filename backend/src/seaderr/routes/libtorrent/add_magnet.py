@@ -1,11 +1,11 @@
-from seaderr.singletons import SIO, LibtorrentSession, Logger
-from seaderr.utilities import serialize_magnet_torrent_info
-from seaderr.stores import ExpiringStore
-from seaderr.datastructures import TorrentDataclass
-from datetime import timedelta
-import libtorrent as lt
 import asyncio
+from datetime import timedelta
 
+import libtorrent as lt
+from seaderr.datastructures import TorrentDataclass
+from seaderr.singletons import SIO, LibtorrentSession, Logger
+from seaderr.stores import ExpiringStore
+from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()

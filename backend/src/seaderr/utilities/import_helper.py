@@ -1,5 +1,5 @@
-import os
 import importlib
+import os
 
 
 def import_submodules(package_name: str) -> None:

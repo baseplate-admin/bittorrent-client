@@ -1,5 +1,5 @@
-from seaderr.singletons import SIO, LibtorrentSession
 import libtorrent as lt
+from seaderr.singletons import SIO, LibtorrentSession
 
 sio = SIO.get_instance()
 

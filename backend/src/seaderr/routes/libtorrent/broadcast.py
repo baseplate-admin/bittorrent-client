@@ -29,7 +29,6 @@ async def serialize_alert(alert) -> dict:
                 }
 
             case SyntheticEvent.PAUSED:
-                print(alert)
                 return {
                     "type": "synthetic:paused",
                     "info_hash": str(alert.torrent.info_hash()),

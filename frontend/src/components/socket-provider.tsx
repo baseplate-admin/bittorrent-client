@@ -39,8 +39,6 @@ export default function SocketProvider() {
     const socketRef = useSocketConnection();
 
     const updateTorrentsAtom = useCallback(() => {
-        if (latestTorrentsRef.current.length === 0) return;
-
         // Create a deep clone so Jotai recognizes it as a new value
         setTorrent(structuredClone(latestTorrentsRef.current));
     }, [setTorrent]);
@@ -71,7 +69,7 @@ export default function SocketProvider() {
                 );
             });
         },
-        [],
+        [socketRef],
     );
 
     useEffect(() => {
@@ -112,6 +110,7 @@ export default function SocketProvider() {
                     break;
                 }
                 case "synthetic:removed": {
+                    console.log(response);
                     const torrent = findTorrentByInfoHash(response.info_hash);
                     if (torrent) {
                         latestTorrentsRef.current =
@@ -235,7 +234,7 @@ export default function SocketProvider() {
                 }
             },
         );
-    }, [torrentResumeQueue]);
+    }, [torrentResumeQueue, setTorrentResumeQueue]);
 
     // Pause torrent queue
     useEffect(() => {
@@ -255,7 +254,7 @@ export default function SocketProvider() {
                 }
             },
         );
-    }, [torrentPauseQueue]);
+    }, [torrentPauseQueue, setTorrentPauseQueue]);
 
     // Magnet upload queue
     useEffect(() => {

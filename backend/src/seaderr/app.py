@@ -1,6 +1,11 @@
 import socketio
 
-from seaderr.singletons import SIO, LibtorrentSession, Logger
+from seaderr.singletons import (
+    SIO,
+    EventBus,
+    LibtorrentSession,
+    Logger,
+)
 from seaderr.utilities import import_submodules
 
 
@@ -12,6 +17,9 @@ async def on_startup():
 
     # Initialize the libtorrent session
     await LibtorrentSession.init()
+
+    # Initialize the event bus
+    EventBus.init_bus()
 
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")

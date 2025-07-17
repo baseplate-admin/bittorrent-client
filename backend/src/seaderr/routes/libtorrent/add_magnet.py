@@ -62,7 +62,6 @@ async def add_magnet(sid: str, data: dict):
 
         # Pause after fetching metadata
         handle.auto_managed(False)  # Disable auto-resume
-        handle.set_upload_mode(True)  # Prevent seeding
         handle.pause()
 
         # Store handle
@@ -96,7 +95,6 @@ async def add_magnet(sid: str, data: dict):
             }
         if action == "add":
             handle.set_upload_mode(False)
-            handle.auto_managed(True)
             handle.resume()
             return {"status": "success", "message": "Torrent resumed/started"}
 

@@ -1,4 +1,4 @@
-import asyncio
+import json
 import os
 import platform
 import re
@@ -6,8 +6,8 @@ import shutil
 import sys
 import zipfile
 from io import BytesIO
-
-import aiohttp
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 
 def get_os_name_for_asset():
@@ -15,7 +15,7 @@ def get_os_name_for_asset():
     if system == "darwin":
         return "macos"
     elif system == "linux":
-        return "ubuntu"  # per example, Linux builds use ubuntu naming
+        return "ubuntu"  # Linux builds use ubuntu naming here
     elif system == "windows":
         return "windows"
     else:
@@ -54,21 +54,34 @@ def copy_folder(src_folder, dst_folder):
     shutil.copytree(src_folder, dst_folder)
 
 
-async def fetch_json(session, url):
-    async with session.get(url) as resp:
-        resp.raise_for_status()
-        return await resp.json()
+def fetch_json(url):
+    print(f"Fetching JSON from {url} ...")
+    req = Request(url, headers={"User-Agent": "python-urllib"})
+    try:
+        with urlopen(req) as resp:
+            data = resp.read()
+            return json.loads(data.decode())
+    except HTTPError as e:
+        print(f"HTTP error: {e.code} {e.reason}")
+    except URLError as e:
+        print(f"URL error: {e.reason}")
+    return None
 
 
-async def download_file(session, url):
+def download_file(url):
     print(f"Downloading {url} ...")
-    async with session.get(url) as resp:
-        resp.raise_for_status()
-        data = await resp.read()
-        return data
+    req = Request(url, headers={"User-Agent": "python-urllib"})
+    try:
+        with urlopen(req) as resp:
+            return resp.read()
+    except HTTPError as e:
+        print(f"HTTP error: {e.code} {e.reason}")
+    except URLError as e:
+        print(f"URL error: {e.reason}")
+    return None
 
 
-async def main():
+def main():
     os_name = get_os_name_for_asset()
     py_minor = get_python_minor_version()
     pattern = re.compile(
@@ -80,29 +93,32 @@ async def main():
         "https://api.github.com/repos/baseplate-admin/libtorrent-python/releases/latest"
     )
 
-    async with aiohttp.ClientSession() as session:
-        release_data = await fetch_json(session, GITHUB_API_RELEASES_URL)
+    release_data = fetch_json(GITHUB_API_RELEASES_URL)
+    if not release_data:
+        print("Failed to fetch release data.")
+        return
 
-        assets = release_data.get("assets", [])
-        matching_asset = None
+    assets = release_data.get("assets", [])
+    matching_asset = None
 
-        for asset in assets:
-            name = asset.get("name", "")
-            if pattern.fullmatch(name):
-                matching_asset = asset
-                break
+    for asset in assets:
+        name = asset.get("name", "")
+        if pattern.fullmatch(name):
+            matching_asset = asset
+            break
 
-        if not matching_asset:
-            print("No matching asset found for pattern:", pattern.pattern)
-            return
+    if not matching_asset:
+        print("No matching asset found for pattern:", pattern.pattern)
+        return
 
-        print(f"Found asset: {matching_asset['name']}")
-        download_url = matching_asset["browser_download_url"]
+    print(f"Found asset: {matching_asset['name']}")
+    download_url = matching_asset["browser_download_url"]
 
-        # Download zip file bytes
-        zip_bytes = await download_file(session, download_url)
+    zip_bytes = download_file(download_url)
+    if not zip_bytes:
+        print("Failed to download the asset.")
+        return
 
-    # Extract zip synchronously
     tmp_extract_dir = "tmp_extract"
     if os.path.exists(tmp_extract_dir):
         shutil.rmtree(tmp_extract_dir)
@@ -112,7 +128,6 @@ async def main():
         print(f"Extracting to {tmp_extract_dir} ...")
         z.extractall(tmp_extract_dir)
 
-    # Find nested libtorrent folder and copy it
     libtorrent_src = find_libtorrent_folder(tmp_extract_dir)
     if not libtorrent_src:
         print("Error: 'libtorrent' folder not found in extracted content.")
@@ -124,11 +139,10 @@ async def main():
     dst = os.path.join(site_packages_path, "libtorrent")
     copy_folder(libtorrent_src, dst)
 
-    # Cleanup temp folder
     shutil.rmtree(tmp_extract_dir)
 
     print("Done.")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

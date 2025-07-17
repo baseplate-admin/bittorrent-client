@@ -1,4 +1,4 @@
-from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.utilities import serialize_magnet_torrent_info
 from seaderr.stores import ExpiringStore
 from seaderr.datastructures import TorrentDataclass
@@ -6,9 +6,28 @@ from datetime import timedelta
 import libtorrent as lt
 import asyncio
 
+
 sio = SIO.get_instance()
+logger = Logger.get_logger()
+
+
+async def on_cleanup(key: str, value: TorrentDataclass):
+    ses = await LibtorrentSession.get_session()
+    handle = value.torrent
+
+    if handle.is_valid():
+        try:
+            ses.remove_torrent(handle, lt.options_t.delete_files)
+        except Exception as e:
+            logger.error(f"Error removing torrent {key}: {e}")
+    else:
+        logger.error(f"Invalid torrent handle for {key}, skipping removal.")
+
+
 torrent_store = ExpiringStore(
-    TorrentDataclass, expiry=int(timedelta(hours=1).total_seconds())
+    TorrentDataclass,
+    default_expiry=int(timedelta(hours=1).total_seconds()),
+    on_cleanup=on_cleanup,
 )
 
 

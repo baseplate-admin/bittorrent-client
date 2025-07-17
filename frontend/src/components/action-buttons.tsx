@@ -39,6 +39,7 @@ import {
 } from "./ui/select";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
+import { FileInfo } from "@/types/socket/files";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
@@ -217,10 +218,6 @@ export default function ActionButtons() {
         </div>
     );
 }
-interface FileInfo {
-    path: string;
-    size: number;
-}
 
 const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
     const socket = useSocketConnection();
@@ -230,7 +227,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
 
     const [metadata, setMetadata] = useState<TorrentInfo | null>(null);
     const [files, setFiles] = useState<FileInfo[]>([]);
-    const [torrentId, setTorrentId] = useState<number | null>(null);
+    const [torrentInfoHash, setTorrentInfoHash] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
     const [incompletePathEnabled, setIncompletePathEnabled] = useState(false);
@@ -248,25 +245,27 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
             "libtorrent:add_magnet",
             {
                 action: "fetch_metadata",
-                magnet: magnetLink,
+                magnet_uri: magnetLink,
                 save_path: folderValue || ".",
             },
             (response: {
                 status: string;
                 message?: string;
                 metadata?: TorrentInfo;
-                torrent_id?: number;
                 files?: FileInfo[];
             }) => {
                 setLoading(false);
-                console.log(response);
 
                 if (response.status === "success") {
                     setMetadata(response.metadata || null);
-                    setTorrentId(response.torrent_id || null);
-                    setFiles(response.files || []);
+                    const infoHash = response.metadata?.info_hash;
+                    if (!infoHash) {
+                        throw new Error("Info hash not found in metadata");
+                    }
+                    setTorrentInfoHash(infoHash);
+                    setFiles(response.metadata?.files || []);
                 } else {
-                    alert(`Error fetching metadata: ${response.message}`);
+                    console.error("Error fetching metadata:", response.message);
                     setMetadata(null);
                     setFiles([]);
                 }
@@ -287,38 +286,41 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
     };
 
     const confirmAddTorrent = () => {
-        if (!torrentId) return;
+        if (!torrentInfoHash) return;
         setLoading(true);
         socket.current?.emit(
             "libtorrent:add_magnet",
-            { action: "add", torrent_id: torrentId },
+            { action: "add", info_hash: torrentInfoHash },
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    // alert("Torrent added successfully!");
+                    console.log("Torrent added successfully:", response);
                     resetForm();
                     setDialogOpen(false);
                 } else {
-                    // alert(`Error adding torrent: ${response.message}`);
+                    console.error("Error adding torrent:", response.message);
                 }
             },
         );
     };
 
     const cancelTorrent = () => {
-        if (!torrentId) return;
+        if (!torrentInfoHash) return;
         setLoading(true);
         socket.current?.emit(
             "libtorrent:add_magnet",
-            { action: "cancel", torrent_id: torrentId },
+            { action: "remove", info_hash: torrentInfoHash },
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    alert("Torrent cancelled.");
+                    console.log("Torrent cancelled successfully:", response);
                     resetForm();
                     setDialogOpen(false);
                 } else {
-                    alert(`Error cancelling torrent: ${response.message}`);
+                    console.error(
+                        "Error cancelling torrent:",
+                        response.message,
+                    );
                 }
             },
         );
@@ -327,7 +329,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
     const resetForm = () => {
         setMetadata(null);
         setFiles([]);
-        setTorrentId(null);
+        setTorrentInfoHash(null);
     };
 
     return (
@@ -341,7 +343,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                 </DialogHeader>
 
                 <div className="flex gap-6">
-                    <div className="flex w-[350px] flex-col gap-6">
+                    <div className="flex w-[40%] flex-col gap-6">
                         {/* Save at input */}
                         <div className="grid gap-1">
                             <Label htmlFor="save-location">Save at</Label>

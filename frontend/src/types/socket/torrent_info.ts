@@ -1,4 +1,5 @@
 import { TorrentPeer } from "./torrent_peer";
+import { FileInfo } from "./files";
 
 export interface TorrentInfo {
     name: string;
@@ -14,4 +15,5 @@ export interface TorrentInfo {
     seeders: number;
     leechers: number;
     peers: TorrentPeer[]; // New field
+    files: FileInfo[];
 }

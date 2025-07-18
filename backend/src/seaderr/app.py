@@ -1,3 +1,5 @@
+import asyncio
+
 import socketio
 
 from seaderr.singletons import (
@@ -19,7 +21,13 @@ async def on_startup():
     await LibtorrentSession.init()
 
     # Initialize the event bus
+    from seaderr.consumers import alert_consumer, shared_poll_and_publish
+
     EventBus.init()
+    event_bus = EventBus.get_bus()
+    event_bus.set_consumer(alert_consumer)
+    asyncio.create_task(shared_poll_and_publish(event_bus))
+    asyncio.create_task(event_bus.start())
 
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")

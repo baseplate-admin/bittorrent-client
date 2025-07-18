@@ -336,7 +336,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline">Add Torrent</Button>
+                <Button variant="outline"></Button>
             </DialogTrigger>
             <DialogContent className="min-w-[60vw] sm:max-w-[700px]">
                 <DialogHeader>

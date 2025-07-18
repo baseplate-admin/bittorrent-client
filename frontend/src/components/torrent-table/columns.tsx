@@ -123,9 +123,18 @@ const columnsMetadata: {
     },
     {
         key: "eta",
-        cell: ({ getValue }) => {
+        keyName: "ETA",
+        cell: ({ getValue, row }) => {
+            const progressValue = row.original.progress;
+            const value = getValue() ?? Infinity;
             return (
-                <center>{formatDurationClean(getValue() ?? Infinity)}</center>
+                <>
+                    <center>
+                        {formatDurationClean(
+                            progressValue < 100 ? value : Infinity,
+                        )}
+                    </center>
+                </>
             );
         },
     },
@@ -134,8 +143,9 @@ const columnsMetadata: {
         keyName: "Download Speed",
         cell: ({ getValue, row }) => {
             const progress = row.original.progress;
+            const downloadState = row.original.state;
             let download_speed = null;
-            if (progress === 100) {
+            if (progress === 100 || downloadState === "paused") {
                 download_speed = 0;
             } else {
                 download_speed = getValue();

@@ -11,6 +11,17 @@ from seaderr.singletons import (
 from seaderr.utilities import import_submodules
 
 
+def background_task_wrapper(coro_fn, name: str = ""):
+    async def runner():
+        try:
+            await coro_fn()
+        except Exception as e:
+            logger = Logger.get_logger()
+            logger.exception(f"Background task {name} crashed with error: {e}")
+
+    return runner
+
+
 async def on_startup(sio: socketio.AsyncServer):
     # Initialize the database connection
 
@@ -26,8 +37,14 @@ async def on_startup(sio: socketio.AsyncServer):
     EventBus.init()
     event_bus = EventBus.get_bus()
     event_bus.set_consumer(alert_consumer)
-    sio.start_background_task(shared_poll_and_publish, event_bus)
-    sio.start_background_task(event_bus.start)
+    sio.start_background_task(
+        background_task_wrapper(
+            lambda: shared_poll_and_publish(event_bus), "shared_poll_and_publish"
+        )
+    )
+    sio.start_background_task(
+        background_task_wrapper(lambda: event_bus.start(), "event_bus.start")
+    )
 
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")

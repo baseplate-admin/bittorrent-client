@@ -53,7 +53,7 @@ export default function TorrentDetails() {
         eta: torrentData
             ? calculateETA({
                   downloaded: Number(
-                      torrentData.total_size * torrentData.progress,
+                      torrentData.total_size * (torrentData.progress / 100),
                   ),
                   total: torrentData.total_size,
                   downloadSpeed: torrentData.download_rate,
@@ -108,7 +108,11 @@ export default function TorrentDetails() {
                         <div>
                             ETA:{" "}
                             <span className="font-semibold">
-                                {formatDurationClean(mapping.eta ?? Infinity)}
+                                {formatDurationClean(
+                                    mapping.progress < 100
+                                        ? (mapping.eta ?? Infinity)
+                                        : Infinity,
+                                )}{" "}
                             </span>
                         </div>
                         <div>

@@ -166,6 +166,26 @@ export default function SocketProvider() {
                                 total: status.total_size ?? 0,
                                 downloadSpeed: status.download_rate ?? 0,
                             });
+                            const state = (
+                                [
+                                    "seeding",
+                                    "downloading",
+                                    "paused",
+                                    "checking",
+                                    "queued",
+                                    "error",
+                                    "unknown",
+                                ].includes(status.state)
+                                    ? status.state
+                                    : "unknown"
+                            ) as
+                                | "seeding"
+                                | "downloading"
+                                | "paused"
+                                | "checking"
+                                | "queued"
+                                | "error"
+                                | "unknown";
 
                             const { seeds, leeches, connectedPeers } =
                                 analyzePeers(status.peers ?? []);
@@ -179,7 +199,7 @@ export default function SocketProvider() {
                                 seeds: seeds,
                                 leechs: leeches,
                                 total_size: status.total_size,
-                                state: status.state,
+                                state: state,
                                 eta: eta,
                                 // peers_info: status.peers_info ?? [], // Add this line for full peer details
                             };

@@ -49,7 +49,14 @@ export interface TorrentInfo {
     nodes: DHTNode[];
     url_seeds: string[];
     http_seeds: string[];
-    state: string;
+    state:
+        | "seeding"
+        | "downloading"
+        | "paused"
+        | "checking"
+        | "queued"
+        | "error"
+        | "unknown";
 
     // Derived
     paused: boolean;

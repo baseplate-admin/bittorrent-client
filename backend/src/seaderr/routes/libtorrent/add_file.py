@@ -1,3 +1,5 @@
+import tempfile
+
 import libtorrent as lt
 from seaderr.singletons import SIO, LibtorrentSession, Logger
 
@@ -10,7 +12,7 @@ async def add_file(sid: str, data: dict):
     lt_session = await LibtorrentSession.get_session()
 
     file = data.get("file")
-    save_path = data.get("save_path", ".")
+    save_path = data.get("save_path", tempfile.gettempdir())
 
     if not file:
         return {"status": "error", "message": "File not provided"}

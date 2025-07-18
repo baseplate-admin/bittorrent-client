@@ -1,3 +1,4 @@
+import tempfile
 from datetime import timedelta
 
 import libtorrent as lt
@@ -38,7 +39,7 @@ async def add_magnet(sid: str, data: dict):
 
     if action == "fetch_metadata":
         magnet_uri = data.get("magnet_uri")
-        save_path = data.get("save_path", ".")
+        save_path = data.get("save_path", tempfile.gettempdir())
 
         if not magnet_uri:
             return {"status": "error", "message": "Magnet URI is required"}

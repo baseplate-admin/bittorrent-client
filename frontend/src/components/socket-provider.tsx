@@ -76,21 +76,22 @@ export default function SocketProvider() {
 
         socket.emit("libtorrent:get_all", (response: GetAllResponse) => {
             if (response.torrents) {
-                latestTorrentsRef.current = response.torrents.map(
-                    (torrent) => ({
+                latestTorrentsRef.current = response.torrents.map((torrent) => {
+                    const eta = calculateETA({
+                        downloaded: Number(
+                            torrent.total_size * torrent.progress,
+                        ),
+                        total: torrent.total_size,
+                        downloadSpeed: torrent.download_rate ?? 0,
+                    });
+
+                    return {
                         ...torrent,
-                        seeders: torrent.seeders ?? 0,
-                        leechers:
-                            (torrent.num_peers ?? 0) - (torrent.seeders ?? 0),
-                        eta: calculateETA({
-                            downloaded: Number(
-                                torrent.total_size * torrent.progress,
-                            ),
-                            total: torrent.total_size,
-                            downloadSpeed: torrent.download_rate,
-                        }),
-                    }),
-                );
+                        seeders: torrent.seeds ?? 0,
+                        leechers: (torrent.peers ?? 0) - (torrent.seeds ?? 0),
+                        eta: eta,
+                    };
+                });
                 updateTorrentsAtom();
             }
         });
@@ -152,31 +153,33 @@ export default function SocketProvider() {
 
                         if (index !== -1) {
                             const t = latestTorrentsRef.current[index];
-
+                            const eta = calculateETA({
+                                downloaded: Number(
+                                    (status.total_size ?? 0) *
+                                        (status.progress ?? 0),
+                                ),
+                                total: status.total_size ?? 0,
+                                downloadSpeed: status.download_rate ?? 0,
+                            });
+                            const leechs = Math.max(
+                                status.num_peers - status.seeds,
+                                0,
+                            );
                             latestTorrentsRef.current[index] = {
                                 ...t,
-                                progress: Number(status.progress * 100),
+                                progress: Number(status.progress),
                                 download_rate: status.download_rate,
                                 upload_rate: status.upload_rate,
-                                num_peers: status.num_peers,
-                                seeders: status.seeders,
-                                leechers: Math.max(
-                                    status.num_peers - status.seeders,
-                                    0,
-                                ),
+                                peers: status.num_peers,
+                                seeds: status.seeds,
+                                leechs: leechs,
                                 total_size: status.total_size,
                                 state: status.state,
-                                eta: calculateETA({
-                                    downloaded: Number(
-                                        status.total_size * status.progress,
-                                    ),
-                                    total: status.total_size,
-                                    downloadSpeed: status.download_rate,
-                                }),
+                                eta: eta,
+                                // peers_info: status.peers_info ?? [], // Add this line for full peer details
                             };
                         }
                     }
-
                     break;
                 }
             }

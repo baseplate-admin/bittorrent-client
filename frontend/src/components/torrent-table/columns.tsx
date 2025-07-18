@@ -103,13 +103,13 @@ const columnsMetadata: {
         },
     },
     {
-        key: "seeders",
+        key: "seeds",
         cell: ({ getValue }) => {
             return <center>{getValue() || 0}</center>;
         },
     },
     {
-        key: "leechers",
+        key: "leechs",
         cell: ({ getValue }) => {
             return <center>{getValue() || 0}</center>;
         },
@@ -134,18 +134,18 @@ const columnsMetadata: {
         keyName: "Download Speed",
         cell: ({ getValue, row }) => {
             const progress = row.original.progress;
-            let download_rate = null;
+            let download_speed = null;
             if (progress === 100) {
-                download_rate = 0;
+                download_speed = 0;
             } else {
-                download_rate = getValue();
+                download_speed = getValue();
             }
             return (
                 <div className="flex items-center justify-center gap-2">
                     <span>
-                        {download_rate !== null &&
+                        {download_speed !== null &&
                             formatBytes({
-                                bytes: download_rate,
+                                bytes: download_speed,
                                 perSecond: true,
                             })}
                     </span>

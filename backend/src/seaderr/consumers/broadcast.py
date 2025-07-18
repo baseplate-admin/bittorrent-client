@@ -6,6 +6,7 @@ from seaderr.datastructures import EventDataclass
 from seaderr.enums import SyntheticEvent
 from seaderr.managers import BroadcastClientManager
 from seaderr.singletons import SIO, EventBus, LibtorrentSession, Logger
+from seaderr.utilities import serialize_magnet_torrent_info
 
 event_bus = EventBus.get_bus()
 logger = Logger.get_logger()
@@ -76,47 +77,27 @@ async def serialize_alert(alert) -> dict:
                     lt.torrent_status.allocating: "allocating",
                     lt.torrent_status.checking_resume_data: "checking_resume_data",
                 }
+
                 statuses = []
+
                 for st in alert.status:
-                    peers_info = []
-                    seeders = 0
                     try:
-                        peers = st.handle.get_peer_info()
-                        for p in peers:
-                            is_seed = bool(p.flags & lt.peer_info.seed)
-                            if is_seed:
-                                seeders += 1
-                            peers_info.append(
-                                {
-                                    "ip": str(p.ip),
-                                    "progress": p.progress,
-                                    "total_download": p.total_download,
-                                    "total_upload": p.total_upload,
-                                    "is_seed": is_seed,
-                                }
-                            )
-                    except Exception:
-                        peers_info = []
-                        seeders = 0
-                    state_str = lt_state_map.get(st.state, "unknown")
-                    try:
-                        total_size = st.handle.get_torrent_info().total_size()
-                    except (RuntimeError, AttributeError):
-                        total_size = 0
-                    statuses.append(
-                        {
+                        info_dict = await serialize_magnet_torrent_info(st.handle)
+                    except RuntimeError:
+                        # If metadata not ready, fallback minimal info
+                        info_dict = {
                             "info_hash": str(st.info_hash),
                             "name": st.name,
-                            "total_size": total_size,
-                            "progress": st.progress,
+                            "progress": round(st.progress * 100, 2),
                             "download_rate": st.download_rate,
                             "upload_rate": st.upload_rate,
                             "num_peers": st.num_peers,
-                            "seeders": seeders,
-                            "state": state_str,
-                            "peers": peers_info,
                         }
-                    )
+
+                    # Add the human-readable state string
+                    info_dict["state"] = lt_state_map.get(st.state, "unknown")
+                    statuses.append(info_dict)
+
                 return {"type": "libtorrent:state_update", "statuses": statuses}
 
             # case lt.dht_stats_alert():

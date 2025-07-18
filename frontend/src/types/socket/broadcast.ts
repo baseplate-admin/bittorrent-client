@@ -9,14 +9,22 @@ export type SerializedAlert =
           type: "libtorrent:state_update";
           statuses: {
               name: string;
-              progress: number;
-              download_rate: number;
-              upload_rate: number;
+              progress: number; // percent (0-100)
+              download_rate: number; // bytes/sec
+              upload_rate: number; // bytes/sec
               info_hash: string;
               num_peers: number;
+              seeds: number;
+              leechers?: number; // optional
               state: string;
-              seeders: number;
               total_size: number;
+              peers_info?: {
+                  ip: string;
+                  progress: number;
+                  total_download: number;
+                  total_upload: number;
+                  is_seed: boolean;
+              }[];
           }[];
       }
     | {

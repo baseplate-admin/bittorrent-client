@@ -18,7 +18,7 @@ export type SerializedAlert =
               leechers?: number; // optional
               state: string;
               total_size: number;
-              peers_info?: {
+              peers?: {
                   ip: string;
                   progress: number;
                   total_download: number;

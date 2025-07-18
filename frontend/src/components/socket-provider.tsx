@@ -17,6 +17,10 @@ import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
 
+function countSeeds(peers: any[]): number {
+    return peers.reduce((count, peer) => count + (peer.seed ? 1 : 0), 0);
+}
+
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
 
@@ -165,6 +169,7 @@ export default function SocketProvider() {
                                 status.num_peers - status.seeds,
                                 0,
                             );
+                            console.log(status.peers);
                             latestTorrentsRef.current[index] = {
                                 ...t,
                                 progress: Number(status.progress),

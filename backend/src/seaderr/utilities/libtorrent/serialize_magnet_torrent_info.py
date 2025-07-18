@@ -5,6 +5,28 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = handle.get_torrent_info()
     status = handle.status()
 
+    peers_info = []
+    try:
+        peers = handle.get_peer_info()
+        for p in peers:
+            peers_info.append(
+                {
+                    "ip": str(p.ip),
+                    "client": p.client,
+                    "progress": p.progress,
+                    "flags": p.flags,
+                    "download_queue_length": p.download_queue_length,
+                    "upload_queue_length": p.upload_queue_length,
+                    "up_speed": p.up_speed,
+                    "down_speed": p.down_speed,
+                    "total_download": p.total_download,
+                    "total_upload": p.total_upload,
+                    "seed": bool(p.flags & lt.peer_info.seed),
+                }
+            )
+    except Exception:
+        peers_info = []
+
     if ti is None:
         # Metadata not available yet, return minimal info
         return {
@@ -44,6 +66,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
             "nodes": [],
             "url_seeds": [],
             "http_seeds": [],
+            "peers": peers_info,
         }
 
     # Metadata is available, serialize full info
@@ -78,6 +101,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "active_time": status.active_time,
         "seeding_time": status.seeding_time,
         "finished": status.is_finished,
+        "peers": peers_info,
     }
 
     # Files

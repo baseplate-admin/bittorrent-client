@@ -1,3 +1,4 @@
+import asyncio
 import functools
 
 import socketio
@@ -58,6 +59,7 @@ async def on_shutdown():
 
 
 async def create_app():
+    asyncio.get_event_loop().set_debug(True)
     await SIO.init()
     sio = SIO.get_instance()
     sio_app = socketio.ASGIApp(sio)

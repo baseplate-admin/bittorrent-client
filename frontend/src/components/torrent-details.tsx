@@ -43,11 +43,15 @@ export default function TorrentDetails() {
     }
 
     const mapping = {
-        addedTime: torrentData?.added_time,
-        completionTime: torrentData?.completion_time,
+        addedTime: new Date(
+            (torrentData?.added_time || 0) * 1000,
+        ).toLocaleString(),
+        completionTime: new Date(
+            (torrentData?.completion_time || 0) * 1000,
+        ).toLocaleString(),
+        activeTime: formatDurationClean(torrentData?.active_time || 0),
         comments: torrentData?.comment,
         progress: torrentData?.progress || 0,
-        timeActive: "20h 42m",
         downloaded: "0 B",
         infoHash: torrentData?.info_hash,
         downloadSpeed: formatBytes({
@@ -58,19 +62,29 @@ export default function TorrentDetails() {
             bytes: torrentData?.upload_rate || 0,
             perSecond: true,
         }),
-        eta: torrentData
-            ? calculateETA({
-                  downloaded: Number(
-                      torrentData.total_size * (torrentData.progress / 100),
-                  ),
-                  total: torrentData.total_size,
-                  downloadSpeed: torrentData.download_rate,
-              })
-            : null,
+        eta: formatDurationClean(
+            (torrentData
+                ? (torrentData.progress || 0) < 100
+                    ? calculateETA({
+                          downloaded: Number(
+                              torrentData.total_size *
+                                  (torrentData.progress / 100),
+                          ),
+                          total: torrentData.total_size,
+                          downloadSpeed: torrentData.download_rate,
+                      })
+                    : Infinity
+                : null) ?? Infinity,
+        ),
         shareRatio: torrentData?.share_ratio,
-        totalSize: torrentData?.total_size,
+        totalSize: formatBytes({
+            bytes: torrentData?.total_size || 0,
+        }),
+        wastedBytes:
+            formatBytes({
+                bytes: torrentData?.wasted || 0,
+            }) ?? 0,
     };
-
     return (
         <Card className="w-full">
             <CardContent className="space-y-6 pt-6">
@@ -86,7 +100,7 @@ export default function TorrentDetails() {
                         <div>
                             Time Active:{" "}
                             <span className="font-semibold">
-                                {mapping.timeActive}
+                                {mapping.activeTime}
                             </span>
                         </div>
                         <div>
@@ -120,11 +134,7 @@ export default function TorrentDetails() {
                         <div>
                             ETA:{" "}
                             <span className="font-semibold">
-                                {formatDurationClean(
-                                    mapping.progress < 100
-                                        ? (mapping.eta ?? Infinity)
-                                        : Infinity,
-                                )}{" "}
+                                {mapping.eta}{" "}
                             </span>
                         </div>
                         <div>
@@ -160,14 +170,15 @@ export default function TorrentDetails() {
                             <span className="font-semibold">0 (100 total)</span>
                         </div>
                         <div>
-                            Wasted: <span className="font-semibold">0 B</span>
+                            Wasted:{" "}
+                            <span className="font-semibold">
+                                {mapping.wastedBytes}
+                            </span>
                         </div>
                         <div>
                             Last Seen Complete:{" "}
                             <span className="font-semibold">
-                                {new Date(
-                                    (mapping.completionTime || 0) * 1000,
-                                ).toLocaleString()}
+                                {mapping.completionTime}
                             </span>
                         </div>
                     </div>
@@ -179,17 +190,13 @@ export default function TorrentDetails() {
                         <div>
                             Total Size:{" "}
                             <span className="font-semibold">
-                                {formatBytes({
-                                    bytes: mapping.totalSize || 0,
-                                })}
+                                {mapping.totalSize}
                             </span>
                         </div>
                         <div>
                             Added On:{" "}
                             <span className="font-semibold">
-                                {new Date(
-                                    (mapping.addedTime || 0) * 1000,
-                                ).toLocaleString()}
+                                {mapping.addedTime}
                             </span>
                         </div>
                         <div>

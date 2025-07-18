@@ -13,7 +13,7 @@ export interface DHTNode {
     host: string;
     port: number;
 }
-interface Peer {
+export interface Peer {
     ip: string;
     client: Record<string, any>;
     progress: number;

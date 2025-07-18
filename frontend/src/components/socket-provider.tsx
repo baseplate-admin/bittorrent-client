@@ -10,14 +10,15 @@ import {
     torrentRemoveQueueAtom,
 } from "@/atoms/torrent";
 import { dequeue, peekQueue } from "@/lib/queue";
-import { TorrentInfo } from "@/types/socket/torrent_info";
+import { TorrentInfo, Peer } from "@/types/socket/torrent_info";
 import { GetAllResponse } from "@/types/socket/get_all";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
+import { deepMerge } from "@/lib/deepMerge";
 
-function analyzePeers(peers: any[]) {
+function analyzePeers(peers: Peer[]) {
     const seeds = peers.filter((p) => p.seed).length;
     const leeches = peers.length - seeds;
     const connectedPeers = peers.length;
@@ -90,11 +91,14 @@ export default function SocketProvider() {
                         total: torrent.total_size,
                         downloadSpeed: torrent.download_rate ?? 0,
                     });
+                    const { seeds, leeches } = analyzePeers(
+                        torrent.peers ?? [],
+                    );
 
                     return {
                         ...torrent,
-                        // seeders: torrent.seeds ?? 0,
-                        // leechers: (torrent.peers ?? 0) - (torrent.seeds ?? 0),
+                        seeds: seeds,
+                        leechs: leeches,
                         eta: eta,
                     };
                 });
@@ -190,28 +194,15 @@ export default function SocketProvider() {
                                 status.peers ?? [],
                             );
                             console.log(status);
-                            latestTorrentsRef.current[index] = {
-                                ...t,
-                                active_time: status.active_time,
-                                added_time: status.added_time,
-                                comment: status.comment,
-                                completion_time: status.completion_time,
-                                connections: status.connections,
-                                finished: status.finished,
-                                name: status.name,
-                                progress: Number(status.progress),
-                                download_rate: status.download_rate,
-                                upload_rate: status.upload_rate,
-                                peers: status.peers,
-                                seeds: seeds,
-                                leechs: leeches,
-                                total_size: status.total_size,
-                                state: state,
-                                eta: eta,
-                                share_ratio: status.share_ratio ?? null,
-                                wasted: status.wasted,
-                                // peers_info: status.peers_info ?? [], // Add this line for full peer details
-                            };
+                            status["eta"] = eta;
+                            status["seeds"] = seeds;
+                            status["leechs"] = leeches;
+                            status["state"] = state;
+
+                            latestTorrentsRef.current[index] = deepMerge(
+                                t,
+                                status,
+                            );
                         }
                     }
                     break;

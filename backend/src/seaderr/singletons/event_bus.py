@@ -1,11 +1,14 @@
 import asyncio
 from typing import Any, Awaitable, Callable, Optional
 
+from .logger import Logger
+
 
 class EventBus:
     _instance: Optional["EventBus"] = None
 
     _initialized: bool
+    _running: bool
     queue: asyncio.Queue
     _consumer: Optional[Callable[[Any], Awaitable[None]]]
 
@@ -29,6 +32,7 @@ class EventBus:
             return
         instance.queue = asyncio.Queue()
         instance._consumer = None
+        instance._running = False
         instance._initialized = True
 
     def set_consumer(self, consumer: Callable[[Any], Awaitable[None]]):
@@ -55,6 +59,37 @@ class EventBus:
             raise RuntimeError("Call EventBus.init() before starting the bus")
         if not self._consumer:
             raise RuntimeError("Consumer not set")
-        while True:
-            event = await self.queue.get()
-            await self._consumer(event)
+
+        logger = Logger.get_logger()
+        self._running = True
+
+        logger.info("EventBus started.")
+
+        while self._running:
+            try:
+                event = await self.queue.get()
+                if event is None:
+                    # Special signal to stop the loop
+                    logger.info("EventBus received shutdown signal.")
+                    break
+
+                try:
+                    await self._consumer(event)
+                except asyncio.CancelledError:
+                    logger.info("EventBus task cancelled.")
+                    raise
+                except Exception as e:
+                    logger.exception(f"Error while handling event {event}: {e}")
+            except Exception as outer:
+                logger.exception(f"Unexpected error in EventBus loop: {outer}")
+
+        logger.info("EventBus stopped.")
+
+    def stop(self):
+        if not self._initialized:
+            raise RuntimeError("Call EventBus.init() before stopping the bus")
+        if not self._running:
+            return
+        self._running = False
+        # Wake up the queue if it's waiting
+        self.queue.put_nowait(None)

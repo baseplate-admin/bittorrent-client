@@ -124,42 +124,44 @@ async def serialize_alert(alert) -> dict:
                         }
                     )
                 return {"type": "libtorrent:state_update", "statuses": statuses}
-            case lt.dht_stats_alert():
-                active_requests = [
-                    {
-                        "type": r["type"],
-                        "outstanding_requests": r["outstanding_requests"],
-                        "timeouts": r["timeouts"],
-                        "responses": r["responses"],
-                        "branch_factor": r["branch_factor"],
-                        "nodes_left": r["nodes_left"],
-                        "last_sent": r["last_sent"],
-                        "first_timeout": r["first_timeout"],
-                    }
-                    for r in alert.active_requests
-                ]
-                routing_table = [
-                    {
-                        "num_nodes": bucket["num_nodes"],
-                        "num_replacements": bucket["num_replacements"],
-                    }
-                    for bucket in alert.routing_table
-                ]
-                return {
-                    "type": "libtorrent:dht_stats",
-                    "active_requests": active_requests,
-                    "routing_table": routing_table,
-                }
-            case lt.session_stats_header_alert():
-                return {
-                    "type": "libtorrent:session_stats_header",
-                    "counters": list(alert.message().split("\t")),
-                }
-            case lt.session_stats_alert():
-                return {
-                    "type": "libtorrent:session_stats",
-                    "values": list(alert.values),
-                }
+
+            # case lt.dht_stats_alert():
+            #     active_requests = [
+            #         {
+            #             "type": r["type"],
+            #             "outstanding_requests": r["outstanding_requests"],
+            #             "timeouts": r["timeouts"],
+            #             "responses": r["responses"],
+            #             "branch_factor": r["branch_factor"],
+            #             "nodes_left": r["nodes_left"],
+            #             "last_sent": r["last_sent"],
+            #             "first_timeout": r["first_timeout"],
+            #         }
+            #         for r in alert.active_requests
+            #     ]
+            #     routing_table = [
+            #         {
+            #             "num_nodes": bucket["num_nodes"],
+            #             "num_replacements": bucket["num_replacements"],
+            #         }
+            #         for bucket in alert.routing_table
+            #     ]
+            #     return {
+            #         "type": "libtorrent:dht_stats",
+            #         "active_requests": active_requests,
+            #         "routing_table": routing_table,
+            #     }
+            # case lt.session_stats_header_alert():
+            #     return {
+            #         "type": "libtorrent:session_stats_header",
+            #         "counters": list(alert.message().split("\t")),
+            #    }
+            # case lt.session_stats_alert():
+
+            #     return {
+            #         "type": "libtorrent:session_stats",
+            #         "values": list(alert.values),
+            #     }
 
             case _:
                 try:
@@ -177,8 +179,6 @@ async def shared_poll_and_publish(bus: EventBus):
             continue
 
         lt_ses.post_torrent_updates()
-        lt_ses.post_dht_stats()
-        lt_ses.post_session_stats()
 
         alerts = lt_ses.pop_alerts()
         for alert in alerts:

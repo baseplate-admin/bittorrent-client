@@ -47,7 +47,9 @@ class ExpiringStore(Generic[T]):
 
     async def delete(self, key: str):
         async with self._lock:
-            await self._expire_key(key)
+            await self._cancel_timer(key)
+            self._data.pop(key, None)
+            self._expiries.pop(key, None)
 
     async def keys(self) -> list[str]:
         async with self._lock:

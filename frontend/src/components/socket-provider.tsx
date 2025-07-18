@@ -17,6 +17,7 @@ import { MagnetResponse } from "@/types/socket/add_magnet";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
+import { calculateETA } from "@/lib/calculateEta";
 
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
@@ -85,6 +86,13 @@ export default function SocketProvider() {
                         seeders: torrent.seeders ?? 0,
                         leechers:
                             (torrent.num_peers ?? 0) - (torrent.seeders ?? 0),
+                        eta: calculateETA({
+                            downloaded: Number(
+                                torrent.total_size * torrent.progress,
+                            ),
+                            total: torrent.total_size,
+                            downloadSpeed: torrent.download_rate,
+                        }),
                     }),
                 );
                 updateTorrentsAtom();
@@ -125,6 +133,13 @@ export default function SocketProvider() {
                     const newTorrent = await getSpecificTorrentFromSocket(
                         response.info_hash,
                     );
+                    newTorrent.eta = calculateETA({
+                        downloaded: Number(
+                            newTorrent.total_size * newTorrent.progress,
+                        ),
+                        total: newTorrent.total_size,
+                        downloadSpeed: newTorrent.download_rate,
+                    });
                     const exists = latestTorrentsRef.current.some(
                         (t) => t.info_hash === newTorrent.info_hash,
                     );
@@ -155,6 +170,13 @@ export default function SocketProvider() {
                                 ),
                                 total_size: status.total_size,
                                 state: status.state,
+                                eta: calculateETA({
+                                    downloaded: Number(
+                                        status.total_size * status.progress,
+                                    ),
+                                    total: status.total_size,
+                                    downloadSpeed: status.download_rate,
+                                }),
                             };
                         }
                     }

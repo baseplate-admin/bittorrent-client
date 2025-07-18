@@ -16,4 +16,6 @@ export interface TorrentInfo {
     leechers: number;
     peers: TorrentPeer[]; // New field
     files: FileInfo[];
+    /** Derived Field */
+    eta?: number; // Estimated Time of Arrival in seconds
 }

@@ -9,6 +9,7 @@ import { snakeToSpace } from "@/lib/snakeToSpace";
 import { useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Progress } from "../ui/progress";
+import { formatDurationClean } from "@/lib/formatDurationClean";
 
 const columnsMetadata: {
     key: string;
@@ -120,7 +121,14 @@ const columnsMetadata: {
             return <center>{getValue()}</center>;
         },
     },
-
+    {
+        key: "eta",
+        cell: ({ getValue }) => {
+            return (
+                <center>{formatDurationClean(getValue() ?? Infinity)}</center>
+            );
+        },
+    },
     {
         key: "download_rate",
         keyName: "Download Speed",

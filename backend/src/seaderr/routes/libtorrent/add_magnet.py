@@ -27,7 +27,7 @@ async def on_cleanup(key: str, value: TorrentDataclass):
 
 torrent_store = ExpiringStore(
     TorrentDataclass,
-    default_expiry=int(timedelta(hours=1).total_seconds()),
+    default_expiry=15,
     on_cleanup=on_cleanup,
 )
 

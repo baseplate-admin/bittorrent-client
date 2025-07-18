@@ -96,11 +96,11 @@ async def add_magnet(sid: str, data: dict):
         if action == "add":
             handle.set_upload_mode(False)
             handle.resume()
+            await torrent_store.delete(info_hash)
             return {"status": "success", "message": "Torrent resumed/started"}
 
         elif action == "remove":
             ses.remove_torrent(handle, lt.options_t.delete_files)
-            await torrent_store.delete(info_hash)
             return {"status": "success", "message": "Torrent removed successfully"}
 
     return {"status": "error", "message": "Unknown action"}

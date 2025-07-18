@@ -8,6 +8,7 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { snakeToSpace } from "@/lib/snakeToSpace";
 import { useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Progress } from "../ui/progress";
 
 const columnsMetadata: {
     key: string;
@@ -75,7 +76,7 @@ const columnsMetadata: {
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                     >
-                        <progress
+                        <Progress
                             max={100}
                             value={progress}
                             className="bg-muted h-3 w-full rounded"

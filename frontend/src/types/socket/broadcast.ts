@@ -1,3 +1,5 @@
+import { TorrentInfo } from "./torrent_info";
+
 export type SerializedAlert =
     | { type: "synthetic:resumed"; info_hash: string }
     | { type: "synthetic:paused"; info_hash: string }
@@ -7,25 +9,7 @@ export type SerializedAlert =
     | { type: "libtorrent:peer_connected"; message: string } // IP string
     | {
           type: "libtorrent:state_update";
-          statuses: {
-              name: string;
-              progress: number; // percent (0-100)
-              download_rate: number; // bytes/sec
-              upload_rate: number; // bytes/sec
-              info_hash: string;
-              num_peers: number;
-              seeds: number;
-              leechers?: number; // optional
-              state: string;
-              total_size: number;
-              peers?: {
-                  ip: string;
-                  progress: number;
-                  total_download: number;
-                  total_upload: number;
-                  is_seed: boolean;
-              }[];
-          }[];
+          statuses: TorrentInfo[];
       }
     | {
           type: "libtorrent:tracker_error";

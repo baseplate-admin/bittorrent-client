@@ -93,8 +93,8 @@ export default function SocketProvider() {
 
                     return {
                         ...torrent,
-                        seeders: torrent.seeds ?? 0,
-                        leechers: (torrent.peers ?? 0) - (torrent.seeds ?? 0),
+                        // seeders: torrent.seeds ?? 0,
+                        // leechers: (torrent.peers ?? 0) - (torrent.seeds ?? 0),
                         eta: eta,
                     };
                 });
@@ -121,7 +121,6 @@ export default function SocketProvider() {
                     break;
                 }
                 case "synthetic:removed": {
-                    console.log(response);
                     const torrent = findTorrentByInfoHash(response.info_hash);
                     if (torrent) {
                         latestTorrentsRef.current =
@@ -187,20 +186,30 @@ export default function SocketProvider() {
                                 | "error"
                                 | "unknown";
 
-                            const { seeds, leeches, connectedPeers } =
-                                analyzePeers(status.peers ?? []);
-
+                            const { seeds, leeches } = analyzePeers(
+                                status.peers ?? [],
+                            );
+                            console.log(status);
                             latestTorrentsRef.current[index] = {
                                 ...t,
+                                active_time: status.active_time,
+                                added_time: status.added_time,
+                                comment: status.comment,
+                                completion_time: status.completion_time,
+                                connections: status.connections,
+                                finished: status.finished,
+                                name: status.name,
                                 progress: Number(status.progress),
                                 download_rate: status.download_rate,
                                 upload_rate: status.upload_rate,
-                                peers: connectedPeers,
+                                peers: status.peers,
                                 seeds: seeds,
                                 leechs: leeches,
                                 total_size: status.total_size,
                                 state: state,
                                 eta: eta,
+                                share_ratio: status.share_ratio ?? null,
+                                wasted: status.wasted,
                                 // peers_info: status.peers_info ?? [], // Add this line for full peer details
                             };
                         }

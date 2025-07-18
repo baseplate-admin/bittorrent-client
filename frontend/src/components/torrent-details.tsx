@@ -43,11 +43,19 @@ export default function TorrentDetails() {
     }
 
     const mapping = {
+        addedTime: torrentData?.added_time,
+        completionTime: torrentData?.completion_time,
+        comments: torrentData?.comment,
         progress: torrentData?.progress || 0,
         timeActive: "20h 42m",
         downloaded: "0 B",
+        infoHash: torrentData?.info_hash,
         downloadSpeed: formatBytes({
             bytes: torrentData?.download_rate || 0,
+            perSecond: true,
+        }),
+        uploadSpeed: formatBytes({
+            bytes: torrentData?.upload_rate || 0,
             perSecond: true,
         }),
         eta: torrentData
@@ -59,6 +67,8 @@ export default function TorrentDetails() {
                   downloadSpeed: torrentData.download_rate,
               })
             : null,
+        shareRatio: torrentData?.share_ratio,
+        totalSize: torrentData?.total_size,
     };
 
     return (
@@ -97,7 +107,9 @@ export default function TorrentDetails() {
                         </div>
                         <div>
                             Share Ratio:{" "}
-                            <span className="font-semibold">0.44</span>
+                            <span className="font-semibold">
+                                {mapping.shareRatio}
+                            </span>
                         </div>
                         <div>
                             Popularity:{" "}
@@ -122,7 +134,7 @@ export default function TorrentDetails() {
                         <div>
                             Upload Speed:{" "}
                             <span className="font-semibold">
-                                0 B/s (203.7 KiB/s avg.)
+                                {mapping.uploadSpeed}
                             </span>
                         </div>
                         <div>
@@ -153,7 +165,9 @@ export default function TorrentDetails() {
                         <div>
                             Last Seen Complete:{" "}
                             <span className="font-semibold">
-                                7/6/2025 3:16 PM
+                                {new Date(
+                                    (mapping.completionTime || 0) * 1000,
+                                ).toLocaleString()}
                             </span>
                         </div>
                     </div>
@@ -164,12 +178,18 @@ export default function TorrentDetails() {
                     <div className="space-y-1">
                         <div>
                             Total Size:{" "}
-                            <span className="font-semibold">31.58 GiB</span>
+                            <span className="font-semibold">
+                                {formatBytes({
+                                    bytes: mapping.totalSize || 0,
+                                })}
+                            </span>
                         </div>
                         <div>
                             Added On:{" "}
                             <span className="font-semibold">
-                                7/5/2025 8:10 PM
+                                {new Date(
+                                    (mapping.addedTime || 0) * 1000,
+                                ).toLocaleString()}
                             </span>
                         </div>
                         <div>
@@ -178,7 +198,7 @@ export default function TorrentDetails() {
                         <div>
                             Info Hash v1:{" "}
                             <span className="font-semibold break-all">
-                                380bdebd8c5e1bb2b56817901db258e7deb3c6a06
+                                {mapping.infoHash}
                             </span>
                         </div>
                         <div>
@@ -190,7 +210,12 @@ export default function TorrentDetails() {
                             <span className="font-semibold">E:\Torrent</span>
                         </div>
                         <div>
-                            Comment: <span className="font-semibold">—</span>
+                            Comment:{" "}
+                            <span className="font-semibold">
+                                {mapping.comments || (
+                                    <span className="italic">No comments</span>
+                                )}
+                            </span>
                         </div>
                     </div>
                     <div className="space-y-1">

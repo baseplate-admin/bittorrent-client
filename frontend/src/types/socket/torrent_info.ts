@@ -13,6 +13,19 @@ export interface DHTNode {
     host: string;
     port: number;
 }
+interface Peer {
+    ip: string;
+    client: Record<string, any>;
+    progress: number;
+    flags: number;
+    download_queue_length: number;
+    upload_queue_length: number;
+    up_speed: number;
+    down_speed: number;
+    total_download: number;
+    total_upload: number;
+    seed: boolean;
+}
 
 export interface TorrentInfo {
     name: string;
@@ -39,7 +52,7 @@ export interface TorrentInfo {
     share_ratio?: number | null;
     connections: number;
     seeds: number;
-    peers: number;
+    peers: Peer[];
     wasted: number;
     active_time: number;
     seeding_time: number;

@@ -85,7 +85,7 @@ export default function SocketProvider() {
                 latestTorrentsRef.current = response.torrents.map((torrent) => {
                     const eta = calculateETA({
                         downloaded: Number(
-                            torrent.total_size * torrent.progress,
+                            torrent.total_size * (torrent.progress / 100),
                         ),
                         total: torrent.total_size,
                         downloadSpeed: torrent.download_rate ?? 0,
@@ -161,7 +161,7 @@ export default function SocketProvider() {
                             const t = latestTorrentsRef.current[index];
                             const eta = calculateETA({
                                 downloaded: Number(
-                                    status.total_size * status.progress,
+                                    status.total_size * (status.progress / 100),
                                 ),
                                 total: status.total_size ?? 0,
                                 downloadSpeed: status.download_rate ?? 0,

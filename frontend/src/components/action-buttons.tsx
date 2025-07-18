@@ -51,12 +51,14 @@ export default function ActionButtons() {
     const setIgnoredElementsRef = useSetAtom(ignoredElementsRefAtom);
 
     useEffect(() => {
-        if (actionButtonRef.current) {
-            setIgnoredElementsRef((prev) => [
-                ...prev,
-                actionButtonRef as RefObject<HTMLElement>,
-            ]);
+        const ref = actionButtonRef as RefObject<HTMLElement>;
+
+        if (ref.current) {
+            setIgnoredElementsRef((prev) => [...prev, ref]);
         }
+        return () => {
+            setIgnoredElementsRef((prev) => prev.filter((el) => el !== ref));
+        };
     }, [actionButtonRef, setIgnoredElementsRef]);
 
     // Array of magnet links that have active FileDialogs open

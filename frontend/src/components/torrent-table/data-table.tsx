@@ -312,12 +312,13 @@ export function DataTable<TData, TValue>({
     );
     const tableRef = useRef<HTMLTableElement>(null);
     useEffect(() => {
-        if (tableRef?.current) {
-            setIgnoredElementsRef((prev) => [
-                ...prev,
-                tableRef as RefObject<HTMLElement>,
-            ]);
+        const ref = tableRef as RefObject<HTMLElement>;
+        if (ref.current) {
+            setIgnoredElementsRef((prev) => [...prev, ref]);
         }
+        return () => {
+            setIgnoredElementsRef((prev) => prev.filter((el) => el !== ref));
+        };
     }, [tableRef, setIgnoredElementsRef]);
 
     const table = useReactTable({

@@ -21,12 +21,15 @@ export default function TorrentDetails() {
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
 
     useEffect(() => {
-        if (cardRef.current) {
-            setIgnoredElementsRef((prev) => [
-                ...prev,
-                cardRef as RefObject<HTMLElement>,
-            ]);
+        const ref = cardRef as RefObject<HTMLElement>;
+        if (ref.current) {
+            setIgnoredElementsRef((prev) => [...prev, ref]);
         }
+        return () => {
+            setIgnoredElementsRef((prev) =>
+                prev.filter((element) => element !== ref),
+            );
+        };
     }, [cardRef, setIgnoredElementsRef]);
 
     const keys = Object.keys(selectedRows || {});

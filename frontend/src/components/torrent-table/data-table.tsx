@@ -335,7 +335,9 @@ export function DataTable<TData, TValue>({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
+            // Only trigger on left-click (button code 0)
             if (
+                event.button === 0 &&
                 tableRef.current &&
                 !tableRef.current.contains(event.target as Node)
             ) {

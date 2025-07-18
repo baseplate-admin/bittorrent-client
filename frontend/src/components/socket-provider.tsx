@@ -17,10 +17,12 @@ import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
 
-function countSeeds(peers: any[]): number {
-    return peers.reduce((count, peer) => count + (peer.seed ? 1 : 0), 0);
+function analyzePeers(peers: any[]) {
+    const seeds = peers.filter((p) => p.seed).length;
+    const leeches = peers.length - seeds;
+    const connectedPeers = peers.length;
+    return { seeds, leeches, connectedPeers };
 }
-
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
 
@@ -159,25 +161,23 @@ export default function SocketProvider() {
                             const t = latestTorrentsRef.current[index];
                             const eta = calculateETA({
                                 downloaded: Number(
-                                    (status.total_size ?? 0) *
-                                        (status.progress ?? 0),
+                                    status.total_size * status.progress,
                                 ),
                                 total: status.total_size ?? 0,
                                 downloadSpeed: status.download_rate ?? 0,
                             });
-                            const leechs = Math.max(
-                                status.num_peers - status.seeds,
-                                0,
-                            );
-                            console.log(status.peers);
+
+                            const { seeds, leeches, connectedPeers } =
+                                analyzePeers(status.peers ?? []);
+
                             latestTorrentsRef.current[index] = {
                                 ...t,
                                 progress: Number(status.progress),
                                 download_rate: status.download_rate,
                                 upload_rate: status.upload_rate,
-                                peers: status.num_peers,
-                                seeds: status.seeds,
-                                leechs: leechs,
+                                peers: connectedPeers,
+                                seeds: seeds,
+                                leechs: leeches,
                                 total_size: status.total_size,
                                 state: status.state,
                                 eta: eta,

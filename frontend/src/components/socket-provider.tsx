@@ -4,7 +4,6 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useAtom } from "jotai";
 import {
     torrentAtom,
-    torrentUploadMagnetQueueAtom,
     torrentUploadFileQueueAtom,
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
@@ -13,7 +12,6 @@ import {
 import { dequeue, peekQueue } from "@/lib/queue";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { GetAllResponse } from "@/types/socket/get_all";
-import { MagnetResponse } from "@/types/socket/add_magnet";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
@@ -21,9 +19,7 @@ import { calculateETA } from "@/lib/calculateEta";
 
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
-    const [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue] = useAtom(
-        torrentUploadMagnetQueueAtom,
-    );
+
     const [torrentUploadFileQueue] = useAtom(torrentUploadFileQueueAtom);
     const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(
         torrentPauseQueueAtom,
@@ -277,29 +273,6 @@ export default function SocketProvider() {
             },
         );
     }, [torrentPauseQueue, setTorrentPauseQueue]);
-
-    // Magnet upload queue
-    useEffect(() => {
-        if (!socketRef.current || torrentUploadMagnetQueue.length === 0) return;
-
-        const magnet = peekQueue(torrentUploadMagnetQueue);
-        if (!magnet) return;
-
-        socketRef.current.emit(
-            "libtorrent:add_magnet",
-            { magnet },
-            (response: MagnetResponse) => {
-                if (response.status === "success") {
-                    dequeue(
-                        torrentUploadMagnetQueue,
-                        setTorrentUploadMagnetQueue,
-                    );
-                } else {
-                    console.error("Failed to upload magnet:", response.message);
-                }
-            },
-        );
-    }, [torrentUploadMagnetQueue, setTorrentUploadMagnetQueue]);
 
     // Sync ref to atom every 1 second using updateTorrentsAtom
     useEffect(() => {

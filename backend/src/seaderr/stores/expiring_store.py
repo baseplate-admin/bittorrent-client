@@ -70,5 +70,5 @@ class ExpiringStore(Generic[T]):
         value = self._data.pop(key, None)
         self._expiries.pop(key, None)
         await self._cancel_timer(key)
-        if value and self._on_cleanup:
-            await asyncio.to_thread(lambda: asyncio.run(self._on_cleanup(key, value)))
+        if value is not None and self._on_cleanup is not None:
+            await self._on_cleanup(key, value)

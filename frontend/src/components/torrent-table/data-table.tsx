@@ -44,7 +44,6 @@ import {
 } from "lucide-react";
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -58,7 +57,8 @@ import {
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
 } from "@/atoms/torrent";
-import { useSetAtom } from "jotai";
+import { selectedRowAtom } from "@/atoms/table";
+import { useAtom, useSetAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
@@ -306,9 +306,8 @@ export function DataTable<TData, TValue>({
     data,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
-    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>(
-        {},
-    );
+    const [rowSelection, setRowSelection] = useAtom(selectedRowAtom);
+
     const tableRef = useRef<HTMLTableElement>(null);
 
     const table = useReactTable({
@@ -321,11 +320,9 @@ export function DataTable<TData, TValue>({
             sorting,
             rowSelection,
         },
+        onRowSelectionChange: setRowSelection,
         columnResizeMode: "onChange",
     });
-    useEffect(() => {
-        console.log(rowSelection);
-    }, [rowSelection]);
 
     const handleRowClick = (rowId: string) => {
         if (!rowSelection[rowId]) {
@@ -345,12 +342,12 @@ export function DataTable<TData, TValue>({
                 setRowSelection({});
             }
         }
-        document.addEventListener("mousedown", handleClickOutside);
 
+        document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, []);
+    }, [setRowSelection]);
 
     return (
         <div className="h-full rounded-md border">

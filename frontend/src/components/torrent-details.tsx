@@ -1,15 +1,73 @@
+"use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { useAtomValue } from "jotai";
+import { torrentAtom } from "@/atoms/torrent";
+import { selectedRowAtom } from "@/atoms/table";
+import { TorrentInfo } from "@/types/socket/torrent_info";
+import { useEffect, useState } from "react";
+import { formatBytes } from "@/lib/formatBytes";
+import { calculateETA } from "@/lib/calculateEta";
+import { formatDurationClean } from "@/lib/formatDurationClean";
 
 export default function TorrentDetails() {
+    const torrent = useAtomValue(torrentAtom);
+    const selectedRows = useAtomValue(selectedRowAtom);
+
+    const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+
+    const keys = Object.keys(selectedRows || {});
+
+    const index = keys.length === 1 ? keys[0] : null;
+    const indexNum = index !== null ? parseInt(index, 10) : null;
+
+    useEffect(() => {
+        if (torrent && indexNum !== null && !isNaN(indexNum)) {
+            setTorrentData(torrent[indexNum] ?? null);
+            console.log("Torrent Data:", torrent[indexNum]);
+        } else {
+            setTorrentData(null);
+        }
+    }, [torrent, indexNum]);
+
+    if (keys.length > 1) {
+        return <>Error: More than one row selected</>;
+    }
+    if (keys.length === 0) {
+        return (
+            <div className="flex justify-center rounded-md border p-64">
+                No torrent selected
+            </div>
+        );
+    }
+
+    const mapping = {
+        progress: torrentData?.progress || 0,
+        timeActive: "20h 42m",
+        downloaded: "0 B",
+        downloadSpeed: formatBytes({
+            bytes: torrentData?.download_rate || 0,
+            perSecond: true,
+        }),
+        eta: torrentData
+            ? calculateETA({
+                  downloaded: Number(
+                      torrentData.total_size * torrentData.progress,
+                  ),
+                  total: torrentData.total_size,
+                  downloadSpeed: torrentData.download_rate,
+              })
+            : null,
+    };
+
     return (
         <Card className="w-full">
             <CardContent className="space-y-6 pt-6">
                 {/* Progress */}
                 <div>
                     <div className="mb-1 text-sm font-medium">Progress:</div>
-                    <Progress value={0} className="h-2" />
+                    <Progress value={mapping.progress} className="h-2" />
                 </div>
 
                 {/* Transfer Section */}
@@ -17,16 +75,20 @@ export default function TorrentDetails() {
                     <div className="space-y-1">
                         <div>
                             Time Active:{" "}
-                            <span className="font-semibold">20h 4m</span>
+                            <span className="font-semibold">
+                                {mapping.timeActive}
+                            </span>
                         </div>
                         <div>
                             Downloaded:{" "}
-                            <span className="font-semibold">31.58 GiB</span>
+                            <span className="font-semibold">
+                                {mapping.downloaded}
+                            </span>
                         </div>
                         <div>
                             Download Speed:{" "}
                             <span className="font-semibold">
-                                0 B/s (2.0 MiB/s avg.)
+                                {mapping.downloadSpeed}
                             </span>
                         </div>
                         <div>
@@ -44,7 +106,10 @@ export default function TorrentDetails() {
                     </div>
                     <div className="space-y-1">
                         <div>
-                            ETA: <span className="font-semibold">∞</span>
+                            ETA:{" "}
+                            <span className="font-semibold">
+                                {formatDurationClean(mapping.eta ?? Infinity)}
+                            </span>
                         </div>
                         <div>
                             Uploaded:{" "}

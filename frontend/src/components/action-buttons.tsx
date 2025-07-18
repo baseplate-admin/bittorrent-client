@@ -561,27 +561,21 @@ const FileDialog = ({
                 <DialogFooter className="mt-6 flex justify-end gap-3">
                     <DialogClose asChild>
                         {/* Confirm / Cancel buttons */}
-                        {metadata && (
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={confirmAddTorrent}
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <Loader2Icon className="animate-spin" />
-                                    ) : (
-                                        "Add Torrent"
-                                    )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={cancelTorrent}
-                                    disabled={loading}
-                                >
-                                    Cancel
-                                </Button>
-                            </div>
-                        )}
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={confirmAddTorrent}
+                                disabled={loading}
+                            >
+                                Add Torrent
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={cancelTorrent}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>

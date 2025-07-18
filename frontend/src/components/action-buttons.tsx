@@ -22,10 +22,7 @@ import React, { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useSetAtom } from "jotai";
-import {
-    torrentUploadFileQueueAtom,
-    torrentUploadMagnetQueueAtom,
-} from "@/atoms/torrent";
+import { torrentUploadFileQueueAtom } from "@/atoms/torrent";
 import { Label } from "./ui/label";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { Checkbox } from "./ui/checkbox";
@@ -49,15 +46,27 @@ export default function ActionButtons() {
     const [textareaValue, setTextareaValue] = useState<string>("");
 
     const setTorrentUploadFileQueue = useSetAtom(torrentUploadFileQueueAtom);
-    const setTorrentUploadMagnetQueue = useSetAtom(
-        torrentUploadMagnetQueueAtom,
-    );
 
+    // Array of magnet links that have active FileDialogs open
+    const [openMagnetDialogs, setOpenMagnetDialogs] = useState<string[]>([]);
+
+    // When Download clicked on magnet links textarea dialog
     const handleDownloadButtonClick = (closeDialog: () => void) => {
-        const magnets = textareaValue.split("\n");
-        setTorrentUploadMagnetQueue([...magnets]);
+        const magnets = textareaValue
+            .split("\n")
+            .map((link) => link.trim())
+            .filter((link) => link.length > 0);
+
+        // Open one FileDialog per magnet link
+        setOpenMagnetDialogs((prev) => [...prev, ...magnets]);
 
         closeDialog();
+    };
+
+    const handleCloseMagnetDialog = (magnetLink: string) => {
+        setOpenMagnetDialogs((prev) =>
+            prev.filter((link) => link !== magnetLink),
+        );
     };
 
     const handleTorrentAddButtonClick = (closeDialog: () => void) => {
@@ -87,7 +96,7 @@ export default function ActionButtons() {
                             onChange={(e) => setTextareaValue(e.target.value)}
                             value={textareaValue}
                             className="h-32"
-                            placeholder="Type your message here."
+                            placeholder="Type your magnet links here, one per line."
                         />
                         <p className="text-sm italic">
                             One link per line (Magnet links are supported)
@@ -168,7 +177,15 @@ export default function ActionButtons() {
     return (
         <div className="flex rounded-md border p-4">
             <div className="flex gap-5">
-                <FileDialog magnetLink="magnet:?xt=urn:btih:F9B4F6C8D8E1F8B13BB2468D1945A904285CE3C2&dn=Call+of+Duty%3A+Vanguard+%28v1.26+Campaign%2FZombies+%2B+Bonus+OST%2C+MULTi13%29+%5BFitGirl+Repack%2C+Selective+Download+-+from+41.8+GB%5D&tr=udp%3A%2F%2Fopentor.net%3A6969&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=udp%3A%2F%2Ftracker.theoks.net%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.ccp.ovh%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=https%3A%2F%2Ftracker.tamersunion.org%3A443%2Fannounce&tr=udp%3A%2F%2Fexplodie.org%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.bt4g.com%3A2095%2Fannounce&tr=udp%3A%2F%2Fbt2.archive.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fbt1.archive.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.filemail.com%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker1.bt.moack.co.kr%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce&tr=udp%3A%2F%2Fopentracker.i2p.rocks%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.internetwarriors.net%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Fcoppersurfer.tk%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.zer0day.to%3A1337%2Fannounce" />
+                {/* Render all open FileDialogs for each magnet */}
+                {openMagnetDialogs.map((magnet, idx) => (
+                    <FileDialog
+                        key={magnet}
+                        magnetLink={magnet}
+                        onClose={() => handleCloseMagnetDialog(magnet)}
+                    />
+                ))}
+
                 {mapping.map((item, index) => {
                     const isOpen = openDialogIndex === index;
 
@@ -220,7 +237,13 @@ export default function ActionButtons() {
     );
 }
 
-const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
+const FileDialog = ({
+    magnetLink,
+    onClose,
+}: {
+    magnetLink: string;
+    onClose: () => void;
+}) => {
     const socket = useSocketConnection();
 
     const [folderValue, setFolderValue] = useState("");
@@ -234,7 +257,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
     const [incompletePathEnabled, setIncompletePathEnabled] = useState(false);
     const [rememberPath, setRememberPath] = useState(false);
 
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(true);
 
     // Fetch metadata when dialog opens or magnetLink changes
     useEffect(() => {
@@ -297,7 +320,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                 if (response.status === "success") {
                     console.log("Torrent added successfully:", response);
                     resetForm();
-                    setDialogOpen(false);
+                    closeDialog();
                 } else {
                     console.error("Error adding torrent:", response.message);
                 }
@@ -316,7 +339,7 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
                 if (response.status === "success") {
                     console.log("Torrent cancelled successfully:", response);
                     resetForm();
-                    setDialogOpen(false);
+                    closeDialog();
                 } else {
                     console.error(
                         "Error cancelling torrent:",
@@ -333,11 +356,14 @@ const FileDialog = ({ magnetLink }: { magnetLink: string }) => {
         setTorrentInfoHash(null);
     };
 
+    // Close dialog handler
+    const closeDialog = () => {
+        setDialogOpen(false);
+        onClose();
+    };
+
     return (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline"></Button>
-            </DialogTrigger>
+        <Dialog open={dialogOpen} onOpenChange={closeDialog}>
             <DialogContent className="min-w-[60vw] sm:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Save Torrent</DialogTitle>

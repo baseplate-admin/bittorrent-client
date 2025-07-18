@@ -18,7 +18,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import React, { useEffect, useState } from "react";
+import React, { RefObject, useEffect, useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useSetAtom } from "jotai";
@@ -38,14 +38,26 @@ import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { FileInfo } from "@/types/socket/files";
 import { FileTree } from "./trees/file-tree";
+import { ignoredElementsRefAtom } from "@/atoms/table";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);
 
+    const actionButtonRef = useRef<HTMLDivElement>(null);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [textareaValue, setTextareaValue] = useState<string>("");
 
     const setTorrentUploadFileQueue = useSetAtom(torrentUploadFileQueueAtom);
+    const setIgnoredElementsRef = useSetAtom(ignoredElementsRefAtom);
+
+    useEffect(() => {
+        if (actionButtonRef.current) {
+            setIgnoredElementsRef((prev) => [
+                ...prev,
+                actionButtonRef as RefObject<HTMLElement>,
+            ]);
+        }
+    }, [actionButtonRef, setIgnoredElementsRef]);
 
     // Array of magnet links that have active FileDialogs open
     const [openMagnetDialogs, setOpenMagnetDialogs] = useState<string[]>([]);
@@ -175,7 +187,7 @@ export default function ActionButtons() {
     ];
 
     return (
-        <div className="flex rounded-md border p-4">
+        <div ref={actionButtonRef} className="flex rounded-md border p-4">
             <div className="flex gap-5">
                 {/* Render all open FileDialogs for each magnet */}
                 {openMagnetDialogs.map((magnet, idx) => (

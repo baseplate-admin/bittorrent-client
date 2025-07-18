@@ -2,20 +2,32 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { torrentAtom } from "@/atoms/torrent";
 import { selectedRowAtom } from "@/atoms/table";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { formatBytes } from "@/lib/formatBytes";
 import { calculateETA } from "@/lib/calculateEta";
 import { formatDurationClean } from "@/lib/formatDurationClean";
+import { ignoredElementsRefAtom } from "@/atoms/table";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(torrentAtom);
     const selectedRows = useAtomValue(selectedRowAtom);
+    const setIgnoredElementsRef = useSetAtom(ignoredElementsRefAtom);
 
+    const cardRef = useRef<HTMLDivElement>(null);
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+
+    useEffect(() => {
+        if (cardRef.current) {
+            setIgnoredElementsRef((prev) => [
+                ...prev,
+                cardRef as RefObject<HTMLElement>,
+            ]);
+        }
+    }, [cardRef, setIgnoredElementsRef]);
 
     const keys = Object.keys(selectedRows || {});
 
@@ -25,7 +37,6 @@ export default function TorrentDetails() {
     useEffect(() => {
         if (torrent && indexNum !== null && !isNaN(indexNum)) {
             setTorrentData(torrent[indexNum] ?? null);
-            console.log("Torrent Data:", torrent[indexNum]);
         } else {
             setTorrentData(null);
         }
@@ -36,7 +47,10 @@ export default function TorrentDetails() {
     }
     if (keys.length === 0) {
         return (
-            <div className="flex justify-center rounded-md border p-64">
+            <div
+                ref={cardRef}
+                className="flex justify-center rounded-md border p-64"
+            >
                 No torrent selected
             </div>
         );
@@ -85,8 +99,9 @@ export default function TorrentDetails() {
                 bytes: torrentData?.wasted || 0,
             }) ?? 0,
     };
+
     return (
-        <Card className="w-full">
+        <Card className="w-full" ref={cardRef}>
             <CardContent className="space-y-6 pt-6">
                 {/* Progress */}
                 <div>

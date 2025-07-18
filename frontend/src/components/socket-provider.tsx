@@ -193,7 +193,6 @@ export default function SocketProvider() {
                             const { seeds, leeches } = analyzePeers(
                                 status.peers ?? [],
                             );
-                            console.log(status);
                             status["eta"] = eta;
                             status["seeds"] = seeds;
                             status["leechs"] = leeches;

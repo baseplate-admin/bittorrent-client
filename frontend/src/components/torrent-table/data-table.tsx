@@ -342,7 +342,6 @@ export function DataTable<TData, TValue>({
                 tableRef.current &&
                 !tableRef.current.contains(event.target as Node)
             ) {
-                // Clicked outside the table
                 setRowSelection({});
             }
         }

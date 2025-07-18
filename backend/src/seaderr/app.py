@@ -12,6 +12,12 @@ from seaderr.singletons import (
 from seaderr.utilities import import_submodules
 
 
+def handle_task_exception(loop, context):
+    logger = Logger.get_logger()
+    msg = context.get("exception", context["message"])
+    logger.error(f"Caught async exception: {msg}")
+
+
 def background_task_wrapper(coro_fn, name: str = ""):
     async def runner():
         try:
@@ -59,7 +65,7 @@ async def on_shutdown():
 
 
 async def create_app():
-    asyncio.get_event_loop().set_debug(True)
+    asyncio.get_event_loop().set_exception_handler(handle_task_exception)
     await SIO.init()
     sio = SIO.get_instance()
     sio_app = socketio.ASGIApp(sio)

@@ -38,6 +38,7 @@ export default function SocketProvider() {
         torrentRemoveQueueAtom,
     );
 
+    const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [broadcastStarted, setBroadcastStarted] = useState<boolean>(false);
     const latestTorrentsRef = useRef<TorrentInfo[]>([]);
     const socketRef = useSocketConnection();
@@ -94,7 +95,7 @@ export default function SocketProvider() {
                     const { seeds, leeches } = analyzePeers(
                         torrent.peers ?? [],
                     );
-
+                    setFirstLoad(true);
                     return {
                         ...torrent,
                         seeds: seeds,
@@ -304,10 +305,12 @@ export default function SocketProvider() {
     // Sync ref to atom every 1 second using updateTorrentsAtom
     useEffect(() => {
         const interval = setInterval(() => {
-            updateTorrentsAtom();
+            if (firstLoad) {
+                updateTorrentsAtom();
+            }
         }, 750);
 
         return () => clearInterval(interval);
-    }, [updateTorrentsAtom]);
+    }, [updateTorrentsAtom, firstLoad]);
     return null;
 }

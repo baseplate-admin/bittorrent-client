@@ -53,13 +53,13 @@ async def serialize_alert(alert) -> dict:
                 }
             case lt.peer_connect_alert():
                 return {"type": "libtorrent:peer_connected", "message": str(alert.ip)}
-            case lt.tracker_error_alert():
-                return {
-                    "type": "libtorrent:tracker_error",
-                    "message": alert.message(),
-                    "url": str(alert.url),
-                    "error": str(alert.error),
-                }
+            # case lt.tracker_error_alert():
+            #     return {
+            #         "type": "libtorrent:tracker_error",
+            #         "message": alert.message,
+            #         "url": str(alert.url),
+            #         "error": str(alert.error),
+            #     }
             case lt.udp_error_alert():
                 return {
                     "type": "libtorrent:udp_error",

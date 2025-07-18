@@ -1,4 +1,4 @@
-import asyncio
+import faulthandler
 import functools
 
 import socketio
@@ -11,13 +11,7 @@ from seaderr.singletons import (
 )
 from seaderr.utilities import import_submodules
 
-
-async def print_task_queue(interval=1):
-    while True:
-        print("\n--- Current asyncio tasks ---")
-        for task in asyncio.all_tasks():
-            print(f"- {task.get_name()}: {task}")
-        await asyncio.sleep(interval)
+faulthandler.enable()
 
 
 async def on_startup(sio: socketio.AsyncServer):

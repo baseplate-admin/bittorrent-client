@@ -1,5 +1,4 @@
 import tempfile
-from datetime import timedelta
 
 import libtorrent as lt
 from seaderr.datastructures import TorrentDataclass

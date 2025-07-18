@@ -52,7 +52,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
@@ -306,22 +306,56 @@ export function DataTable<TData, TValue>({
     data,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>(
+        {},
+    );
+    const tableRef = useRef<HTMLTableElement>(null);
 
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
-        onSortingChange: setSorting,
-        columnResizeMode: "onChange",
         getSortedRowModel: getSortedRowModel(),
+        onSortingChange: setSorting,
         state: {
             sorting,
+            rowSelection,
         },
+        columnResizeMode: "onChange",
     });
+    useEffect(() => {
+        console.log(rowSelection);
+    }, [rowSelection]);
+
+    const handleRowClick = (rowId: string) => {
+        if (!rowSelection[rowId]) {
+            setRowSelection((prev) => ({
+                ...prev,
+                [rowId]: true,
+            }));
+        }
+    };
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (
+                tableRef.current &&
+                !tableRef.current.contains(event.target as Node)
+            ) {
+                // Clicked outside the table
+                setRowSelection({});
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     return (
         <div className="h-full rounded-md border">
-            <Table>
+            <Table ref={tableRef}>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
@@ -342,29 +376,44 @@ export function DataTable<TData, TValue>({
                     ))}
                 </TableHeader>
                 <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
-                            <Fragment key={row.id}>
-                                <RowContextMenu
-                                    rowData={row.original as TorrentInfo}
-                                >
-                                    <TableRow
-                                        data-state={
-                                            row.getIsSelected() && "selected"
-                                        }
+                    {table.getRowModel().rows.length ? (
+                        table.getRowModel().rows.map((row) => {
+                            const isSelected = !!rowSelection[row.id];
+
+                            return (
+                                <Fragment key={row.id}>
+                                    <RowContextMenu
+                                        rowData={row.original as TorrentInfo}
                                     >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id}>
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext(),
-                                                )}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                </RowContextMenu>
-                            </Fragment>
-                        ))
+                                        <TableRow
+                                            onClick={() =>
+                                                handleRowClick(row.id)
+                                            }
+                                            data-state={
+                                                isSelected
+                                                    ? "selected"
+                                                    : undefined
+                                            }
+                                            className={
+                                                isSelected ? "bg-blue-100" : ""
+                                            }
+                                        >
+                                            {row
+                                                .getVisibleCells()
+                                                .map((cell) => (
+                                                    <TableCell key={cell.id}>
+                                                        {flexRender(
+                                                            cell.column
+                                                                .columnDef.cell,
+                                                            cell.getContext(),
+                                                        )}
+                                                    </TableCell>
+                                                ))}
+                                        </TableRow>
+                                    </RowContextMenu>
+                                </Fragment>
+                            );
+                        })
                     ) : (
                         <TableRow>
                             <TableCell

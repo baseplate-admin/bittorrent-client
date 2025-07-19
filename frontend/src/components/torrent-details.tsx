@@ -51,10 +51,11 @@ export default function TorrentDetails() {
         ).toLocaleString(),
         completionTime: torrentData?.completion_time
             ? new Date(torrentData?.completion_time * 1000).toLocaleString()
-            : torrentData?.state,
+            : "—",
         savePath: torrentData?.save_path || "N/A",
         activeTime: formatDurationClean(torrentData?.active_time || 0),
         creationDate: torrentData?.creation_date ?? "—",
+        createdBy: torrentData?.creator ?? "—",
         comments:
             torrentData?.comment === ""
                 ? `<Empty String>`
@@ -99,11 +100,11 @@ export default function TorrentDetails() {
         private:
             typeof torrentData?.is_private === "boolean" &&
             String(torrentData?.is_private),
-        pieceLength: `${torrentData?.num_pieces} x ${formatBytes({ bytes: torrentData?.piece_length || 0 })} )`,
+        pieceLength: `${torrentData?.num_pieces} x ${formatBytes({ bytes: torrentData?.piece_length || 0 })}`,
     };
 
     useEffect(() => {
-        console.log(torrentData?.is_private);
+        console.log(torrentData?.creation_date);
     }, [torrentData]);
 
     if (keys.length > 1) {
@@ -276,11 +277,14 @@ export default function TorrentDetails() {
                         <div>
                             Completed On:{" "}
                             <span className="font-semibold">
-                                7/6/2025 12:30 AM
+                                {mapping.completionTime}
                             </span>
                         </div>
                         <div>
-                            Created By: <span className="font-semibold">—</span>
+                            Created By:{" "}
+                            <span className="font-semibold">
+                                {mapping.createdBy}
+                            </span>
                         </div>
                         <div>
                             Created On:{" "}

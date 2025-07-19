@@ -31,7 +31,6 @@ async def on_startup(sio: socketio.AsyncServer):
     event_bus.set_consumer(alert_consumer)
     sio.start_background_task(shared_poll_and_publish, event_bus)
     sio.start_background_task(event_bus.start)
-    # sio.start_background_task(print_task_queue)
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")
     import_submodules("seaderr.routes.libtorrent")

@@ -25,15 +25,15 @@ import { useAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RowContextMenu } from "./row-context-menu";
 
-interface DataTableProps<TData, TValue> {
+interface TorrentDataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
 }
 
-export function DataTable<TData, TValue>({
+export function TorrentDataTable<TData, TValue>({
     columns,
     data,
-}: DataTableProps<TData, TValue>) {
+}: TorrentDataTableProps<TData, TValue>) {
     "use no memo";
     const [sorting, setSorting] = useState<SortingState>([]);
     const [rowSelection, setRowSelection] = useAtom(selectedRowAtom);

@@ -51,13 +51,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, RefObject, useEffect, useRef, useState } from "react";
 import {
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
 } from "@/atoms/torrent";
-import { selectedRowAtom } from "@/atoms/table";
+import { ignoredElementsRefAtom, selectedRowAtom } from "@/atoms/table";
 import { useAtom, useSetAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { Label } from "../ui/label";
@@ -307,8 +307,19 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [rowSelection, setRowSelection] = useAtom(selectedRowAtom);
-
+    const [ignoredElementsRef, setIgnoredElementsRef] = useAtom(
+        ignoredElementsRefAtom,
+    );
     const tableRef = useRef<HTMLTableElement>(null);
+    useEffect(() => {
+        const ref = tableRef as RefObject<HTMLElement>;
+        if (ref.current) {
+            setIgnoredElementsRef((prev) => [...prev, ref]);
+        }
+        return () => {
+            setIgnoredElementsRef((prev) => prev.filter((el) => el !== ref));
+        };
+    }, [tableRef, setIgnoredElementsRef]);
 
     const table = useReactTable({
         data,
@@ -335,23 +346,30 @@ export function DataTable<TData, TValue>({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (
-                tableRef.current &&
-                !tableRef.current.contains(event.target as Node)
-            ) {
-                setRowSelection({});
+            if (event.button !== 0) return; // Only left click
+
+            const target = event.target as Node;
+
+            // Check if click inside any ignored elements
+            for (const ref of ignoredElementsRef) {
+                if (ref.current && ref.current.contains(target)) {
+                    return; // click inside ignored element → do nothing
+                }
             }
+
+            // Click outside all ignored elements → clear selection
+            setRowSelection({});
         }
 
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [setRowSelection]);
+    }, [setRowSelection, ignoredElementsRef]);
 
     return (
         <div className="h-full rounded-md border">
-            <Table ref={tableRef}>
+            <Table>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>

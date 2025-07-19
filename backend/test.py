@@ -33,7 +33,7 @@ async def main():
         print(f"Piece size: {info.piece_length() // 1024} KB")
         print(f"Number of pieces: {info.num_pieces()}")
         print(f"Info hash (SHA1): {str(info.info_hash())}")
-        print(f"Files:")
+        print("Files:")
         for f in info.files():
             print(f" - {f.path} ({f.size / (1024**2):.2f} MB)")
 

@@ -10,13 +10,20 @@ import {
     torrentRemoveQueueAtom,
 } from "@/atoms/torrent";
 import { dequeue, peekQueue } from "@/lib/queue";
-import { TorrentInfo } from "@/types/socket/torrent_info";
+import { TorrentInfo, Peer } from "@/types/socket/torrent_info";
 import { GetAllResponse } from "@/types/socket/get_all";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
+import { deepMerge } from "@/lib/deepMerge";
 
+function analyzePeers(peers: Peer[]) {
+    const seeds = peers.filter((p) => p.seed).length;
+    const leeches = peers.length - seeds;
+    const connectedPeers = peers.length;
+    return { seeds, leeches, connectedPeers };
+}
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
 
@@ -31,6 +38,7 @@ export default function SocketProvider() {
         torrentRemoveQueueAtom,
     );
 
+    const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [broadcastStarted, setBroadcastStarted] = useState<boolean>(false);
     const latestTorrentsRef = useRef<TorrentInfo[]>([]);
     const socketRef = useSocketConnection();
@@ -76,21 +84,25 @@ export default function SocketProvider() {
 
         socket.emit("libtorrent:get_all", (response: GetAllResponse) => {
             if (response.torrents) {
-                latestTorrentsRef.current = response.torrents.map(
-                    (torrent) => ({
+                latestTorrentsRef.current = response.torrents.map((torrent) => {
+                    const eta = calculateETA({
+                        downloaded: Number(
+                            torrent.total_size * (torrent.progress / 100),
+                        ),
+                        total: torrent.total_size,
+                        downloadSpeed: torrent.download_rate ?? 0,
+                    });
+                    const { seeds, leeches } = analyzePeers(
+                        torrent.peers ?? [],
+                    );
+                    setFirstLoad(true);
+                    return {
                         ...torrent,
-                        seeders: torrent.seeders ?? 0,
-                        leechers:
-                            (torrent.num_peers ?? 0) - (torrent.seeders ?? 0),
-                        eta: calculateETA({
-                            downloaded: Number(
-                                torrent.total_size * torrent.progress,
-                            ),
-                            total: torrent.total_size,
-                            downloadSpeed: torrent.download_rate,
-                        }),
-                    }),
-                );
+                        seeds: seeds,
+                        leechs: leeches,
+                        eta: eta,
+                    };
+                });
                 updateTorrentsAtom();
             }
         });
@@ -114,7 +126,6 @@ export default function SocketProvider() {
                     break;
                 }
                 case "synthetic:removed": {
-                    console.log(response);
                     const torrent = findTorrentByInfoHash(response.info_hash);
                     if (torrent) {
                         latestTorrentsRef.current =
@@ -152,31 +163,48 @@ export default function SocketProvider() {
 
                         if (index !== -1) {
                             const t = latestTorrentsRef.current[index];
-
-                            latestTorrentsRef.current[index] = {
-                                ...t,
-                                progress: Number(status.progress * 100),
-                                download_rate: status.download_rate,
-                                upload_rate: status.upload_rate,
-                                num_peers: status.num_peers,
-                                seeders: status.seeders,
-                                leechers: Math.max(
-                                    status.num_peers - status.seeders,
-                                    0,
+                            const eta = calculateETA({
+                                downloaded: Number(
+                                    status.total_size * (status.progress / 100),
                                 ),
-                                total_size: status.total_size,
-                                state: status.state,
-                                eta: calculateETA({
-                                    downloaded: Number(
-                                        status.total_size * status.progress,
-                                    ),
-                                    total: status.total_size,
-                                    downloadSpeed: status.download_rate,
-                                }),
-                            };
+                                total: status.total_size ?? 0,
+                                downloadSpeed: status.download_rate ?? 0,
+                            });
+                            const state = (
+                                [
+                                    "seeding",
+                                    "downloading",
+                                    "paused",
+                                    "checking",
+                                    "queued",
+                                    "error",
+                                    "unknown",
+                                ].includes(status.state)
+                                    ? status.state
+                                    : "unknown"
+                            ) as
+                                | "seeding"
+                                | "downloading"
+                                | "paused"
+                                | "checking"
+                                | "queued"
+                                | "error"
+                                | "unknown";
+
+                            const { seeds, leeches } = analyzePeers(
+                                status.peers ?? [],
+                            );
+                            status["eta"] = eta;
+                            status["seeds"] = seeds;
+                            status["leechs"] = leeches;
+                            status["state"] = state;
+
+                            latestTorrentsRef.current[index] = deepMerge(
+                                t,
+                                status,
+                            );
                         }
                     }
-
                     break;
                 }
             }
@@ -277,10 +305,12 @@ export default function SocketProvider() {
     // Sync ref to atom every 1 second using updateTorrentsAtom
     useEffect(() => {
         const interval = setInterval(() => {
-            updateTorrentsAtom();
+            if (firstLoad) {
+                updateTorrentsAtom();
+            }
         }, 750);
 
         return () => clearInterval(interval);
-    }, [updateTorrentsAtom]);
+    }, [updateTorrentsAtom, firstLoad]);
     return null;
 }

@@ -103,13 +103,13 @@ const columnsMetadata: {
         },
     },
     {
-        key: "seeders",
+        key: "seeds",
         cell: ({ getValue }) => {
             return <center>{getValue() || 0}</center>;
         },
     },
     {
-        key: "leechers",
+        key: "leechs",
         cell: ({ getValue }) => {
             return <center>{getValue() || 0}</center>;
         },
@@ -123,9 +123,18 @@ const columnsMetadata: {
     },
     {
         key: "eta",
-        cell: ({ getValue }) => {
+        keyName: "ETA",
+        cell: ({ getValue, row }) => {
+            const progressValue = row.original.progress;
+            const value = getValue() ?? Infinity;
             return (
-                <center>{formatDurationClean(getValue() ?? Infinity)}</center>
+                <>
+                    <center>
+                        {formatDurationClean(
+                            progressValue < 100 ? value : Infinity,
+                        )}
+                    </center>
+                </>
             );
         },
     },
@@ -134,18 +143,19 @@ const columnsMetadata: {
         keyName: "Download Speed",
         cell: ({ getValue, row }) => {
             const progress = row.original.progress;
-            let download_rate = null;
-            if (progress === 100) {
-                download_rate = 0;
+            const downloadState = row.original.state;
+            let download_speed = null;
+            if (progress === 100 || downloadState === "paused") {
+                download_speed = 0;
             } else {
-                download_rate = getValue();
+                download_speed = getValue();
             }
             return (
                 <div className="flex items-center justify-center gap-2">
                     <span>
-                        {download_rate !== null &&
+                        {download_speed !== null &&
                             formatBytes({
-                                bytes: download_rate,
+                                bytes: download_speed,
                                 perSecond: true,
                             })}
                     </span>

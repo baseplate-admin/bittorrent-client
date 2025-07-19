@@ -2,20 +2,35 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { torrentAtom } from "@/atoms/torrent";
 import { selectedRowAtom } from "@/atoms/table";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-import { useEffect, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { formatBytes } from "@/lib/formatBytes";
 import { calculateETA } from "@/lib/calculateEta";
 import { formatDurationClean } from "@/lib/formatDurationClean";
+import { ignoredElementsRefAtom } from "@/atoms/table";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(torrentAtom);
     const selectedRows = useAtomValue(selectedRowAtom);
+    const setIgnoredElementsRef = useSetAtom(ignoredElementsRefAtom);
 
+    const cardRef = useRef<HTMLDivElement>(null);
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+
+    useEffect(() => {
+        const ref = cardRef as RefObject<HTMLElement>;
+        if (ref.current) {
+            setIgnoredElementsRef((prev) => [...prev, ref]);
+        }
+        return () => {
+            setIgnoredElementsRef((prev) =>
+                prev.filter((element) => element !== ref),
+            );
+        };
+    }, [cardRef, setIgnoredElementsRef]);
 
     const keys = Object.keys(selectedRows || {});
 
@@ -25,44 +40,87 @@ export default function TorrentDetails() {
     useEffect(() => {
         if (torrent && indexNum !== null && !isNaN(indexNum)) {
             setTorrentData(torrent[indexNum] ?? null);
-            console.log("Torrent Data:", torrent[indexNum]);
         } else {
             setTorrentData(null);
         }
     }, [torrent, indexNum]);
+
+    const mapping = {
+        addedTime: new Date(
+            (torrentData?.added_time || 0) * 1000,
+        ).toLocaleString(),
+        completionTime: torrentData?.completion_time
+            ? new Date(torrentData?.completion_time * 1000).toLocaleString()
+            : torrentData?.state,
+        savePath: torrentData?.save_path || "N/A",
+        activeTime: formatDurationClean(torrentData?.active_time || 0),
+        creationDate: torrentData?.creation_date ?? "—",
+        comments:
+            torrentData?.comment === ""
+                ? `<Empty String>`
+                : (torrentData?.comment ?? "N/A"),
+        progress: torrentData?.progress || 0,
+        downloaded: formatBytes({ bytes: torrentData?.downloaded || 0 }),
+        uploaded: formatBytes({
+            bytes: torrentData?.uploaded || 0,
+        }),
+        infoHash: torrentData?.info_hash,
+        infoHashV2: torrentData?.info_hash_v2 || "N/A",
+        downloadSpeed: formatBytes({
+            bytes: torrentData?.download_rate || 0,
+            perSecond: true,
+        }),
+        uploadSpeed: formatBytes({
+            bytes: torrentData?.upload_rate || 0,
+            perSecond: true,
+        }),
+        eta: formatDurationClean(
+            (torrentData
+                ? (torrentData.progress || 0) < 100
+                    ? calculateETA({
+                          downloaded: Number(
+                              torrentData.total_size *
+                                  (torrentData.progress / 100),
+                          ),
+                          total: torrentData.total_size,
+                          downloadSpeed: torrentData.download_rate,
+                      })
+                    : Infinity
+                : null) ?? Infinity,
+        ),
+        shareRatio: torrentData?.share_ratio,
+        totalSize: formatBytes({
+            bytes: torrentData?.total_size || 0,
+        }),
+        wastedBytes:
+            formatBytes({
+                bytes: torrentData?.wasted || 0,
+            }) ?? 0,
+        private:
+            typeof torrentData?.is_private === "boolean" &&
+            String(torrentData?.is_private),
+        pieceLength: `${torrentData?.num_pieces} x ${formatBytes({ bytes: torrentData?.piece_length || 0 })} )`,
+    };
+
+    useEffect(() => {
+        console.log(torrentData?.is_private);
+    }, [torrentData]);
 
     if (keys.length > 1) {
         return <>Error: More than one row selected</>;
     }
     if (keys.length === 0) {
         return (
-            <div className="flex justify-center rounded-md border p-64">
+            <div
+                ref={cardRef}
+                className="flex justify-center rounded-md border p-64"
+            >
                 No torrent selected
             </div>
         );
     }
-
-    const mapping = {
-        progress: torrentData?.progress || 0,
-        timeActive: "20h 42m",
-        downloaded: "0 B",
-        downloadSpeed: formatBytes({
-            bytes: torrentData?.download_rate || 0,
-            perSecond: true,
-        }),
-        eta: torrentData
-            ? calculateETA({
-                  downloaded: Number(
-                      torrentData.total_size * torrentData.progress,
-                  ),
-                  total: torrentData.total_size,
-                  downloadSpeed: torrentData.download_rate,
-              })
-            : null,
-    };
-
     return (
-        <Card className="w-full">
+        <Card className="w-full" ref={cardRef}>
             <CardContent className="space-y-6 pt-6">
                 {/* Progress */}
                 <div>
@@ -76,7 +134,7 @@ export default function TorrentDetails() {
                         <div>
                             Time Active:{" "}
                             <span className="font-semibold">
-                                {mapping.timeActive}
+                                {mapping.activeTime}
                             </span>
                         </div>
                         <div>
@@ -97,7 +155,9 @@ export default function TorrentDetails() {
                         </div>
                         <div>
                             Share Ratio:{" "}
-                            <span className="font-semibold">0.44</span>
+                            <span className="font-semibold">
+                                {mapping.shareRatio}
+                            </span>
                         </div>
                         <div>
                             Popularity:{" "}
@@ -108,17 +168,19 @@ export default function TorrentDetails() {
                         <div>
                             ETA:{" "}
                             <span className="font-semibold">
-                                {formatDurationClean(mapping.eta ?? Infinity)}
+                                {mapping.eta}{" "}
                             </span>
                         </div>
                         <div>
                             Uploaded:{" "}
-                            <span className="font-semibold">14.03 GiB</span>
+                            <span className="font-semibold">
+                                {mapping.uploaded}
+                            </span>
                         </div>
                         <div>
                             Upload Speed:{" "}
                             <span className="font-semibold">
-                                0 B/s (203.7 KiB/s avg.)
+                                {mapping.uploadSpeed}
                             </span>
                         </div>
                         <div>
@@ -144,12 +206,15 @@ export default function TorrentDetails() {
                             <span className="font-semibold">0 (100 total)</span>
                         </div>
                         <div>
-                            Wasted: <span className="font-semibold">0 B</span>
+                            Wasted:{" "}
+                            <span className="font-semibold">
+                                {mapping.wastedBytes}
+                            </span>
                         </div>
                         <div>
                             Last Seen Complete:{" "}
                             <span className="font-semibold">
-                                7/6/2025 3:16 PM
+                                {mapping.completionTime}
                             </span>
                         </div>
                     </div>
@@ -160,40 +225,52 @@ export default function TorrentDetails() {
                     <div className="space-y-1">
                         <div>
                             Total Size:{" "}
-                            <span className="font-semibold">31.58 GiB</span>
+                            <span className="font-semibold">
+                                {mapping.totalSize}
+                            </span>
                         </div>
                         <div>
                             Added On:{" "}
                             <span className="font-semibold">
-                                7/5/2025 8:10 PM
+                                {mapping.addedTime}
                             </span>
                         </div>
                         <div>
-                            Private: <span className="font-semibold">No</span>
+                            Private:{" "}
+                            <span className="font-semibold capitalize">
+                                {mapping.private}
+                            </span>
                         </div>
                         <div>
                             Info Hash v1:{" "}
                             <span className="font-semibold break-all">
-                                380bdebd8c5e1bb2b56817901db258e7deb3c6a06
+                                {mapping.infoHash}
                             </span>
                         </div>
                         <div>
                             Info Hash v2:{" "}
-                            <span className="font-semibold">N/A</span>
+                            <span className="font-semibold">
+                                {mapping.infoHashV2}
+                            </span>
                         </div>
                         <div>
                             Save Path:{" "}
-                            <span className="font-semibold">E:\Torrent</span>
+                            <span className="font-semibold">
+                                {mapping.savePath}
+                            </span>
                         </div>
                         <div>
-                            Comment: <span className="font-semibold">—</span>
+                            Comment:{" "}
+                            <span className="font-semibold">
+                                {mapping.comments}
+                            </span>
                         </div>
                     </div>
                     <div className="space-y-1">
                         <div>
                             Pieces:{" "}
                             <span className="font-semibold">
-                                16174 x 2.0 MiB (have 0)
+                                {mapping.pieceLength}
                             </span>
                         </div>
                         <div>
@@ -206,7 +283,10 @@ export default function TorrentDetails() {
                             Created By: <span className="font-semibold">—</span>
                         </div>
                         <div>
-                            Created On: <span className="font-semibold">—</span>
+                            Created On:{" "}
+                            <span className="font-semibold">
+                                {mapping.creationDate}
+                            </span>
                         </div>
                     </div>
                 </div>

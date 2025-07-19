@@ -33,8 +33,7 @@ class LibtorrentSession:
 
     def _create_session(self) -> lt.session:
         ses = lt.session()
-        ses.apply_settings({"listen_interfaces": "0.0.0.0:6881"})
-        ses.start_dht()
+        ses.apply_settings({"listen_interfaces": "0.0.0.0:6881", "enable_dht": True})
         ses.add_dht_router("router.bittorrent.com", 6881)
         ses.add_dht_router("router.utorrent.com", 6881)
         ses.add_dht_router("router.openbittorrent.org", 2710)

@@ -30,8 +30,8 @@ async def get_all(sid: str):
                         "client": p.client,
                         "flags": str(p.flags),
                         "progress": round(p.progress * 100, 2),
-                        "download_speed": p.down_speed,
-                        "upload_speed": p.up_speed,
+                        "download_rate": p.down_speed,
+                        "upload_rate": p.up_speed,
                         "is_seed": is_seed,
                     }
                 )

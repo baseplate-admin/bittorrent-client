@@ -1,4 +1,5 @@
-import asyncio
+import faulthandler
+import functools
 
 import socketio
 
@@ -10,8 +11,10 @@ from seaderr.singletons import (
 )
 from seaderr.utilities import import_submodules
 
+faulthandler.enable()
 
-async def on_startup():
+
+async def on_startup(sio: socketio.AsyncServer):
     # Initialize the database connection
 
     # Initialize the logger singleton
@@ -26,9 +29,9 @@ async def on_startup():
     EventBus.init()
     event_bus = EventBus.get_bus()
     event_bus.set_consumer(alert_consumer)
-    asyncio.create_task(shared_poll_and_publish(event_bus))
-    asyncio.create_task(event_bus.start())
-
+    sio.start_background_task(shared_poll_and_publish, event_bus)
+    sio.start_background_task(event_bus.start)
+    # sio.start_background_task(print_task_queue)
     # Lazy import submodules to avoid circular imports
     import_submodules("seaderr.events")
     import_submodules("seaderr.routes.libtorrent")
@@ -44,6 +47,6 @@ async def create_app():
     await SIO.init()
     sio = SIO.get_instance()
     sio_app = socketio.ASGIApp(sio)
-    sio_app.on_startup = on_startup
+    sio_app.on_startup = functools.partial(on_startup, sio)
     sio_app.on_shutdown = on_shutdown
     return sio_app

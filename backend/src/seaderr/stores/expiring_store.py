@@ -10,6 +10,10 @@ from typing import (
     TypeVar,
 )
 
+from seaderr.singletons import Logger
+
+logger = Logger.get_logger()
+
 T = TypeVar("T")
 AsyncCleanupFn = Callable[[str, T], Awaitable[None]]
 
@@ -43,7 +47,9 @@ class ExpiringStore(Generic[T]):
 
     async def delete(self, key: str):
         async with self._lock:
-            await self._expire_key(key)
+            await self._cancel_timer(key)
+            self._data.pop(key, None)
+            self._expiries.pop(key, None)
 
     async def keys(self) -> list[str]:
         async with self._lock:
@@ -70,5 +76,9 @@ class ExpiringStore(Generic[T]):
         value = self._data.pop(key, None)
         self._expiries.pop(key, None)
         await self._cancel_timer(key)
-        if value and self._on_cleanup:
-            await asyncio.to_thread(lambda: asyncio.run(self._on_cleanup(key, value)))
+        if value is not None and self._on_cleanup is not None:
+            try:
+                await self._on_cleanup(key, value)
+            except Exception as exc:
+                # Replace with your logging
+                logger.exception(f"Exception in cleanup for key '{key}': {exc}")

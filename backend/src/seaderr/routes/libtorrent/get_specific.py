@@ -26,8 +26,8 @@ async def get_specific(sid: str, data: dict):
                         "client": p.client,
                         "flags": str(p.flags),
                         "progress": round(p.progress * 100, 2),
-                        "download_speed": p.down_speed,
-                        "upload_speed": p.up_speed,
+                        "download_rate": p.down_speed,
+                        "upload_rate": p.up_speed,
                     }
                     for p in peers_info
                 ]

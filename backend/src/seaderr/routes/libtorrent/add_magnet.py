@@ -1,5 +1,4 @@
 import tempfile
-from datetime import timedelta
 
 import libtorrent as lt
 from seaderr.datastructures import TorrentDataclass
@@ -27,7 +26,7 @@ async def on_cleanup(key: str, value: TorrentDataclass):
 
 torrent_store = ExpiringStore(
     TorrentDataclass,
-    default_expiry=int(timedelta(hours=1).total_seconds()),
+    default_expiry=15,
     on_cleanup=on_cleanup,
 )
 
@@ -70,8 +69,7 @@ async def add_magnet(sid: str, data: dict):
             str(handle.info_hash()), TorrentDataclass(torrent=handle)
         )
 
-        torrent_info = handle.get_torrent_info()
-        serialized_info = await serialize_magnet_torrent_info(torrent_info)
+        serialized_info = await serialize_magnet_torrent_info(handle)
 
         return {
             "status": "success",
@@ -97,11 +95,11 @@ async def add_magnet(sid: str, data: dict):
         if action == "add":
             handle.set_upload_mode(False)
             handle.resume()
+            await torrent_store.delete(info_hash)
             return {"status": "success", "message": "Torrent resumed/started"}
 
         elif action == "remove":
             ses.remove_torrent(handle, lt.options_t.delete_files)
-            await torrent_store.delete(info_hash)
             return {"status": "success", "message": "Torrent removed successfully"}
 
     return {"status": "error", "message": "Unknown action"}

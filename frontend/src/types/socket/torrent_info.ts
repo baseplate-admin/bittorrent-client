@@ -30,7 +30,7 @@ export interface Peer {
 
 export interface TorrentInfo {
     // Identifiers
-    name: string | null;
+    name: string;
     comment: string | null;
     creator: string | null;
     info_hash: string;

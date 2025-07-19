@@ -18,51 +18,11 @@ import {
     TableRow,
 } from "@/components/ui/table";
 
-import {
-    ContextMenu,
-    ContextMenuCheckboxItem,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuSeparator,
-    ContextMenuSub,
-    ContextMenuSubContent,
-    ContextMenuSubTrigger,
-    ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-    PlayIcon,
-    StopCircle,
-    PlayCircle,
-    Trash2,
-    Pencil,
-    FolderOpen,
-    Tag,
-    Folder,
-    RefreshCcw,
-    UploadCloud,
-    Plus,
-} from "lucide-react";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import { Fragment, RefObject, useEffect, useRef, useState } from "react";
-import {
-    torrentPauseQueueAtom,
-    torrentResumeQueueAtom,
-    torrentRemoveQueueAtom,
-} from "@/atoms/torrent";
+
 import { ignoredElementsRefAtom, selectedRowAtom } from "@/atoms/table";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-import { Label } from "../ui/label";
-import { Checkbox } from "../ui/checkbox";
-import { Button } from "../ui/button";
 import { RowContextMenu } from "./row-context-menu";
 
 interface DataTableProps<TData, TValue> {

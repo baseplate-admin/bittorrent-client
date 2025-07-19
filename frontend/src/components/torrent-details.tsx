@@ -68,6 +68,7 @@ export default function TorrentDetails() {
             bytes: torrentData?.download_rate || 0,
             perSecond: true,
         }),
+        nextAnnounce: formatDurationClean(torrentData?.next_announce || 0),
         uploadSpeed: formatBytes({
             bytes: torrentData?.upload_rate || 0,
             perSecond: true,
@@ -92,7 +93,6 @@ export default function TorrentDetails() {
                 : undefined,
         pieceLength: `${torrentData?.num_pieces} x ${formatBytes({ bytes: torrentData?.piece_length || 0 })}`,
     };
-
     if (keys.length > 1) {
         return <div ref={cardRef}>Error: More than one row selected</div>;
     }
@@ -176,7 +176,9 @@ export default function TorrentDetails() {
                         </div>
                         <div>
                             Reannounce In:{" "}
-                            <span className="font-semibold">0</span>
+                            <span className="font-semibold">
+                                {mapping.nextAnnounce}
+                            </span>
                         </div>
                     </div>
                     <div className="space-y-1">

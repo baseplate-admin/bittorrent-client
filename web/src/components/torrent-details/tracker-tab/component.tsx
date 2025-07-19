@@ -9,9 +9,6 @@ export default function TrackersTab({
 }: {
     torrentData: TorrentInfo;
 }) {
-    useEffect(() => {
-        console.log(torrentData.trackers);
-    }, [torrentData]);
     return (
         <TrackerTabDataTable columns={columns} data={torrentData.trackers} />
     );

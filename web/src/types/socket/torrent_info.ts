@@ -1,14 +1,62 @@
 import { TorrentPeer } from "./torrent_peer";
 import { FileInfo } from "./files";
 
+export interface ErrorInfo {
+    value: number;
+    category: string;
+}
+
+export interface InfoHash {
+    message: string;
+    last_error: ErrorInfo;
+    next_announce: number;
+    min_announce: number;
+    scrape_incomplete: number;
+    scrape_complete: number;
+    scrape_downloaded: number;
+    fails: number;
+    updating: boolean;
+    start_sent: boolean;
+    complete_sent: boolean;
+}
+
+export interface Endpoint {
+    local_address: [string, number]; // [IP, port]
+    info_hashes: InfoHash[];
+    message: string;
+    last_error: ErrorInfo;
+    next_announce: number;
+    min_announce: number;
+    scrape_incomplete: number;
+    scrape_complete: number;
+    scrape_downloaded: number;
+    fails: number;
+    updating: boolean;
+    start_sent: boolean;
+    complete_sent: boolean;
+}
+
 export interface TrackerInfo {
     url: string;
+    trackerid: string;
     tier: number;
     fail_limit: number;
     source: number;
     verified: boolean;
+    message: string;
+    last_error: ErrorInfo;
+    next_announce: number;
+    min_announce: number;
+    scrape_incomplete: number;
+    scrape_complete: number;
+    scrape_downloaded: number;
+    fails: number;
+    updating: boolean;
+    start_sent: boolean;
+    complete_sent: boolean;
+    endpoints: Endpoint[];
+    send_stats: boolean;
 }
-
 export interface DHTNode {
     host: string;
     port: number;

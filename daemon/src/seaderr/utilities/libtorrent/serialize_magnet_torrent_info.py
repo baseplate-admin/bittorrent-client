@@ -102,19 +102,8 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         for idx in range(fs.num_files())
     ]
 
-    trackers = [
-        {
-            "url": t.url,
-            "tier": t.tier,
-            "fail_limit": t.fail_limit,
-            "source": t.source,
-            "verified": t.verified,
-        }
-        for t in ti.trackers()
-    ]
-
     nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
-
+    trackers = list(ti.trackers()) + handle.trackers()
     info.update(
         {
             "name": ti.name(),

@@ -177,8 +177,8 @@ const columnsMetadata: {
     },
 ];
 
-export const columns: ColumnDef<TorrentInfo>[] = columnsMetadata.map(
-    ({ key, cell, keyName }) => ({
+export const torrentTableColumns: ColumnDef<TorrentInfo>[] =
+    columnsMetadata.map(({ key, cell, keyName }) => ({
         accessorKey: key,
         size: 300,
         header: ({ column }) => (
@@ -194,5 +194,4 @@ export const columns: ColumnDef<TorrentInfo>[] = columnsMetadata.map(
         ),
         enableResizing: true,
         ...(cell ? { cell } : {}),
-    }),
-);
+    }));

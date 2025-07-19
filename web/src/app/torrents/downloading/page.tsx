@@ -1,6 +1,6 @@
 "use client";
 import { torrentAtom } from "@/atoms/torrent";
-import { columns } from "@/components/torrent-table/columns";
+import { torrentTableColumns } from "@/components/torrent-table/columns";
 import { TorrentDataTable } from "@/components/torrent-table/data-table";
 import TorrentTableLoading from "@/components/torrent-table/loading";
 import { useAtomValue } from "jotai";
@@ -18,5 +18,7 @@ export default function AllPage() {
         allowedStates.includes(torrent.state?.toLowerCase() ?? ""),
     );
 
-    return <TorrentDataTable columns={columns} data={filteredData} />;
+    return (
+        <TorrentDataTable columns={torrentTableColumns} data={filteredData} />
+    );
 }

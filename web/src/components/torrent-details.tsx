@@ -185,7 +185,10 @@ export default function TorrentDetails() {
                 {/* Progress */}
                 <div>
                     <div className="mb-1 text-sm font-medium">Progress:</div>
-                    <Progress value={mapping.progress} className="h-2" />
+                    <Progress
+                        value={mapping.progress}
+                        className="h-6 rounded-sm"
+                    />
                 </div>
 
                 {/* Transfer Info in 3 separate tables */}

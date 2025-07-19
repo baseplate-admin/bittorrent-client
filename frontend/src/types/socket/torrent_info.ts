@@ -66,7 +66,6 @@ export interface TorrentInfo {
     uploaded: number;
     download_rate: number;
     upload_rate: number;
-    share_ratio: number | null;
     wasted: number;
 
     // Connections

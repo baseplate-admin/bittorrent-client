@@ -4,7 +4,9 @@ const nextConfig: NextConfig = {
     // images: { unoptimized: true },
     output: "standalone",
     productionBrowserSourceMaps: true,
-
+    experimental: {
+        reactCompiler: true,
+    },
     turbopack: {
         rules: {
             "*.svg": {

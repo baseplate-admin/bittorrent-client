@@ -84,7 +84,10 @@ export default function TorrentDetails() {
                   }) ?? Infinity)
                 : Infinity,
         ),
-        shareRatio: torrentData?.share_ratio ?? "N/A",
+        shareRatio:
+            torrentData?.uploaded && torrentData?.downloaded
+                ? (torrentData.uploaded / torrentData.downloaded).toFixed(2)
+                : "N/A",
         totalSize: formatBytes({ bytes: torrentData?.total_size || 0 }),
         wastedBytes: formatBytes({ bytes: torrentData?.wasted || 0 }) ?? 0,
         private:
@@ -95,9 +98,7 @@ export default function TorrentDetails() {
             bytes: torrentData?.piece_length || 0,
         })}`,
     };
-    useEffect(() => {
-        console.log(torrentData?.share_ratio);
-    }, [torrentData]);
+
     // Data arrays for the 3 tables in upper section
     const tableData1 = [
         ["Time Active", mapping.activeTime],

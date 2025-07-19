@@ -34,6 +34,7 @@ export function DataTable<TData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {
+    "use no memo";
     const [sorting, setSorting] = useState<SortingState>([]);
     const [rowSelection, setRowSelection] = useAtom(selectedRowAtom);
     const [ignoredElementsRef, setIgnoredElementsRef] = useAtom(

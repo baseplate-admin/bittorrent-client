@@ -53,6 +53,8 @@ async def serialize_alert(alert) -> dict:
                 }
             case lt.peer_connect_alert():
                 return {"type": "libtorrent:peer_connected", "message": str(alert.ip)}
+
+            # https://github.com/baseplate-admin/bittorrent-client/issues/7#issuecomment-3090723219
             # case lt.tracker_error_alert():
             #     return {
             #         "type": "libtorrent:tracker_error",
@@ -60,12 +62,14 @@ async def serialize_alert(alert) -> dict:
             #         "url": str(alert.url),
             #         "error": str(alert.error),
             #     }
-            case lt.udp_error_alert():
-                return {
-                    "type": "libtorrent:udp_error",
-                    "message": alert.message(),
-                    "endpoint": str(alert.endpoint),
-                }
+
+            # https://github.com/baseplate-admin/bittorrent-client/issues/7#issuecomment-3091519096
+            # case lt.udp_error_alert():
+            #     return {
+            #         "type": "libtorrent:udp_error",
+            #         "message": alert.message(),
+            #         "endpoint": str(alert.endpoint),
+            #     }
             case lt.state_update_alert():
                 lt_state_map = {
                     lt.torrent_status.queued_for_checking: "queued_for_checking",

@@ -94,15 +94,16 @@ export const columns: ColumnDef<TrackerInfo>[] = [
                 : "N/A";
         },
     },
+    // Derived
     {
-        accessorKey: "min_announce",
+        id: "min_announce",
         header: "Min Announce",
-        cell: (info) => {
-            const minAnnounce = info.getValue();
-            return typeof minAnnounce === "number"
-                ? formatDurationClean(
-                      Math.floor(minAnnounce - Date.now() / 1000),
-                  )
+        cell: ({ row }) => {
+            const nextAnnounce = row.original.next_announce;
+            const minAnnounce = row.original.min_announce;
+            return typeof nextAnnounce === "number" &&
+                typeof minAnnounce === "number"
+                ? formatDurationClean(minAnnounce - nextAnnounce)
                 : "N/A";
         },
     },

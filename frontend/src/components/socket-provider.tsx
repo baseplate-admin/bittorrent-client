@@ -87,9 +87,10 @@ export default function SocketProvider() {
                 latestTorrentsRef.current = response.torrents.map((torrent) => {
                     const eta = calculateETA({
                         downloaded: Number(
-                            torrent.total_size * (torrent.progress / 100),
+                            (torrent.total_size ?? 0) *
+                                (torrent.progress / 100),
                         ),
-                        total: torrent.total_size,
+                        total: torrent.total_size ?? 0,
                         downloadSpeed: torrent.download_rate ?? 0,
                     });
                     const { seeds, leeches } = analyzePeers(
@@ -142,9 +143,10 @@ export default function SocketProvider() {
                     );
                     newTorrent.eta = calculateETA({
                         downloaded: Number(
-                            newTorrent.total_size * newTorrent.progress,
+                            (newTorrent.total_size ?? 0) *
+                                (newTorrent.progress / 100),
                         ),
-                        total: newTorrent.total_size,
+                        total: newTorrent.total_size ?? 0,
                         downloadSpeed: newTorrent.download_rate,
                     });
                     const exists = latestTorrentsRef.current.some(
@@ -165,7 +167,8 @@ export default function SocketProvider() {
                             const t = latestTorrentsRef.current[index];
                             const eta = calculateETA({
                                 downloaded: Number(
-                                    status.total_size * (status.progress / 100),
+                                    (status.total_size ?? 0) *
+                                        (status.progress / 100),
                                 ),
                                 total: status.total_size ?? 0,
                                 downloadSpeed: status.download_rate ?? 0,

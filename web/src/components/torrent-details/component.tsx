@@ -7,7 +7,7 @@ import { selectedRowAtom, ignoredElementsRefAtom } from "@/atoms/table";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { GeneralTab } from "./general";
-import TrackersTab from "./trackers";
+import TrackersTab from "./tracker-tab/component";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(torrentAtom);

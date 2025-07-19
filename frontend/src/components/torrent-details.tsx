@@ -44,13 +44,12 @@ export default function TorrentDetails() {
             setTorrentData(null);
         }
     }, [torrent, indexNum]);
-
     const mapping = {
         addedTime: new Date(
             (torrentData?.added_time || 0) * 1000,
         ).toLocaleString(),
         completionTime: torrentData?.completion_time
-            ? new Date(torrentData?.completion_time * 1000).toLocaleString()
+            ? new Date(torrentData.completion_time * 1000).toLocaleString()
             : "—",
         savePath: torrentData?.save_path || "N/A",
         activeTime: formatDurationClean(torrentData?.active_time || 0),
@@ -58,13 +57,11 @@ export default function TorrentDetails() {
         createdBy: torrentData?.creator ?? "—",
         comments:
             torrentData?.comment === ""
-                ? `<Empty String>`
+                ? "<Empty String>"
                 : (torrentData?.comment ?? "N/A"),
         progress: torrentData?.progress || 0,
         downloaded: formatBytes({ bytes: torrentData?.downloaded || 0 }),
-        uploaded: formatBytes({
-            bytes: torrentData?.uploaded || 0,
-        }),
+        uploaded: formatBytes({ bytes: torrentData?.uploaded || 0 }),
         infoHash: torrentData?.info_hash,
         infoHashV2: torrentData?.info_hash_v2 || "N/A",
         downloadSpeed: formatBytes({
@@ -76,30 +73,23 @@ export default function TorrentDetails() {
             perSecond: true,
         }),
         eta: formatDurationClean(
-            (torrentData
-                ? (torrentData.progress || 0) < 100
-                    ? calculateETA({
-                          downloaded: Number(
-                              torrentData.total_size *
-                                  (torrentData.progress / 100),
-                          ),
-                          total: torrentData.total_size,
-                          downloadSpeed: torrentData.download_rate,
-                      })
-                    : Infinity
-                : null) ?? Infinity,
+            torrentData && (torrentData.progress || 0) < 100
+                ? (calculateETA({
+                      downloaded: Number(
+                          torrentData.total_size * (torrentData.progress / 100),
+                      ),
+                      total: torrentData.total_size,
+                      downloadSpeed: torrentData.download_rate,
+                  }) ?? Infinity)
+                : Infinity,
         ),
         shareRatio: torrentData?.share_ratio,
-        totalSize: formatBytes({
-            bytes: torrentData?.total_size || 0,
-        }),
-        wastedBytes:
-            formatBytes({
-                bytes: torrentData?.wasted || 0,
-            }) ?? 0,
+        totalSize: formatBytes({ bytes: torrentData?.total_size || 0 }),
+        wastedBytes: formatBytes({ bytes: torrentData?.wasted || 0 }) ?? 0,
         private:
-            typeof torrentData?.is_private === "boolean" &&
-            String(torrentData?.is_private),
+            typeof torrentData?.is_private === "boolean"
+                ? String(torrentData.is_private)
+                : undefined,
         pieceLength: `${torrentData?.num_pieces} x ${formatBytes({ bytes: torrentData?.piece_length || 0 })}`,
     };
 

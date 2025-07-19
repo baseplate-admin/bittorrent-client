@@ -90,11 +90,11 @@ wheels = [
 
 [[package]]
 name = "cross-platform-folder-picker"
-version = "0.0.2"
+version = "0.0.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c9/61/db73637fd753b44bec90033fd0dbcdde757434c36644a250fcdf3e0128d1/cross_platform_folder_picker-0.0.2.tar.gz", hash = "sha256:fa1e13dabd05ed45a38e84a9c6eb5e3e701a242e5928e28209577b43d86342ef", size = 593168, upload-time = "2025-07-16T16:58:17.017Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/24/4cb26c80f97c6186b54c9999a2a01b29f4967dc48ddfc654ae734d31ccf9/cross_platform_folder_picker-0.0.3.tar.gz", hash = "sha256:505a11c76746d65d1cc55a6ce25c849140a6967af1da55993187099b4d7f038d", size = 593213, upload-time = "2025-07-16T17:25:39.214Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/0d/aa09bcf712f92fa987e90ca5faed95f478b59c6b1770fc88a4bdc54a2e26/cross_platform_folder_picker-0.0.2-py3-none-any.whl", hash = "sha256:62a7689b1f14540551c2e211f2b746091c16cdc9f67e5d9670d42739c32406aa", size = 4995, upload-time = "2025-07-16T16:58:15.625Z" },
+    { url = "https://files.pythonhosted.org/packages/da/da/dd1ec1762fb1108b17c3fa7515d44ca1b43af2a7d738225ac9305df295a2/cross_platform_folder_picker-0.0.3-py3-none-any.whl", hash = "sha256:02b1c7a765730c8fea0efbad91f366ee71d60b9b72ebe01c52603e4bfa78fb0e", size = 5039, upload-time = "2025-07-16T17:25:37.856Z" },
 ]
 
 [[package]]
@@ -478,7 +478,7 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "click", specifier = ">=8.2.1" },
     { name = "colorama", specifier = ">=0.4.6" },
-    { name = "cross-platform-folder-picker", specifier = ">=0.0.2" },
+    { name = "cross-platform-folder-picker", specifier = ">=0.0.3" },
     { name = "python-socketio", specifier = ">=5.13.0" },
     { name = "uvicorn", specifier = ">=0.35.0" },
 ]

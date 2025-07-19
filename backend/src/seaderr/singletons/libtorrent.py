@@ -1,4 +1,5 @@
 import asyncio
+import threading
 from typing import Optional, Type
 
 import libtorrent as lt
@@ -10,7 +11,8 @@ class LibtorrentSession:
 
     def __init__(self) -> None:
         self._initialized = False
-        self.session: Optional[lt.session] = None  # <-- Add this line
+        self.session: Optional[lt.session] = None
+        self._thread_lock = threading.Lock()
 
     @classmethod
     async def init(cls: Type["LibtorrentSession"]) -> None:
@@ -18,6 +20,7 @@ class LibtorrentSession:
             if cls._instance is None:
                 cls._instance = cls()
             if not cls._instance._initialized:
+                # Run session creation in a separate thread
                 cls._instance.session = await asyncio.to_thread(
                     cls._instance._create_session
                 )
@@ -49,11 +52,14 @@ class LibtorrentSession:
         async with cls._lock:
             if cls._instance is None or not cls._instance._initialized:
                 return
+            # Run pause_all_torrents in a separate thread
             await asyncio.to_thread(cls._instance._pause_all_torrents)
             await asyncio.sleep(1)
             cls._instance._initialized = False
 
     def _pause_all_torrents(self) -> None:
-        if self.session is not None:
-            for handle in self.session.get_torrents():
-                handle.pause()
+        # Protect this method from concurrent access with a threading lock
+        with self._thread_lock:
+            if self.session is not None:
+                for handle in self.session.get_torrents():
+                    handle.pause()

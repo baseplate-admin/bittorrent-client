@@ -18,12 +18,6 @@ import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
 import { deepMerge } from "@/lib/deepMerge";
 
-function analyzePeers(peers: Peer[]) {
-    const seeds = peers.filter((p) => p.seed).length;
-    const leeches = peers.length - seeds;
-    const connectedPeers = peers.length;
-    return { seeds, leeches, connectedPeers };
-}
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
 
@@ -87,19 +81,16 @@ export default function SocketProvider() {
                 latestTorrentsRef.current = response.torrents.map((torrent) => {
                     const eta = calculateETA({
                         downloaded: Number(
-                            torrent.total_size * (torrent.progress / 100),
+                            (torrent.total_size ?? 0) *
+                                (torrent.progress / 100),
                         ),
-                        total: torrent.total_size,
+                        total: torrent.total_size ?? 0,
                         downloadSpeed: torrent.download_rate ?? 0,
                     });
-                    const { seeds, leeches } = analyzePeers(
-                        torrent.peers ?? [],
-                    );
+
                     setFirstLoad(true);
                     return {
                         ...torrent,
-                        seeds: seeds,
-                        leechs: leeches,
                         eta: eta,
                     };
                 });
@@ -142,9 +133,10 @@ export default function SocketProvider() {
                     );
                     newTorrent.eta = calculateETA({
                         downloaded: Number(
-                            newTorrent.total_size * newTorrent.progress,
+                            (newTorrent.total_size ?? 0) *
+                                (newTorrent.progress / 100),
                         ),
-                        total: newTorrent.total_size,
+                        total: newTorrent.total_size ?? 0,
                         downloadSpeed: newTorrent.download_rate,
                     });
                     const exists = latestTorrentsRef.current.some(
@@ -157,6 +149,7 @@ export default function SocketProvider() {
                 }
                 case "libtorrent:state_update": {
                     for (const status of response.statuses ?? []) {
+                        console.log(status);
                         const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,
                         );
@@ -165,7 +158,8 @@ export default function SocketProvider() {
                             const t = latestTorrentsRef.current[index];
                             const eta = calculateETA({
                                 downloaded: Number(
-                                    status.total_size * (status.progress / 100),
+                                    (status.total_size ?? 0) *
+                                        (status.progress / 100),
                                 ),
                                 total: status.total_size ?? 0,
                                 downloadSpeed: status.download_rate ?? 0,
@@ -191,12 +185,7 @@ export default function SocketProvider() {
                                 | "error"
                                 | "unknown";
 
-                            const { seeds, leeches } = analyzePeers(
-                                status.peers ?? [],
-                            );
                             status["eta"] = eta;
-                            status["seeds"] = seeds;
-                            status["leechs"] = leeches;
                             status["state"] = state;
 
                             latestTorrentsRef.current[index] = deepMerge(

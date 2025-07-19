@@ -93,12 +93,8 @@ export default function TorrentDetails() {
         pieceLength: `${torrentData?.num_pieces} x ${formatBytes({ bytes: torrentData?.piece_length || 0 })}`,
     };
 
-    useEffect(() => {
-        console.log(torrentData?.creation_date);
-    }, [torrentData]);
-
     if (keys.length > 1) {
-        return <>Error: More than one row selected</>;
+        return <div ref={cardRef}>Error: More than one row selected</div>;
     }
     if (keys.length === 0) {
         return (

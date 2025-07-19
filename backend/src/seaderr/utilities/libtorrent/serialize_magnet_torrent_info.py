@@ -28,6 +28,12 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         peers_info = []
         total_leeches = 0
 
+    downloaded = (
+        status.all_time_download or status.total_done or status.total_wanted_done or 0
+    )
+    uploaded = status.all_time_upload
+    share_ratio = round(uploaded / downloaded, 2) if downloaded > 0 else None
+
     info = {
         "info_hash": str(handle.info_hash()),
         "progress": round(status.progress * 100, 2),
@@ -39,11 +45,9 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "save_path": handle.save_path(),
         "added_time": status.added_time,
         "completion_time": status.completed_time if status.is_finished else None,
-        "downloaded": status.all_time_download,
-        "uploaded": status.all_time_upload,
-        "share_ratio": round(status.all_time_upload / status.all_time_download, 2)
-        if status.all_time_download > 0
-        else None,
+        "downloaded": downloaded,
+        "uploaded": uploaded,
+        "share_ratio": share_ratio,
         "connections": status.num_connections,
         "wasted": status.total_failed_bytes,
         "active_time": status.active_time,
@@ -53,12 +57,11 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "connected_seeds": status.num_seeds,
         "connected_leeches": status.num_peers - status.num_seeds,
         "total_known_peers": len(peers_info),
-        "leeches": total_leeches,  # Added total leeches count here
+        "leeches": total_leeches,
         "peers": peers_info,
     }
 
     if not ti:
-        # No metadata yet, skip fields below
         info.update(
             {
                 "name": None,
@@ -81,7 +84,6 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         )
         return info
 
-    # Metadata is available, enrich info
     fs = ti.files()
     files = [
         {

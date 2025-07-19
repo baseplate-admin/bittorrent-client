@@ -72,11 +72,16 @@ export interface TorrentInfo {
     // Connections
     connections: number;
     seeds: number;
+
+    // Peers & Leeches
     peers: Peer[];
     connected_peers: number;
     connected_seeds: number;
     connected_leeches: number;
     total_known_peers: number;
+
+    // Additional leeches count (total leeches from peer info)
+    leechs?: number;
 
     // File info
     files: FileInfo[];
@@ -100,6 +105,5 @@ export interface TorrentInfo {
 
     // Derived
     eta?: number;
-    leechs?: number;
     peers_info?: TorrentPeer[];
 }

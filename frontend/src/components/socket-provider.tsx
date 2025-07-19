@@ -149,6 +149,7 @@ export default function SocketProvider() {
                 }
                 case "libtorrent:state_update": {
                     for (const status of response.statuses ?? []) {
+                        console.log(status);
                         const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,
                         );

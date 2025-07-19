@@ -23,8 +23,10 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
             }
             for p in peers
         ]
+        total_leeches = sum(1 for p in peers_info if not p["seed"])
     except Exception:
         peers_info = []
+        total_leeches = 0
 
     info = {
         "info_hash": str(handle.info_hash()),
@@ -51,6 +53,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "connected_seeds": status.num_seeds,
         "connected_leeches": status.num_peers - status.num_seeds,
         "total_known_peers": len(peers_info),
+        "leeches": total_leeches,  # Added total leeches count here
         "peers": peers_info,
     }
 

@@ -18,12 +18,6 @@ import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
 import { deepMerge } from "@/lib/deepMerge";
 
-function analyzePeers(peers: Peer[]) {
-    const seeds = peers.filter((p) => p.seed).length;
-    const leeches = peers.length - seeds;
-    const connectedPeers = peers.length;
-    return { seeds, leeches, connectedPeers };
-}
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
 
@@ -93,14 +87,10 @@ export default function SocketProvider() {
                         total: torrent.total_size ?? 0,
                         downloadSpeed: torrent.download_rate ?? 0,
                     });
-                    const { seeds, leeches } = analyzePeers(
-                        torrent.peers ?? [],
-                    );
+
                     setFirstLoad(true);
                     return {
                         ...torrent,
-                        seeds: seeds,
-                        leechs: leeches,
                         eta: eta,
                     };
                 });
@@ -194,12 +184,7 @@ export default function SocketProvider() {
                                 | "error"
                                 | "unknown";
 
-                            const { seeds, leeches } = analyzePeers(
-                                status.peers ?? [],
-                            );
                             status["eta"] = eta;
-                            status["seeds"] = seeds;
-                            status["leechs"] = leeches;
                             status["state"] = state;
 
                             latestTorrentsRef.current[index] = deepMerge(

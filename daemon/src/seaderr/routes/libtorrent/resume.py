@@ -1,5 +1,8 @@
+from pydantic import BaseModel
+
 import libtorrent as lt
 from seaderr.datastructures import EventDataclass
+from seaderr.decorators import validate_payload
 from seaderr.enums import SyntheticEvent
 from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
@@ -16,8 +19,13 @@ async def publish_resume_event(handle: lt.torrent_handle):
     await event_bus.publish(event)
 
 
+class ResumeRequestPayload(BaseModel):
+    info_hash: str
+
+
 @sio.on("libtorrent:resume")  # type: ignore
-async def resume(sid: str, data: dict):
+@validate_payload(ResumeRequestPayload)
+async def resume(sid: str, data: ResumeRequestPayload):
     """
     Handle the 'resume' event from the client.
 
@@ -28,13 +36,9 @@ async def resume(sid: str, data: dict):
             - info_hash (str): The hex string of the torrent's info hash.
     """
     ses = await LibtorrentSession.get_session()
-    info_hash = data.get("info_hash")
-
-    if not info_hash:
-        return {"status": "error", "message": "Missing 'info_hash'"}
 
     try:
-        ih = lt.sha1_hash(bytes.fromhex(info_hash))
+        ih = lt.sha1_hash(bytes.fromhex(data.info_hash))
     except ValueError:
         return {"status": "error", "message": "Invalid info_hash format"}
 

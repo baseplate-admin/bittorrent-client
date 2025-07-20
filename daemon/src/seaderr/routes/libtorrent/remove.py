@@ -1,5 +1,8 @@
+from pydantic import BaseModel
+
 import libtorrent as lt
 from seaderr.datastructures import EventDataclass
+from seaderr.decorators import validate_payload
 from seaderr.enums import SyntheticEvent
 from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
@@ -16,17 +19,21 @@ async def publish_remove_event(handle: lt.torrent_handle):
     await event_bus.publish(event)
 
 
-@sio.on("libtorrent:remove")  # type: ignore
-async def remove(sid: str, data: dict):
-    ses = await LibtorrentSession.get_session()
-    info_hash = data.get("info_hash")
-    remove_data = data.get("remove_data", False)
+class RemoveRequestPayload(BaseModel):
+    info_hash: str
+    remove_data: bool = False
 
-    if not info_hash:
+
+@sio.on("libtorrent:remove")  # type: ignore
+@validate_payload(RemoveRequestPayload)
+async def remove(sid: str, data: RemoveRequestPayload):
+    ses = await LibtorrentSession.get_session()
+
+    if not data.info_hash:
         return {"status": "error", "message": "Missing 'info_hash'"}
 
     try:
-        ih = lt.sha1_hash(bytes.fromhex(info_hash))
+        ih = lt.sha1_hash(bytes.fromhex(data.info_hash))
     except ValueError:
         return {"status": "error", "message": "Invalid info_hash format"}
 
@@ -34,7 +41,7 @@ async def remove(sid: str, data: dict):
     if not handle.is_valid():
         return {"status": "error", "message": "Torrent not found"}
 
-    flags = lt.options_t.delete_files if remove_data else 0
+    flags = lt.options_t.delete_files if data.remove_data else 0
     ses.remove_torrent(handle, flags)
     sio.start_background_task(publish_remove_event, handle)
     return {"status": "success", "message": "Torrent removed"}

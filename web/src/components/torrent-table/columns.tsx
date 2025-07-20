@@ -1,15 +1,19 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { snakeToSpace } from "@/lib/snakeToSpace";
 import { useRef, useState } from "react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { Progress } from "../ui/progress";
+import { Progress } from "@/components/ui/progress";
 import { formatDurationClean } from "@/lib/formatDurationClean";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const columnsMetadata: {
     key: string;

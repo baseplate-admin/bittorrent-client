@@ -1,17 +1,18 @@
 "use client";
 
-import { Checkbox } from "../ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
     DialogTitle,
     DialogDescription,
     DialogTrigger,
-} from "../ui/dialog";
-import { Label } from "../ui/label";
+    DialogHeader,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { Button } from "../ui/button";
-import { DialogHeader, DialogFooter } from "../ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function RemoveTorrentDialog({
     open,

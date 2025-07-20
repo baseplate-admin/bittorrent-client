@@ -1,9 +1,9 @@
+import { Progress } from "@/components/ui/progress";
 import { calculateETA } from "@/lib/calculateEta";
 import { formatBytes } from "@/lib/formatBytes";
 import { formatDurationClean } from "@/lib/formatDurationClean";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { Fragment } from "react";
-import { Progress } from "../ui/progress";
 
 export default function GeneralTab({ torrentData }: { torrentData: TorrentInfo }) {
     const mapping = {

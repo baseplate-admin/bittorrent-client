@@ -6,8 +6,11 @@ import { torrentAtom } from "@/atoms/torrent";
 import { selectedRowAtom, ignoredElementsRefAtom } from "@/atoms/table";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RefObject, useEffect, useRef, useState } from "react";
-import GeneralTab from "./general-tab";
+
+// Tabs import
+import GeneralTab from "./general-tab/component";
 import TrackersTab from "./tracker-tab/component";
+import PeersTab from "./peers-tab/component";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(torrentAtom);
@@ -59,7 +62,7 @@ export default function TorrentDetails() {
     const tabs = [
         { label: "General", component: GeneralTab },
         { label: "Trackers", component: TrackersTab },
-        // { label: "Peers", component: PeersTab },
+        { label: "Peers", component: PeersTab },
         // { label: "HTTP Sources", component: HttpSourcesTab },
         // { label: "Content", component: ContentTab },
     ] as const;

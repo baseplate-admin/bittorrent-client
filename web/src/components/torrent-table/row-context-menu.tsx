@@ -15,7 +15,7 @@ import {
     ContextMenuSubTrigger,
     ContextMenuSubContent,
     ContextMenuCheckboxItem,
-} from "../ui/context-menu";
+} from "@/components/ui/context-menu";
 import { useSetAtom } from "jotai";
 import {
     PlayIcon,

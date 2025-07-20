@@ -95,7 +95,7 @@ export function TorrentDataTable<TData, TValue>({
 
     return (
         <div className="h-full rounded-md border">
-            <div ref={tableRef}>
+            <div role="table" ref={tableRef}>
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

@@ -5,7 +5,7 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { Fragment } from "react";
 import { Progress } from "../ui/progress";
 
-export function GeneralTab({ torrentData }: { torrentData: TorrentInfo }) {
+export default function GeneralTab({ torrentData }: { torrentData: TorrentInfo }) {
     const mapping = {
         addedTime: new Date(
             (torrentData?.added_time || 0) * 1000,

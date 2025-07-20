@@ -6,7 +6,7 @@ import { torrentAtom } from "@/atoms/torrent";
 import { selectedRowAtom, ignoredElementsRefAtom } from "@/atoms/table";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RefObject, useEffect, useRef, useState } from "react";
-import { GeneralTab } from "./general-tab";
+import GeneralTab from "./general-tab";
 import TrackersTab from "./tracker-tab/component";
 
 export default function TorrentDetails() {
@@ -16,6 +16,7 @@ export default function TorrentDetails() {
 
     const cardRef = useRef<HTMLDivElement>(null);
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+    const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
 
     useEffect(() => {
         const ref = cardRef as RefObject<HTMLElement>;
@@ -40,19 +41,11 @@ export default function TorrentDetails() {
             setTorrentData(null);
         }
     }, [torrent, indexNum]);
-    const tabsType = [
-        "General",
-        "Trackers",
-        "Peers",
-        "HTTP Sources",
-        "Content",
-    ] as const;
-
-    const [tabs, setTabs] = useState<(typeof tabsType)[number]>("General");
 
     if (keys.length > 1) {
         return <div ref={cardRef}>Error: More than one row selected</div>;
     }
+
     if (keys.length === 0 || torrentData === null) {
         return (
             <div
@@ -63,25 +56,31 @@ export default function TorrentDetails() {
             </div>
         );
     }
+    const tabs = [
+        { label: "General", component: GeneralTab },
+        { label: "Trackers", component: TrackersTab },
+        // { label: "Peers", component: PeersTab },
+        // { label: "HTTP Sources", component: HttpSourcesTab },
+        // { label: "Content", component: ContentTab },
+    ] as const;
+    const SelectedTabComponent = tabs[selectedTabIndex]?.component;
 
     return (
         <Card className="w-full" ref={cardRef}>
             <CardContent className="space-y-6 pt-6">
-                {/* Tabs switch defined here  */}
-                {tabs === "General" && <GeneralTab torrentData={torrentData} />}
-                {tabs === "Trackers" && (
-                    <TrackersTab torrentData={torrentData} />
+                {SelectedTabComponent && (
+                    <SelectedTabComponent torrentData={torrentData} />
                 )}
-                {/* Tabs */}
-                <Tabs defaultValue="general" className="border-t pt-4">
+
+                <Tabs
+                    value={String(selectedTabIndex)}
+                    onValueChange={(v) => setSelectedTabIndex(Number(v))}
+                    className="border-t pt-4"
+                >
                     <TabsList>
-                        {tabsType.map((tab) => (
-                            <TabsTrigger
-                                key={tab}
-                                value={tab.toLowerCase().replace(/\s+/g, "-")}
-                                onClick={() => setTabs(tab)}
-                            >
-                                {tab}
+                        {tabs.map((tab, i) => (
+                            <TabsTrigger key={i} value={String(i)}>
+                                {tab.label}
                             </TabsTrigger>
                         ))}
                     </TabsList>

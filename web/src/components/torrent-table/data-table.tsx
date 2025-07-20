@@ -140,7 +140,7 @@ export function TorrentDataTable<TData, TValue>({
                                                     : undefined
                                             }
                                             className={cn(
-                                                isSelected && "bg-blue-100",
+                                                isSelected ? "bg-blue-100" : "",
                                                 "cursor-pointer",
                                             )}
                                         >

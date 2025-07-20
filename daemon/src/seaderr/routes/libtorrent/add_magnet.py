@@ -47,66 +47,70 @@ class AddMagnetPayload(BaseModel):
 async def add_magnet(sid: str, data: AddMagnetPayload):
     ses = await LibtorrentSession.get_session()
 
-    if data.action == "fetch_metadata":
-        if not data.magnet_uri:
-            return {"status": "error", "message": "Magnet URI is required"}
+    match data.action:
+        case "fetch_metadata":
+            if not data.magnet_uri:
+                return {"status": "error", "message": "Magnet URI is required"}
 
-        # Add magnet to session
-        params = lt.parse_magnet_uri(data.magnet_uri)
-        params.save_path = data.save_path
-        handle = ses.add_torrent(params)
+            # Add magnet to session
+            params = lt.parse_magnet_uri(data.magnet_uri)
+            params.save_path = data.save_path
+            handle = ses.add_torrent(params)
 
-        async def is_ready():
-            return handle.has_metadata()
+            async def is_ready():
+                return handle.has_metadata()
 
-        await wait_for(is_ready, timeout=20, backoff="exponential")
+            await wait_for(is_ready, timeout=20, backoff="exponential")
 
-        if not handle.has_metadata():
+            if not handle.has_metadata():
+                return {
+                    "status": "error",
+                    "message": "Metadata not available after waiting",
+                    "metadata": None,
+                }
+
+            # Pause after fetching metadata
+            handle.auto_managed(False)  # Disable auto-resume
+            handle.pause()
+
+            # Store handle
+            await torrent_store.set(
+                str(handle.info_hash()), TorrentDataclass(torrent=handle)
+            )
+
+            serialized_info = await serialize_magnet_torrent_info(handle)
+
             return {
-                "status": "error",
-                "message": "Metadata not available after waiting",
-                "metadata": None,
+                "status": "success",
+                "message": "Metadata fetched and torrent paused",
+                "metadata": serialized_info,
             }
+        case "add" | "remove":
+            if not data.info_hash:
+                return {"status": "error", "message": "Info hash is required"}
 
-        # Pause after fetching metadata
-        handle.auto_managed(False)  # Disable auto-resume
-        handle.pause()
+            torrent_entry = await torrent_store.get(data.info_hash)
+            if not torrent_entry:
+                return {"status": "error", "message": "Torrent not found in store"}
 
-        # Store handle
-        await torrent_store.set(
-            str(handle.info_hash()), TorrentDataclass(torrent=handle)
-        )
+            handle = torrent_entry.torrent
+            if not handle.is_valid():
+                return {
+                    "status": "error",
+                    "message": "Stored torrent handle is invalid",
+                }
+            match data.action:
+                case "add":
+                    handle.set_upload_mode(False)
+                    handle.resume()
+                    await torrent_store.delete(data.info_hash)
+                    return {"status": "success", "message": "Torrent resumed/started"}
+                case "remove":
+                    ses.remove_torrent(handle, lt.options_t.delete_files)
+                    return {
+                        "status": "success",
+                        "message": "Torrent removed successfully",
+                    }
 
-        serialized_info = await serialize_magnet_torrent_info(handle)
-
-        return {
-            "status": "success",
-            "message": "Metadata fetched and torrent paused",
-            "metadata": serialized_info,
-        }
-
-    elif data.action in ("add", "remove"):
-        if not data.info_hash:
-            return {"status": "error", "message": "Info hash is required"}
-
-        torrent_entry = await torrent_store.get(data.info_hash)
-        if not torrent_entry:
-            return {"status": "error", "message": "Torrent not found in store"}
-
-        handle = torrent_entry.torrent
-        if not handle.is_valid():
-            return {
-                "status": "error",
-                "message": "Stored torrent handle is invalid",
-            }
-        if data.action == "add":
-            handle.set_upload_mode(False)
-            handle.resume()
-            await torrent_store.delete(data.info_hash)
-            return {"status": "success", "message": "Torrent resumed/started"}
-
-        elif data.action == "remove":
-            ses.remove_torrent(handle, lt.options_t.delete_files)
-            return {"status": "success", "message": "Torrent removed successfully"}
-
-    return {"status": "error", "message": "Unknown action"}
+        case _:
+            return {"status": "error", "message": "Unknown action"}

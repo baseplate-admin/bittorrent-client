@@ -16,13 +16,22 @@ const nextConfig: NextConfig = {
         },
     },
     webpack(config) {
+        config.experiments = {
+            asyncWebAssembly: true,
+            layers: true,
+            topLevelAwait: true,
+        };
+
+        config.module.rules.push({
+            test: /\.wasm$/,
+            type: "webassembly/async",
+        });
         config.module.rules.push({
             test: /\.svg$/i,
             use: ["@svgr/webpack"],
         });
         return config;
     },
-    transpilePackages: ["jotai-devtools"],
 };
 
 export default nextConfig;

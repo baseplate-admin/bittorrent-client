@@ -12,7 +12,7 @@ export default function TrackersTab({
         <ScrollArea className="h-96">
             <TrackerTabDataTable
                 columns={columns}
-                data={torrentData.trackers}
+                data={torrentData.trackers || []}
             />
         </ScrollArea>
     );

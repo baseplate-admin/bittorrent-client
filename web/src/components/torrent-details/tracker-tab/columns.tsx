@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 
 function getTrackerStatus(tracker: TrackerInfo): string {
     if (tracker.updating) {
-        return "Updaing";
+        return "Updating"; // fixed typo here
     }
     if (tracker.verified) {
         return "Working";
@@ -22,9 +22,17 @@ function getTrackerStatus(tracker: TrackerInfo): string {
     return "Not Working";
 }
 
+// Type-safe header renderer for sortable columns
 const sortableHeader =
     (label: string) =>
-    ({ column }: any) => (
+    ({
+        column,
+    }: {
+        column: {
+            toggleSorting: (desc?: boolean) => void;
+            getIsSorted: () => "asc" | "desc" | false;
+        };
+    }) => (
         <Button
             variant="ghost"
             className="p-0.5"
@@ -38,12 +46,13 @@ export const columns: ColumnDef<TrackerInfo>[] = [
     {
         accessorKey: "tier",
         header: sortableHeader("Tier"),
+        enableSorting: true,
     },
     {
         accessorKey: "url",
         header: sortableHeader("URL/Announce Endpoint"),
+        enableSorting: true,
     },
-
     {
         id: "status",
         header: sortableHeader("Status"),
@@ -58,6 +67,7 @@ export const columns: ColumnDef<TrackerInfo>[] = [
             const value = info.getValue() as number;
             return typeof value === "number" && value >= 0 ? value : "N/A";
         },
+        enableSorting: true,
     },
     {
         accessorKey: "scrape_incomplete",
@@ -66,6 +76,7 @@ export const columns: ColumnDef<TrackerInfo>[] = [
             const value = info.getValue() as number;
             return typeof value === "number" && value >= 0 ? value : "N/A";
         },
+        enableSorting: true,
     },
     {
         accessorKey: "scrape_downloaded",
@@ -74,11 +85,13 @@ export const columns: ColumnDef<TrackerInfo>[] = [
             const value = info.getValue() as number;
             return typeof value === "number" && value >= 0 ? value : "N/A";
         },
+        enableSorting: true,
     },
     {
         accessorKey: "message",
         header: "Message",
         cell: (info) => info.getValue() || "N/A",
+        enableSorting: false,
     },
     {
         accessorKey: "next_announce",
@@ -91,8 +104,10 @@ export const columns: ColumnDef<TrackerInfo>[] = [
                 ? "announcing"
                 : formatDurationClean(secondsLeft);
         },
+        enableSorting: true,
     },
     {
+        id: "min_announce",
         header: "Min Announce",
         cell: ({ row }) => {
             const { next_announce, min_announce } = row.original;
@@ -101,5 +116,6 @@ export const columns: ColumnDef<TrackerInfo>[] = [
                 ? formatDurationClean(next_announce - min_announce)
                 : "N/A";
         },
+        enableSorting: false,
     },
 ];

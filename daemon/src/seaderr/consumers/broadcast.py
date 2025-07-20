@@ -1,5 +1,4 @@
 import asyncio
-import traceback
 
 import libtorrent as lt
 
@@ -98,9 +97,6 @@ async def serialize_alert(alert) -> dict:
                             "upload_rate": st.upload_rate,
                             "num_peers": st.num_peers,
                         }
-                    except Exception as e:
-                        traceback.print_exception(e)
-                        raise e
 
                     # Add the human-readable state string
                     info_dict["state"] = lt_state_map.get(st.state, "unknown")

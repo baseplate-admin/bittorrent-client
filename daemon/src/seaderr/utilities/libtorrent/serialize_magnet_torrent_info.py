@@ -1,112 +1,66 @@
-import asyncio
-
+import traceback
 import libtorrent as lt
 
 
 def infer_connection_type(flags: int) -> str:
-    WEB_SEED = 1 << 31
-    HTTP_SEED = 1 << 30
-    UTP_SOCKET = 0x2000
-    if flags & WEB_SEED:
-        return "web_seed"
-    if flags & HTTP_SEED:
-        return "http_seed"
-    if flags & UTP_SOCKET:
-        return "utp"
-    return "tcp"
+    try:
+        WEB_SEED = getattr(lt.peer_info, "web_seed", 1 << 31)
+        HTTP_SEED = getattr(lt.peer_info, "http_seed", 1 << 30)
+        UTP_SOCKET = getattr(lt.peer_info, "utp_socket", 0x2000)
+
+        if flags & WEB_SEED:
+            return "web_seed"
+        if flags & HTTP_SEED:
+            return "http_seed"
+        if flags & UTP_SOCKET:
+            return "utp"
+        return "tcp"
+    except Exception as e:
+        traceback.print_exception(e)
+        raise e
 
 
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = handle.get_torrent_info()
     status = handle.status()
 
-    # 1. Pull raw peer data synchronously
-    raw_peers = []
     try:
-        for p in handle.get_peer_info():
-            raw_peers.append(
-                (
-                    f"{p.ip[0]}",
-                    p.ip[1],
-                    p.flags,
-                    p.client,
-                    p.progress,
-                    p.down_speed,
-                    p.up_speed,
-                    p.total_download,
-                    p.total_upload,
-                )
+        peers = handle.get_peer_info()
+        peers_info = []
+        total_leeches = 0
+
+        for p in peers:
+            seed = bool(p.flags & lt.peer_info.seed)
+            if not seed:
+                total_leeches += 1
+
+            peers_info.append(
+                {
+                    "ip": p.ip[0],
+                    "port": p.ip[1],
+                    "client": p.client.decode("utf-8", "ignore"),
+                    "connection_type": infer_connection_type(p.flags),
+                    "progress": p.progress,
+                    "flags": p.flags,
+                    "download_queue_length": p.download_queue_length,
+                    "upload_queue_length": p.upload_queue_length,
+                    "up_speed": p.up_speed,
+                    "down_speed": p.down_speed,
+                    "total_download": p.total_download,
+                    "total_upload": p.total_upload,
+                    "seed": seed,
+                }
             )
     except Exception:
-        raw_peers = []
+        peers_info = []
+        total_leeches = 0
 
-    # 2. Define pure‑Python serialization coroutines
-    async def _ser_peer(ip, port, flags, client_bytes, progress, down, up, dl, ul):
-        try:
-            return {
-                "ip": ip,
-                "port": port,
-                "connection_type": infer_connection_type(flags),
-                "flags": flags,
-                "client": client_bytes.decode("utf-8", errors="ignore"),
-                "progress": round(progress * 100, 2),
-                "down_speed": down,
-                "up_speed": up,
-                "downloaded": dl,
-                "uploaded": ul,
-            }
-        except Exception:
-            return {
-                "ip": None,
-                "connection_type": "unknown",
-                "flags": None,
-                "client": None,
-                "progress": 0,
-                "down_speed": 0,
-                "up_speed": 0,
-                "downloaded": 0,
-                "uploaded": 0,
-            }
-
-    # 3. Fan‑out peer serialization in TaskGroup
-    async with asyncio.TaskGroup() as tg:
-        peer_tasks = [tg.create_task(_ser_peer(*rp)) for rp in raw_peers]
-    peers_info = [t.result() for t in peer_tasks]
-
-    # 4. Pull raw file & node data synchronously
-    files_list = []
-    nodes_list = []
-    if ti:
-        fs = ti.files()
-        for idx in range(fs.num_files()):
-            files_list.append(
-                (
-                    idx,
-                    fs.file_path(idx),
-                    fs.file_size(idx),
-                    fs.file_offset(idx),
-                )
-            )
-        nodes_list = list(ti.nodes())
-
-    # 5. Define file & node serializers
-    async def _ser_file(idx, path, size, offset):
-        return {"index": idx, "path": path, "size": size, "offset": offset}
-
-    async def _ser_node(host, port):
-        return {"host": host, "port": port}
-
-    # 6. Fan‑out file & node serialization
-    async with asyncio.TaskGroup() as tg2:
-        file_tasks = [tg2.create_task(_ser_file(*f)) for f in files_list]
-        node_tasks = [tg2.create_task(_ser_node(h, p)) for h, p in nodes_list]
-    files_info = [t.result() for t in file_tasks]
-    nodes_info = [t.result() for t in node_tasks]
-
-    # --- Build the final dict ---
-    downloaded = status.all_time_download or status.total_done or 0
+    downloaded = (
+        status.all_time_download or status.total_done or status.total_wanted_done or 0
+    )
     uploaded = status.all_time_upload or 0
 
+    # --- Basic info ---
     info = {
         "info_hash": str(handle.info_hash()),
         "progress": round(status.progress * 100, 2),
@@ -129,9 +83,11 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "connected_seeds": status.num_seeds,
         "connected_leeches": status.num_peers - status.num_seeds,
         "total_known_peers": len(peers_info),
+        "leeches": total_leeches,
         "peers": peers_info,
     }
 
+    # --- If metadata is missing ---
     if not ti:
         info.update(
             {
@@ -149,10 +105,25 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
                 "files": [],
                 "trackers": [],
                 "nodes": [],
+                "url_seeds": [],
+                "http_seeds": [],
             }
         )
         return info
 
+    # --- Metadata present ---
+    fs = ti.files()
+    files = [
+        {
+            "index": idx,
+            "path": fs.file_path(idx),
+            "size": fs.file_size(idx),
+            "offset": fs.file_offset(idx),
+        }
+        for idx in range(fs.num_files())
+    ]
+
+    nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
     trackers = list(ti.trackers()) + handle.trackers()
     info.update(
         {
@@ -169,9 +140,11 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
             "creation_date": ti.creation_date(),
             "num_files": ti.num_files(),
             "metadata_size": ti.metadata_size(),
-            "files": files_info,
+            "files": files,
             "trackers": trackers,
-            "nodes": nodes_info,
+            "nodes": nodes,
+            "url_seeds": getattr(ti, "url_seeds", lambda: [])(),
+            "http_seeds": getattr(ti, "http_seeds", lambda: [])(),
         }
     )
 

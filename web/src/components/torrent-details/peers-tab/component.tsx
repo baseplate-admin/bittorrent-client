@@ -24,7 +24,7 @@ export default function PeersTab({
 
                     if (isValidIP(ip)) {
                         try {
-                            isoCode = (await getCountryISOFromIp(ip)) ?? "";
+                            isoCode = await getCountryISOFromIp(ip);
                         } catch (e) {
                             console.warn("Could not fetch ISO for", ip, e);
                         }

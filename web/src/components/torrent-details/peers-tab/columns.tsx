@@ -2,10 +2,8 @@
 import { CountryFlag } from "@/components/country-flag";
 import { TableHeaderSortButton } from "@/components/table-header-sort-button";
 import { Button } from "@/components/ui/button";
-import { getCountryISOFromIp } from "@/lib/getCountryISOFromIp";
 import { Peer } from "@/types/socket/torrent_info";
 import { ColumnDef } from "@tanstack/react-table";
-import { useEffect, useState } from "react";
 
 type SyntheticPeer = Peer & {
     isoCode?: string;
@@ -18,9 +16,15 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
         cell: (info) => {
             const isoValue = info.getValue() as string;
             return (
-                <Button size="icon" variant="ghost">
-                    <CountryFlag iso={isoValue} title={isoValue} />
-                </Button>
+                <>
+                    {isoValue === null && typeof isoValue !== "string" ? (
+                        <span>N/A</span>
+                    ) : (
+                        <Button size="icon" variant="ghost">
+                            <CountryFlag iso={isoValue} title={isoValue} />
+                        </Button>
+                    )}
+                </>
             );
         },
     },
@@ -48,6 +52,14 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
         cell: (info) => {
             const client = (info.getValue() as string) ?? "N/A";
 
+            return <span>{client}</span>;
+        },
+    },
+    {
+        accessorKey: "connection_type",
+        header: TableHeaderSortButton("Connection Type"),
+        cell: (info) => {
+            const client = info.getValue() as string;
             return <span>{client}</span>;
         },
     },

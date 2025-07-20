@@ -204,7 +204,7 @@ export default function SocketProvider() {
         return () => {
             socket.off("libtorrent:broadcast", handleBroadcast);
         };
-    }, [socketRef]);
+    }, [getSpecificTorrentFromSocket, socketRef]);
 
     useEffect(() => {
         if (broadcastStarted) return;

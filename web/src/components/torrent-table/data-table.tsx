@@ -80,18 +80,13 @@ export function TorrentDataTable<TData, TValue>({
             if (event.button !== 0) return; // Only left click
 
             const target = event.target as Node;
-
-            // Check if click inside any ignored elements
             for (const ref of ignoredElementsRef) {
                 if (ref.current && ref.current.contains(target)) {
-                    return; // click inside ignored element → do nothing
+                    return;
                 }
             }
-
-            // Click outside all ignored elements → clear selection
             setRowSelection({});
         }
-
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
@@ -100,78 +95,88 @@ export function TorrentDataTable<TData, TValue>({
 
     return (
         <div className="h-full rounded-md border">
-            <Table>
-                <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <TableHead
-                                    key={header.id}
-                                    className="text-center"
-                                >
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                              header.column.columnDef.header,
-                                              header.getContext(),
-                                          )}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    {table.getRowModel().rows.length ? (
-                        table.getRowModel().rows.map((row) => {
-                            const isSelected = !!rowSelection[row.id];
-
-                            return (
-                                <Fragment key={row.id}>
-                                    <RowContextMenu
-                                        rowData={row.original as TorrentInfo}
+            <div ref={tableRef}>
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead
+                                        key={header.id}
+                                        className="text-center"
                                     >
-                                        <TableRow
-                                            onClick={() =>
-                                                handleRowClick(row.id)
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                  header.column.columnDef
+                                                      .header,
+                                                  header.getContext(),
+                                              )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows.length ? (
+                            table.getRowModel().rows.map((row) => {
+                                const isSelected = !!rowSelection[row.id];
+
+                                return (
+                                    <Fragment key={row.id}>
+                                        <RowContextMenu
+                                            rowData={
+                                                row.original as TorrentInfo
                                             }
-                                            data-state={
-                                                isSelected
-                                                    ? "selected"
-                                                    : undefined
-                                            }
-                                            className={cn(
-                                                isSelected ? "bg-blue-100" : "",
-                                                "cursor-pointer",
-                                            )}
                                         >
-                                            {row
-                                                .getVisibleCells()
-                                                .map((cell) => (
-                                                    <TableCell key={cell.id}>
-                                                        {flexRender(
-                                                            cell.column
-                                                                .columnDef.cell,
-                                                            cell.getContext(),
-                                                        )}
-                                                    </TableCell>
-                                                ))}
-                                        </TableRow>
-                                    </RowContextMenu>
-                                </Fragment>
-                            );
-                        })
-                    ) : (
-                        <TableRow>
-                            <TableCell
-                                colSpan={columns.length}
-                                className="h-24 text-center"
-                            >
-                                No results.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                                            <TableRow
+                                                onClick={() =>
+                                                    handleRowClick(row.id)
+                                                }
+                                                data-state={
+                                                    isSelected
+                                                        ? "selected"
+                                                        : undefined
+                                                }
+                                                className={cn(
+                                                    isSelected
+                                                        ? "bg-blue-100"
+                                                        : "",
+                                                    "cursor-pointer",
+                                                )}
+                                            >
+                                                {row
+                                                    .getVisibleCells()
+                                                    .map((cell) => (
+                                                        <TableCell
+                                                            key={cell.id}
+                                                        >
+                                                            {flexRender(
+                                                                cell.column
+                                                                    .columnDef
+                                                                    .cell,
+                                                                cell.getContext(),
+                                                            )}
+                                                        </TableCell>
+                                                    ))}
+                                            </TableRow>
+                                        </RowContextMenu>
+                                    </Fragment>
+                                );
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-24 text-center"
+                                >
+                                    No results.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 }

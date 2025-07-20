@@ -1,5 +1,8 @@
+from pydantic import BaseModel
+
 import libtorrent as lt
 from seaderr.datastructures import EventDataclass
+from seaderr.decorators import validate_payload
 from seaderr.enums import SyntheticEvent
 from seaderr.singletons import SIO, EventBus, LibtorrentSession
 
@@ -16,25 +19,24 @@ async def publish_pause_event(handle: lt.torrent_handle):
     await event_bus.publish(event)
 
 
+class PauseRequestPayload(BaseModel):
+    info_hash: str
+
+
 @sio.on("libtorrent:pause")  # type: ignore
-async def pause(sid: str, data: dict):
+@validate_payload(PauseRequestPayload)
+async def pause(sid: str, data: PauseRequestPayload):
     """
     Handle the 'pause' event from the client.
 
     Args:
         sid (str): The session ID of the client.
         data (dict): The data sent from the client.
-            Expected keys:
-            - info_hash (str): The hex string of the torrent's info hash.
     """
     ses = await LibtorrentSession.get_session()
-    info_hash = data.get("info_hash")
-
-    if not info_hash:
-        return {"status": "error", "message": "Missing 'info_hash'"}
 
     try:
-        ih = lt.sha1_hash(bytes.fromhex(info_hash))
+        ih = lt.sha1_hash(bytes.fromhex(data.info_hash))
     except ValueError:
         return {"status": "error", "message": "Invalid info_hash format"}
 

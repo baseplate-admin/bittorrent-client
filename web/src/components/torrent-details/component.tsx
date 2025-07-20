@@ -11,6 +11,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import GeneralTab from "./general-tab/component";
 import TrackersTab from "./tracker-tab/component";
 import PeersTab from "./peers-tab/component";
+import { cn } from "@/lib/utils";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(torrentAtom);
@@ -59,21 +60,27 @@ export default function TorrentDetails() {
             </div>
         );
     }
+
     const tabs = [
         { label: "General", component: GeneralTab },
         { label: "Trackers", component: TrackersTab },
         { label: "Peers", component: PeersTab },
-        // { label: "HTTP Sources", component: HttpSourcesTab },
-        // { label: "Content", component: ContentTab },
     ] as const;
-    const SelectedTabComponent = tabs[selectedTabIndex]?.component;
 
     return (
         <Card className="w-full" ref={cardRef}>
             <CardContent className="space-y-6 pt-6">
-                {SelectedTabComponent && (
-                    <SelectedTabComponent torrentData={torrentData} />
-                )}
+                {/* Render all tab components but only show the selected one */}
+                {tabs.map(({ component: TabComponent }, i) => (
+                    <div
+                        key={i}
+                        className={cn(
+                            selectedTabIndex === i ? "block" : "hidden",
+                        )}
+                    >
+                        <TabComponent torrentData={torrentData} />
+                    </div>
+                ))}
 
                 <Tabs
                     value={String(selectedTabIndex)}

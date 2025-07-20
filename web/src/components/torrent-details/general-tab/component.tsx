@@ -1,16 +1,40 @@
+"use client";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { calculateETA } from "@/lib/calculateEta";
 import { formatBytes } from "@/lib/formatBytes";
 import { formatDurationClean } from "@/lib/formatDurationClean";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-import { Fragment } from "react";
-
+import { Fragment, useRef, useState } from "react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { TOOLTIP_DELAY } from "@/consts/tooltip";
 export default function GeneralTab({
     torrentData,
 }: {
     torrentData: TorrentInfo;
 }) {
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    // Handlers for delayed tooltip
+    const handleMouseEnter = () => {
+        hoverTimeout.current = setTimeout(() => {
+            setTooltipOpen(true);
+        }, TOOLTIP_DELAY); // 2000ms = 2 seconds delay
+    };
+
+    const handleMouseLeave = () => {
+        if (hoverTimeout.current) {
+            clearTimeout(hoverTimeout.current);
+            hoverTimeout.current = null;
+        }
+        setTooltipOpen(false);
+    };
+
     const mapping = {
         addedTime: new Date(
             (torrentData?.added_time || 0) * 1000,
@@ -139,7 +163,21 @@ export default function GeneralTab({
         <>
             <div>
                 <div className="mb-1 text-sm font-medium">Progress:</div>
-                <Progress value={mapping.progress} className="h-6 rounded-sm" />
+                <Tooltip open={tooltipOpen}>
+                    <TooltipTrigger
+                        asChild
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                    >
+                        <Progress
+                            value={mapping.progress}
+                            className="h-6 rounded-sm"
+                        />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{mapping.progress.toFixed(2)}%</p>
+                    </TooltipContent>
+                </Tooltip>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-6 text-sm">

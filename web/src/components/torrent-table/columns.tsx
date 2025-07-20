@@ -14,6 +14,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { TOOLTIP_DELAY } from "@/consts/tooltip";
 
 const columnsMetadata: {
     key: string;
@@ -54,7 +55,7 @@ const columnsMetadata: {
                 }
                 timerRef.current = window.setTimeout(() => {
                     setOpen(true);
-                }, 200);
+                }, TOOLTIP_DELAY);
             };
 
             const handleMouseEnter = () => {

@@ -18,6 +18,7 @@ logger = Logger.get_logger()
 async def on_cleanup(key: str, value: TorrentDataclass):
     ses = await LibtorrentSession.get_session()
     handle = value.torrent
+
     if handle.is_valid():
         try:
             ses.remove_torrent(handle, lt.options_t.delete_files)
@@ -48,16 +49,11 @@ async def add_magnet(sid: str, data: AddMagnetPayload):
 
     if data.action == "fetch_metadata":
         if not data.magnet_uri:
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {"status": "error", "message": "Magnet URI is required"},
-                to=sid,
-            )
-            return
+            return {"status": "error", "message": "Magnet URI is required"}
 
+        # Add magnet to session
         params = lt.parse_magnet_uri(data.magnet_uri)
-        params.save_path = data.save_path or tempfile.gettempdir()
-
+        params.save_path = data.save_path
         handle = ses.add_torrent(params)
 
         async def is_ready():
@@ -66,88 +62,51 @@ async def add_magnet(sid: str, data: AddMagnetPayload):
         await wait_for(is_ready, timeout=20, backoff="exponential")
 
         if not handle.has_metadata():
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {
-                    "status": "error",
-                    "message": "Metadata not available after waiting",
-                    "metadata": None,
-                },
-                to=sid,
-            )
-            return
+            return {
+                "status": "error",
+                "message": "Metadata not available after waiting",
+                "metadata": None,
+            }
 
-        handle.auto_managed(False)
+        # Pause after fetching metadata
+        handle.auto_managed(False)  # Disable auto-resume
         handle.pause()
 
+        # Store handle
         await torrent_store.set(
             str(handle.info_hash()), TorrentDataclass(torrent=handle)
         )
 
         serialized_info = await serialize_magnet_torrent_info(handle)
 
-        await sio.emit(
-            "libtorrent:add_magnet",
-            {
-                "status": "success",
-                "message": "Metadata fetched and torrent paused",
-                "metadata": serialized_info,
-            },
-            to=sid,
-        )
-        return
+        return {
+            "status": "success",
+            "message": "Metadata fetched and torrent paused",
+            "metadata": serialized_info,
+        }
 
     elif data.action in ("add", "remove"):
         if not data.info_hash:
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {"status": "error", "message": "Info hash is required"},
-                to=sid,
-            )
-            return
+            return {"status": "error", "message": "Info hash is required"}
 
         torrent_entry = await torrent_store.get(data.info_hash)
         if not torrent_entry:
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {"status": "error", "message": "Torrent not found in store"},
-                to=sid,
-            )
-            return
+            return {"status": "error", "message": "Torrent not found in store"}
 
         handle = torrent_entry.torrent
         if not handle.is_valid():
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {"status": "error", "message": "Stored torrent handle is invalid"},
-                to=sid,
-            )
-            return
-
+            return {
+                "status": "error",
+                "message": "Stored torrent handle is invalid",
+            }
         if data.action == "add":
             handle.set_upload_mode(False)
             handle.resume()
             await torrent_store.delete(data.info_hash)
-
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {"status": "success", "message": "Torrent resumed/started"},
-                to=sid,
-            )
-            return
+            return {"status": "success", "message": "Torrent resumed/started"}
 
         elif data.action == "remove":
             ses.remove_torrent(handle, lt.options_t.delete_files)
+            return {"status": "success", "message": "Torrent removed successfully"}
 
-            await sio.emit(
-                "libtorrent:add_magnet",
-                {"status": "success", "message": "Torrent removed successfully"},
-                to=sid,
-            )
-            return
-
-    await sio.emit(
-        "libtorrent:add_magnet",
-        {"status": "error", "message": "Unknown action"},
-        to=sid,
-    )
+    return {"status": "error", "message": "Unknown action"}

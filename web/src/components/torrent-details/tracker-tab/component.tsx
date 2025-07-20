@@ -8,6 +8,11 @@ export default function TrackersTab({
     torrentData: TorrentInfo;
 }) {
     return (
-        <TrackerTabDataTable columns={columns} data={torrentData.trackers} />
+        <div className="h-96 overflow-auto">
+            <TrackerTabDataTable
+                columns={columns}
+                data={torrentData.trackers}
+            />
+        </div>
     );
 }

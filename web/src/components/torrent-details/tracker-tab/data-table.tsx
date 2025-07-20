@@ -3,6 +3,8 @@ import {
     flexRender,
     getCoreRowModel,
     useReactTable,
+    SortingState,
+    getSortedRowModel,
 } from "@tanstack/react-table";
 
 import {
@@ -13,6 +15,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { useState } from "react";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -24,42 +27,54 @@ export function TrackerTabDataTable<TData, TValue>({
     data,
 }: DataTableProps<TData, TValue>) {
     "use no memo";
+    const [sorting, setSorting] = useState<SortingState>([]);
+
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
+        onSortingChange: setSorting,
+        getSortedRowModel: getSortedRowModel(),
+        state: {
+            sorting,
+        },
     });
+
     return (
         <div className="rounded-md border">
-            <Table>
+            <Table noWrapper>
                 <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                                return (
-                                    <TableHead
-                                        className="font-bold"
-                                        key={header.id}
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef
-                                                      .header,
-                                                  header.getContext(),
-                                              )}
-                                    </TableHead>
-                                );
-                            })}
+                        <TableRow
+                            className="bg-sidebar-accent sticky top-0 z-10 rounded-sm opacity-100"
+                            noHover
+                            key={headerGroup.id}
+                        >
+                            {headerGroup.headers.map((header) => (
+                                <TableHead
+                                    className="font-bold"
+                                    key={header.id}
+                                >
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                              header.column.columnDef.header,
+                                              header.getContext(),
+                                          )}
+                                </TableHead>
+                            ))}
                         </TableRow>
                     ))}
                 </TableHeader>
+
                 <TableBody>
                     {table.getRowModel().rows?.length ? (
                         table.getRowModel().rows.map((row) => (
                             <TableRow
                                 key={row.id}
-                                data-state={row.getIsSelected() && "selected"}
+                                data-state={
+                                    row.getIsSelected() ? "selected" : undefined
+                                }
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <TableCell

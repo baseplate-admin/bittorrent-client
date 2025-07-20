@@ -4,11 +4,30 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+// https://medium.com/@shuhan.chan08/shadcn-ui-sticky-table-header-implementation-74b313d5c02e
+function Table({
+    className,
+    noWrapper,
+    divClassname,
+    ...props
+}: React.HTMLAttributes<HTMLTableElement> & {
+    noWrapper?: boolean;
+    divClassname?: string;
+}) {
+    if (noWrapper) {
+        return (
+            <table
+                data-slot="table"
+                className={cn("w-full caption-bottom text-sm", className)}
+                {...props}
+            />
+        );
+    }
+
     return (
         <div
             data-slot="table-container"
-            className="relative w-full overflow-x-auto"
+            className={cn("relative w-full overflow-x-auto", divClassname)}
         >
             <table
                 data-slot="table"
@@ -52,12 +71,19 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
     );
 }
 
-function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
+function TableRow({
+    className,
+    noHover,
+    ...props
+}: React.ComponentProps<"tr"> & {
+    noHover?: boolean;
+}) {
     return (
         <tr
             data-slot="table-row"
             className={cn(
-                "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+                noHover || "hover:bg-muted/50",
+                "data-[state=selected]:bg-muted border-b transition-colors",
                 className,
             )}
             {...props}

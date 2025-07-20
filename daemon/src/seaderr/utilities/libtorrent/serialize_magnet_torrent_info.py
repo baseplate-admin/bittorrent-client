@@ -1,4 +1,4 @@
-import asyncio
+# TODO: Massively parallelize this function to speed up the serialization of magnet torrent info. #noqa: E501
 
 import libtorrent as lt
 
@@ -17,95 +17,47 @@ def infer_connection_type(flags: int) -> str:
     return "BT"
 
 
-async def serialize_peers(peers: list[lt.peer_info]) -> tuple[list[dict], int]:
-    peers_info = []
-    total_leeches = 0
-
-    for p in peers:
-        seed = bool(p.flags & lt.peer_info.seed)
-        if not seed:
-            total_leeches += 1
-
-        peers_info.append(
-            {
-                "ip": p.ip[0],
-                "port": p.ip[1],
-                "client": p.client.decode("utf-8", "ignore"),
-                "connection_type": infer_connection_type(p.flags),
-                "progress": p.progress,
-                "flags": p.flags,
-                "download_queue_length": p.download_queue_length,
-                "upload_queue_length": p.upload_queue_length,
-                "up_speed": p.up_speed,
-                "down_speed": p.down_speed,
-                "total_download": p.total_download,
-                "total_upload": p.total_upload,
-                "seed": seed,
-            }
-        )
-    return peers_info, total_leeches
-
-
-async def serialize_file(fs, idx) -> dict:
-    return {
-        "index": idx,
-        "path": fs.file_path(idx),
-        "size": fs.file_size(idx),
-        "offset": fs.file_offset(idx),
-    }
-
-
-async def serialize_node(node) -> dict:
-    host, port = node
-    return {"host": host, "port": port}
-
-
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = handle.get_torrent_info()
     status = handle.status()
 
     try:
         peers = handle.get_peer_info()
+        peers_info = []
+        total_leeches = 0
+
+        for p in peers:
+            seed = bool(p.flags & lt.peer_info.seed)
+            if not seed:
+                total_leeches += 1
+
+            peers_info.append(
+                {
+                    "ip": p.ip[0],
+                    "port": p.ip[1],
+                    "client": p.client.decode("utf-8", "ignore"),
+                    "connection_type": infer_connection_type(p.flags),
+                    "progress": p.progress,
+                    "flags": p.flags,
+                    "download_queue_length": p.download_queue_length,
+                    "upload_queue_length": p.upload_queue_length,
+                    "up_speed": p.up_speed,
+                    "down_speed": p.down_speed,
+                    "total_download": p.total_download,
+                    "total_upload": p.total_upload,
+                    "seed": seed,
+                }
+            )
     except Exception:
-        peers = []
-
-    peers_info, total_leeches = [], 0
-    files, nodes = [], []
-
-    async with asyncio.TaskGroup() as tg:
-        # Peers serialization task
-        peer_task = tg.create_task(serialize_peers(peers)) if peers else None
-
-        # Files serialization tasks: one task per file
-        file_tasks = []
-        if ti:
-            fs = ti.files()
-            for i in range(fs.num_files()):
-                file_tasks.append(tg.create_task(serialize_file(fs, i)))
-
-        # Nodes serialization tasks: one task per node
-        node_tasks = []
-        if ti:
-            for node in ti.nodes():
-                node_tasks.append(tg.create_task(serialize_node(node)))
-
-    # Retrieve peers info
-    if peer_task:
-        peers_info, total_leeches = peer_task.result()
-
-    # Retrieve files info in order
-    if file_tasks:
-        files = [t.result() for t in file_tasks]
-
-    # Retrieve nodes info in order
-    if node_tasks:
-        nodes = [t.result() for t in node_tasks]
+        peers_info = []
+        total_leeches = 0
 
     downloaded = (
         status.all_time_download or status.total_done or status.total_wanted_done or 0
     )
     uploaded = status.all_time_upload or 0
 
+    # --- Basic info ---
     info = {
         "info_hash": str(handle.info_hash()),
         "progress": round(status.progress * 100, 2),
@@ -132,27 +84,21 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "peers": peers_info,
     }
 
+    # --- If metadata is missing ---
     if not ti:
         info.update(
             {
-                k: None
-                for k in [
-                    "name",
-                    "comment",
-                    "creator",
-                    "info_hash_v2",
-                    "total_size",
-                    "piece_length",
-                    "num_pieces",
-                    "is_private",
-                    "creation_date",
-                    "num_files",
-                    "metadata_size",
-                ]
-            }
-        )
-        info.update(
-            {
+                "name": None,
+                "comment": None,
+                "creator": None,
+                "info_hash_v2": None,
+                "total_size": None,
+                "piece_length": None,
+                "num_pieces": None,
+                "is_private": None,
+                "creation_date": None,
+                "num_files": None,
+                "metadata_size": None,
                 "files": [],
                 "trackers": [],
                 "nodes": [],
@@ -162,6 +108,19 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         )
         return info
 
+    # --- Metadata present ---
+    fs = ti.files()
+    files = [
+        {
+            "index": idx,
+            "path": fs.file_path(idx),
+            "size": fs.file_size(idx),
+            "offset": fs.file_offset(idx),
+        }
+        for idx in range(fs.num_files())
+    ]
+
+    nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
     trackers = list(ti.trackers()) + handle.trackers()
     info.update(
         {

@@ -2,9 +2,11 @@ import libtorrent as lt
 
 
 def infer_connection_type(flags: int) -> str:
+    # Constants are not exposed in Python, so we use known bit positions
+    # These are based on libtorrent's internal peer_flag_t values
     WEB_SEED = 1 << 31
     HTTP_SEED = 1 << 30
-    UTP_SOCKET = 0x2000
+    UTP_SOCKET = 0x2000  # from peer_info::utp_socket
 
     if flags & WEB_SEED:
         return "web_seed"
@@ -17,58 +19,56 @@ def infer_connection_type(flags: int) -> str:
 
 def serialize_peer(p: lt.peer_info):
     try:
-        client = p.client.decode("utf-8", errors="ignore")
+        return {
+            "ip": f"{p.ip[0]}",
+            "port": p.ip[1],
+            "connection_type": infer_connection_type(p.flags),
+            "flags": p.flags,
+            "client": p.client.decode("utf-8", errors="ignore"),
+            "progress": round(p.progress * 100, 2),
+            "down_speed": p.down_speed,
+            "up_speed": p.up_speed,
+            "downloaded": p.total_download,
+            "uploaded": p.total_upload,
+        }
     except Exception:
-        client = ""
-
-    ip_str = str(p.ip[0]) if p.ip else None
-    port = p.ip[1] if p.ip else None
-
-    return {
-        "ip": ip_str,
-        "port": port,
-        "connection_type": infer_connection_type(p.flags),
-        "flags": p.flags,
-        "client": client,
-        "progress": round(p.progress * 100, 2),
-        "down_speed": p.down_speed,
-        "up_speed": p.up_speed,
-        "downloaded": p.total_download,
-        "uploaded": p.total_upload,
-    }
+        return {
+            "ip": None,
+            "connection_type": "unknown",
+            "flags": None,
+            "client": None,
+            "progress": 0,
+            "down_speed": 0,
+            "up_speed": 0,
+            "downloaded": 0,
+            "uploaded": 0,
+        }
 
 
-def unique_trackers(trackers_list):
-    seen = set()
-    unique = []
-    for tracker in trackers_list:
-        # Use 'url' or 'announce' as unique keys; fallback to string form if missing
-        key = tracker.get("url") or tracker.get("announce") or str(tracker)
-        if key not in seen:
-            seen.add(key)
-            unique.append(tracker)
-    return unique
-
-
-def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
+async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = handle.get_torrent_info()
     status = handle.status()
 
-    peers_info = []
-    total_leeches = 0
     try:
         peers = handle.get_peer_info()
-        peers_info = [serialize_peer(p) for p in peers]
-        total_leeches = sum(1 for p in peers if not (p.flags & lt.peer_info.seed))
-    except Exception:
         peers_info = []
         total_leeches = 0
 
+        for p in peers:
+            seed = bool(p.flags & lt.peer_info.seed)
+            if not seed:
+                total_leeches += 1
+
+            peers_info.append(serialize_peer(p))
+    except Exception:
+        peers_info = []
+        total_leeches = 0
     downloaded = (
         status.all_time_download or status.total_done or status.total_wanted_done or 0
     )
     uploaded = status.all_time_upload or 0
 
+    # --- Basic info ---
     info = {
         "info_hash": str(handle.info_hash()),
         "progress": round(status.progress * 100, 2),
@@ -95,6 +95,7 @@ def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "peers": peers_info,
     }
 
+    # --- If metadata is missing ---
     if not ti:
         info.update(
             {
@@ -116,6 +117,7 @@ def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         )
         return info
 
+    # --- Metadata present ---
     fs = ti.files()
     files = [
         {
@@ -128,10 +130,7 @@ def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ]
 
     nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
-
-    combined_trackers = list(ti.trackers()) + handle.trackers()
-    trackers = unique_trackers(combined_trackers)
-
+    trackers = list(ti.trackers()) + handle.trackers()
     info.update(
         {
             "name": ti.name(),

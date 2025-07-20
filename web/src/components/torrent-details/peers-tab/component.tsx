@@ -14,8 +14,9 @@ export default function PeersTab({
     torrentData: TorrentInfo;
 }) {
     const [enrichedPeers, setEnrichedPeers] = useState<Peer[]>([]);
-
     useEffect(() => {
+        let isMounted = true;
+
         async function enrich() {
             const enriched = await Promise.all(
                 torrentData.peers.map(async (peer) => {
@@ -35,10 +36,18 @@ export default function PeersTab({
                     return { ...peer, isoCode };
                 }),
             );
-            setEnrichedPeers(enriched);
+
+            if (isMounted) {
+                setEnrichedPeers(enriched);
+            }
         }
 
         enrich();
+
+        return () => {
+            isMounted = false;
+            setEnrichedPeers([]); // Clear on unmount
+        };
     }, [torrentData.peers]);
 
     return (

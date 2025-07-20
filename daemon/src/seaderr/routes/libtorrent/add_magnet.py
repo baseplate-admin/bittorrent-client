@@ -69,7 +69,7 @@ async def add_magnet(sid: str, data: dict):
             str(handle.info_hash()), TorrentDataclass(torrent=handle)
         )
 
-        serialized_info = serialize_magnet_torrent_info(handle)
+        serialized_info = await serialize_magnet_torrent_info(handle)
 
         return {
             "status": "success",

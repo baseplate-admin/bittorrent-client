@@ -86,7 +86,7 @@ async def serialize_alert(alert) -> dict:
 
                 for st in alert.status:
                     try:
-                        info_dict = serialize_magnet_torrent_info(st.handle)
+                        info_dict = await serialize_magnet_torrent_info(st.handle)
                     except RuntimeError:
                         # If metadata not ready, fallback minimal info
                         info_dict = {

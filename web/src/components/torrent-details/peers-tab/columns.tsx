@@ -16,7 +16,7 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
         accessorKey: "isoCode",
         header: TableHeaderSortButton("Country/Region"),
         cell: (info) => {
-            const isoValue = info.getValue() as string;
+            const isoValue = (info.getValue() as string) ?? "N/A";
             return (
                 <Button size="icon" variant="ghost">
                     <CountryFlag iso={isoValue} title={isoValue} />

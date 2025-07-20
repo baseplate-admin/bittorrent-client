@@ -1,23 +1,20 @@
 import traceback
+
 import libtorrent as lt
 
 
 def infer_connection_type(flags: int) -> str:
-    try:
-        WEB_SEED = getattr(lt.peer_info, "web_seed", 1 << 31)
-        HTTP_SEED = getattr(lt.peer_info, "http_seed", 1 << 30)
-        UTP_SOCKET = getattr(lt.peer_info, "utp_socket", 0x2000)
+    WEB_SEED = getattr(lt.peer_info, "web_seed", 1 << 31)
+    HTTP_SEED = getattr(lt.peer_info, "http_seed", 1 << 30)
+    UTP_SOCKET = getattr(lt.peer_info, "utp_socket", 0x2000)
 
-        if flags & WEB_SEED:
-            return "web_seed"
-        if flags & HTTP_SEED:
-            return "http_seed"
-        if flags & UTP_SOCKET:
-            return "utp"
-        return "tcp"
-    except Exception as e:
-        traceback.print_exception(e)
-        raise e
+    if flags & WEB_SEED:
+        return "web_seed"
+    if flags & HTTP_SEED:
+        return "http_seed"
+    if flags & UTP_SOCKET:
+        return "utp"
+    return "tcp"
 
 
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:

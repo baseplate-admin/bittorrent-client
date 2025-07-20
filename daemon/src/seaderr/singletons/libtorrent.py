@@ -42,16 +42,24 @@ class LibtorrentSession:
                 "enable_dht": True,
                 "announce_to_all_trackers": True,
                 "announce_to_all_tiers": True,
+                "enable_lsd": True,  # optional: Local Service Discovery
+                "enable_upnp": True,  # optional: NAT traversal
+                "enable_natpmp": True,  # optional: NAT traversal
+                "enable_outgoing_utp": True,
+                "enable_incoming_utp": True,
+                "enable_outgoing_tcp": True,
+                "enable_incoming_tcp": True,
+                # "enable_ip_notifier": True,  # for reacting to network changes
+                "alert_mask": (
+                    lt.alert.category_t.status_notification
+                    | lt.alert.category_t.error_notification
+                    | lt.alert.category_t.dht_notification
+                ),
             }
         )
         ses.add_dht_router("router.bittorrent.com", 6881)
         ses.add_dht_router("router.utorrent.com", 6881)
         ses.add_dht_router("router.openbittorrent.org", 2710)
-        ses.set_alert_mask(
-            lt.alert.category_t.status_notification
-            | lt.alert.category_t.error_notification
-            | lt.alert.category_t.dht_notification
-        )
         return ses
 
     @classmethod

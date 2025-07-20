@@ -87,16 +87,18 @@ export const columns: ColumnDef<TrackerInfo>[] = [
         header: "Next Announce",
         cell: (info) => {
             const nextAnnounce = info.getValue();
-            return typeof nextAnnounce === "number"
-                ? formatDurationClean(
-                      Math.floor(nextAnnounce - Date.now() / 1000),
-                  )
-                : "N/A";
+            if (typeof nextAnnounce !== "number" || nextAnnounce <= 0)
+                return "N/A";
+
+            const now = Math.floor(Date.now() / 1000);
+            const secondsLeft = Math.floor(nextAnnounce - now);
+
+            return secondsLeft <= 0
+                ? "announcing"
+                : formatDurationClean(secondsLeft);
         },
     },
-    // Derived
     {
-        id: "min_announce",
         header: "Min Announce",
         cell: ({ row }) => {
             const nextAnnounce = row.original.next_announce;

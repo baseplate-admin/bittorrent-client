@@ -46,7 +46,6 @@ export default function TorrentDetails() {
         "Peers",
         "HTTP Sources",
         "Content",
-        "Speed",
     ] as const;
 
     const [tabs, setTabs] = useState<(typeof tabsType)[number]>("General");

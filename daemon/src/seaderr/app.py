@@ -1,5 +1,6 @@
 import faulthandler
 import functools
+import sys
 
 import socketio
 
@@ -11,7 +12,7 @@ from seaderr.singletons import (
 )
 from seaderr.utilities import import_submodules
 
-faulthandler.enable()
+faulthandler.enable(file=sys.stderr, all_threads=True)
 
 
 async def on_startup(sio: socketio.AsyncServer):

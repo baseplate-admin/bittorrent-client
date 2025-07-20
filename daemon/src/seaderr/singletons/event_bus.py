@@ -1,4 +1,5 @@
 import asyncio
+import traceback
 from typing import Any, Awaitable, Callable, Optional
 
 from .logger import Logger
@@ -79,6 +80,7 @@ class EventBus:
                     logger.info("EventBus task cancelled.")
                     raise
                 except Exception as e:
+                    traceback.print_exception(e)
                     logger.exception(f"Error while handling event {event}: {e}")
             except Exception as outer:
                 logger.exception(f"Unexpected error in EventBus loop: {outer}")

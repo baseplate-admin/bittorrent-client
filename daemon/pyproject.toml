@@ -9,6 +9,7 @@ dependencies = [
     "click>=8.2.1",
     "colorama>=0.4.6",
     "cross-platform-folder-picker>=0.0.3",
+    "pydantic>=2.11.7",
     "python-socketio>=5.13.0",
     "uvicorn>=0.35.0",
 ]

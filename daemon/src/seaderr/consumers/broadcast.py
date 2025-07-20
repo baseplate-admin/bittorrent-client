@@ -163,7 +163,7 @@ async def shared_poll_and_publish(bus: EventBus):
         for alert in alerts:
             await bus.publish(alert)
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
 
 async def alert_consumer(alert):

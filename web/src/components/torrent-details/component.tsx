@@ -12,6 +12,7 @@ import GeneralTab from "./general-tab/component";
 import TrackersTab from "./tracker-tab/component";
 import PeersTab from "./peers-tab/component";
 import { cn } from "@/lib/utils";
+import { Separator } from "../ui/separator";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(torrentAtom);
@@ -81,11 +82,10 @@ export default function TorrentDetails() {
                         <TabComponent torrentData={torrentData} />
                     </div>
                 ))}
-
+                <Separator className="my-4" />
                 <Tabs
                     value={String(selectedTabIndex)}
                     onValueChange={(v) => setSelectedTabIndex(Number(v))}
-                    className="border-t pt-4"
                 >
                     <TabsList>
                         {tabs.map((tab, i) => (

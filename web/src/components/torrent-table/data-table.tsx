@@ -24,6 +24,7 @@ import { ignoredElementsRefAtom, selectedRowAtom } from "@/atoms/table";
 import { useAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RowContextMenu } from "./row-context-menu";
+import { cn } from "@/lib/utils";
 
 interface TorrentDataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -138,9 +139,10 @@ export function TorrentDataTable<TData, TValue>({
                                                     ? "selected"
                                                     : undefined
                                             }
-                                            className={
-                                                isSelected ? "bg-blue-100" : ""
-                                            }
+                                            className={cn(
+                                                isSelected && "bg-blue-100",
+                                                "cursor-pointer",
+                                            )}
                                         >
                                             {row
                                                 .getVisibleCells()

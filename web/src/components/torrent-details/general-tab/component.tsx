@@ -1,11 +1,16 @@
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { calculateETA } from "@/lib/calculateEta";
 import { formatBytes } from "@/lib/formatBytes";
 import { formatDurationClean } from "@/lib/formatDurationClean";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { Fragment } from "react";
 
-export default function GeneralTab({ torrentData }: { torrentData: TorrentInfo }) {
+export default function GeneralTab({
+    torrentData,
+}: {
+    torrentData: TorrentInfo;
+}) {
     const mapping = {
         addedTime: new Date(
             (torrentData?.added_time || 0) * 1000,
@@ -30,7 +35,10 @@ export default function GeneralTab({ torrentData }: { torrentData: TorrentInfo }
             bytes: torrentData?.download_rate || 0,
             perSecond: true,
         }),
-        nextAnnounce: formatDurationClean(torrentData?.next_announce || 0),
+        nextAnnounce:
+            torrentData?.next_announce > 0
+                ? formatDurationClean(torrentData?.next_announce || 0)
+                : "Announce in progress",
         uploadSpeed: formatBytes({
             bytes: torrentData?.upload_rate || 0,
             perSecond: true,
@@ -134,7 +142,7 @@ export default function GeneralTab({ torrentData }: { torrentData: TorrentInfo }
                 <Progress value={mapping.progress} className="h-6 rounded-sm" />
             </div>
 
-            <div className="grid grid-cols-3 gap-6 border-b pb-4 text-sm">
+            <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
                 {[tableData1, tableData2, tableData3].map((tableData, i) => (
                     <table key={i} className="w-full table-auto">
                         <tbody>
@@ -151,6 +159,7 @@ export default function GeneralTab({ torrentData }: { torrentData: TorrentInfo }
                     </table>
                 ))}
             </div>
+            <Separator className="my-4" />
 
             <table className="w-full table-auto text-sm">
                 <tbody>

@@ -1,6 +1,7 @@
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { TrackerTabDataTable } from "./data-table";
 import { columns } from "./columns";
+import { ScrollArea } from "@/components/ui/scroll-area"; // import scrollarea from your UI
 
 export default function TrackersTab({
     torrentData,
@@ -8,11 +9,11 @@ export default function TrackersTab({
     torrentData: TorrentInfo;
 }) {
     return (
-        <div className="h-96 overflow-auto">
+        <ScrollArea className="h-96">
             <TrackerTabDataTable
                 columns={columns}
                 data={torrentData.trackers}
             />
-        </div>
+        </ScrollArea>
     );
 }

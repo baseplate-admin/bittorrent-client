@@ -1,20 +1,20 @@
-import traceback
+# TODO: Massively parallelize this function to speed up the serialization of magnet torrent info. #noqa: E501
 
 import libtorrent as lt
 
 
 def infer_connection_type(flags: int) -> str:
-    WEB_SEED = getattr(lt.peer_info, "web_seed", 1 << 31)
-    HTTP_SEED = getattr(lt.peer_info, "http_seed", 1 << 30)
-    UTP_SOCKET = getattr(lt.peer_info, "utp_socket", 0x2000)
+    WEB_SEED = 1 << 31
+    HTTP_SEED = 1 << 30
+    UTP_SOCKET = 0x2000  # 8192 decimal
 
     if flags & WEB_SEED:
-        return "web_seed"
+        return "WEB"
     if flags & HTTP_SEED:
-        return "http_seed"
+        return "HTTP"
     if flags & UTP_SOCKET:
-        return "utp"
-    return "tcp"
+        return "μTP"
+    return "BT"
 
 
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:

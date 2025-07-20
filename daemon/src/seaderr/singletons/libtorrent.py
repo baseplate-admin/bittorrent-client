@@ -1,5 +1,6 @@
 import asyncio
 import threading
+from pprint import pprint
 from typing import Optional, Type
 
 import libtorrent as lt
@@ -47,8 +48,7 @@ class LibtorrentSession:
                 "enable_natpmp": True,  # optional: NAT traversal
                 "enable_outgoing_utp": True,
                 "enable_incoming_utp": True,
-                "enable_outgoing_tcp": True,
-                "enable_incoming_tcp": True,
+                "ban_web_seeds": False,
                 # "enable_ip_notifier": True,  # for reacting to network changes
                 "alert_mask": (
                     lt.alert.category_t.status_notification
@@ -57,6 +57,8 @@ class LibtorrentSession:
                 ),
             }
         )
+
+        pprint(ses.get_settings())
         ses.add_dht_router("router.bittorrent.com", 6881)
         ses.add_dht_router("router.utorrent.com", 6881)
         ses.add_dht_router("router.openbittorrent.org", 2710)

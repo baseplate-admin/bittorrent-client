@@ -1,35 +1,65 @@
 import libtorrent as lt
 
 
-async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
+def infer_connection_type(flags: int) -> str:
+    WEB_SEED = 1 << 31
+    HTTP_SEED = 1 << 30
+    UTP_SOCKET = 0x2000
+
+    if flags & WEB_SEED:
+        return "web_seed"
+    if flags & HTTP_SEED:
+        return "http_seed"
+    if flags & UTP_SOCKET:
+        return "utp"
+    return "tcp"
+
+
+def serialize_peer(p: lt.peer_info):
+    try:
+        client = p.client.decode("utf-8", errors="ignore")
+    except Exception:
+        client = ""
+
+    ip_str = str(p.ip[0]) if p.ip else None
+    port = p.ip[1] if p.ip else None
+
+    return {
+        "ip": ip_str,
+        "port": port,
+        "connection_type": infer_connection_type(p.flags),
+        "flags": p.flags,
+        "client": client,
+        "progress": round(p.progress * 100, 2),
+        "down_speed": p.down_speed,
+        "up_speed": p.up_speed,
+        "downloaded": p.total_download,
+        "uploaded": p.total_upload,
+    }
+
+
+def unique_trackers(trackers_list):
+    seen = set()
+    unique = []
+    for tracker in trackers_list:
+        # Use 'url' or 'announce' as unique keys; fallback to string form if missing
+        key = tracker.get("url") or tracker.get("announce") or str(tracker)
+        if key not in seen:
+            seen.add(key)
+            unique.append(tracker)
+    return unique
+
+
+def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = handle.get_torrent_info()
     status = handle.status()
 
+    peers_info = []
+    total_leeches = 0
     try:
         peers = handle.get_peer_info()
-        peers_info = []
-        total_leeches = 0
-
-        for p in peers:
-            seed = bool(p.flags & lt.peer_info.seed)
-            if not seed:
-                total_leeches += 1
-
-            peers_info.append(
-                {
-                    "ip": str(p.ip),
-                    "client": p.client,
-                    "progress": p.progress,
-                    "flags": p.flags,
-                    "download_queue_length": p.download_queue_length,
-                    "upload_queue_length": p.upload_queue_length,
-                    "up_speed": p.up_speed,
-                    "down_speed": p.down_speed,
-                    "total_download": p.total_download,
-                    "total_upload": p.total_upload,
-                    "seed": seed,
-                }
-            )
+        peers_info = [serialize_peer(p) for p in peers]
+        total_leeches = sum(1 for p in peers if not (p.flags & lt.peer_info.seed))
     except Exception:
         peers_info = []
         total_leeches = 0
@@ -39,7 +69,6 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     )
     uploaded = status.all_time_upload or 0
 
-    # --- Basic info ---
     info = {
         "info_hash": str(handle.info_hash()),
         "progress": round(status.progress * 100, 2),
@@ -66,7 +95,6 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         "peers": peers_info,
     }
 
-    # --- If metadata is missing ---
     if not ti:
         info.update(
             {
@@ -84,13 +112,10 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
                 "files": [],
                 "trackers": [],
                 "nodes": [],
-                "url_seeds": [],
-                "http_seeds": [],
             }
         )
         return info
 
-    # --- Metadata present ---
     fs = ti.files()
     files = [
         {
@@ -103,7 +128,10 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ]
 
     nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
-    trackers = list(ti.trackers()) + handle.trackers()
+
+    combined_trackers = list(ti.trackers()) + handle.trackers()
+    trackers = unique_trackers(combined_trackers)
+
     info.update(
         {
             "name": ti.name(),
@@ -122,8 +150,6 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
             "files": files,
             "trackers": trackers,
             "nodes": nodes,
-            "url_seeds": getattr(ti, "url_seeds", lambda: [])(),
-            "http_seeds": getattr(ti, "http_seeds", lambda: [])(),
         }
     )
 

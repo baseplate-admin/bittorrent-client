@@ -1,4 +1,5 @@
 "use client";
+import { TableHeaderSortButton } from "@/components/table-header-sort-button";
 import { Button } from "@/components/ui/button";
 import { formatDurationClean } from "@/lib/formatDurationClean";
 import { TrackerInfo } from "@/types/socket/torrent_info";
@@ -23,46 +24,28 @@ function getTrackerStatus(tracker: TrackerInfo): string {
 }
 
 // Type-safe header renderer for sortable columns
-const sortableHeader =
-    (label: string) =>
-    ({
-        column,
-    }: {
-        column: {
-            toggleSorting: (desc?: boolean) => void;
-            getIsSorted: () => "asc" | "desc" | false;
-        };
-    }) => (
-        <Button
-            variant="ghost"
-            className="p-0.5"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-            {label}
-        </Button>
-    );
 
 export const columns: ColumnDef<TrackerInfo>[] = [
     {
         accessorKey: "tier",
-        header: sortableHeader("Tier"),
+        header: TableHeaderSortButton("Tier"),
         enableSorting: true,
     },
     {
         accessorKey: "url",
-        header: sortableHeader("URL/Announce Endpoint"),
+        header: TableHeaderSortButton("URL/Announce Endpoint"),
         enableSorting: true,
     },
     {
         id: "status",
-        header: sortableHeader("Status"),
+        header: TableHeaderSortButton("Status"),
         accessorFn: getTrackerStatus,
         cell: ({ row }) => getTrackerStatus(row.original),
         enableSorting: true,
     },
     {
         accessorKey: "scrape_complete",
-        header: sortableHeader("Seeds"),
+        header: TableHeaderSortButton("Seeds"),
         cell: (info) => {
             const value = info.getValue() as number;
             return typeof value === "number" && value >= 0 ? value : "N/A";
@@ -71,7 +54,7 @@ export const columns: ColumnDef<TrackerInfo>[] = [
     },
     {
         accessorKey: "scrape_incomplete",
-        header: sortableHeader("Leeches"),
+        header: TableHeaderSortButton("Leeches"),
         cell: (info) => {
             const value = info.getValue() as number;
             return typeof value === "number" && value >= 0 ? value : "N/A";
@@ -80,7 +63,7 @@ export const columns: ColumnDef<TrackerInfo>[] = [
     },
     {
         accessorKey: "scrape_downloaded",
-        header: sortableHeader("Times Downloaded"),
+        header: TableHeaderSortButton("Times Downloaded"),
         cell: (info) => {
             const value = info.getValue() as number;
             return typeof value === "number" && value >= 0 ? value : "N/A";
@@ -95,7 +78,7 @@ export const columns: ColumnDef<TrackerInfo>[] = [
     },
     {
         accessorKey: "next_announce",
-        header: sortableHeader("Next Announce"),
+        header: TableHeaderSortButton("Next Announce"),
         cell: (info) => {
             const ts = info.getValue();
             if (typeof ts !== "number" || ts <= 0) return "N/A";

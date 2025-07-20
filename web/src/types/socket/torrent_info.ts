@@ -64,16 +64,15 @@ export interface DHTNode {
 
 export interface Peer {
     ip: string;
-    client: Record<string, any>;
-    progress: number;
-    flags: number;
-    download_queue_length: number;
-    upload_queue_length: number;
-    up_speed: number;
+    port: number;
+    client: string;
+    connection_type: string;
+    flags: string;
+    progress: string;
     down_speed: number;
-    total_download: number;
-    total_upload: number;
-    seed: boolean;
+    up_speed: number;
+    downloaded: number;
+    uploaded: number;
 }
 
 export interface TorrentInfo {
@@ -125,10 +124,6 @@ export interface TorrentInfo {
     connected_peers: number;
     connected_seeds: number;
     connected_leeches: number;
-    total_known_peers: number;
-
-    // Additional leeches count (total leeches from peer info)
-    leechs?: number;
 
     // File info
     files: FileInfo[];

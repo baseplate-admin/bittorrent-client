@@ -17,13 +17,12 @@ import {
 } from "@/components/ui/table";
 import { useState } from "react";
 
-
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
 }
 
-export function TrackerTabDataTable<TData, TValue>({
+export function PeerTabDataTable<TData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {

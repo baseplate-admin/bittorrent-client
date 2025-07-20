@@ -47,9 +47,6 @@ export default function TorrentDetails() {
         }
     }, [torrent, indexNum]);
 
-    useEffect(() => {
-        console.log("Selected Rows:", selectedRows);
-    }, [selectedRows]);
     if (keys.length > 1) {
         return <div ref={cardRef}>Error: More than one row selected</div>;
     }

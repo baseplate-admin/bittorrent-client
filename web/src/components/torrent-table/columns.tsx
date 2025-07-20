@@ -15,6 +15,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TOOLTIP_DELAY } from "@/consts/tooltip";
+import { TableHeaderSortButton } from "../table-header-sort-button";
 
 const columnsMetadata: {
     key: string;
@@ -186,17 +187,7 @@ export const torrentTableColumns: ColumnDef<TorrentInfo>[] =
     columnsMetadata.map(({ key, cell, keyName }) => ({
         accessorKey: key,
         size: 300,
-        header: ({ column }) => (
-            <Button
-                variant="ghost"
-                className={cn("capitalize")}
-                onClick={() =>
-                    column.toggleSorting(column.getIsSorted() === "asc")
-                }
-            >
-                {keyName ? keyName : key}
-            </Button>
-        ),
+        header: TableHeaderSortButton(keyName ? keyName : key),
         enableResizing: true,
         ...(cell ? { cell } : {}),
     }));

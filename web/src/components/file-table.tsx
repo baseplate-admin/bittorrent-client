@@ -113,8 +113,11 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
     return (
         <>
             <tr>
-                <td style={{ paddingLeft: depth * 24 }} className="px-4 py-2">
-                    <div className="flex items-center">
+                <td
+                    style={{ paddingLeft: depth * 24 }}
+                    className="max-w-0 overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap"
+                >
+                    <div className="flex items-center gap-1">
                         {hasChildren ? (
                             <button
                                 onClick={() => setExpanded(!expanded)}
@@ -123,7 +126,7 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
                                         ? "Collapse folder"
                                         : "Expand folder"
                                 }
-                                className="focus:outline-none"
+                                className="shrink-0 focus:outline-none"
                                 type="button"
                             >
                                 {expanded ? (
@@ -133,19 +136,23 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
                                 )}
                             </button>
                         ) : (
-                            <span className="inline-block w-4" />
+                            <span className="inline-block w-4 shrink-0" />
                         )}
-                        <span className="ml-1 select-text">{file.name}</span>
+                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                            {file.name}
+                        </span>
                     </div>
                 </td>
-                <td className="px-4 py-2">
+                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
                     {formatBytes({ bytes: file.size })}
                 </td>
-                <td className="px-4 py-2">
+                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
                     <Progress value={file.progress * 100} className="w-24" />
                 </td>
-                <td className="px-4 py-2">{formatPriority(file.priority)}</td>
-                <td className="px-4 py-2">
+                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
+                    {formatPriority(file.priority)}
+                </td>
+                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
                     {formatBytes({ bytes: file.remaining })}
                 </td>
             </tr>
@@ -161,22 +168,29 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
         </>
     );
 }
-
 export function FileTreeTable({ files }: { files: FileInfo[] }) {
     const fileTree = buildFileTree(files);
 
     return (
         <div className="overflow-hidden rounded-xl border shadow-sm">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full table-fixed text-sm">
                 <thead className="bg-muted text-muted-foreground">
                     <tr>
-                        <th className="px-4 py-2 text-left">Name</th>
-                        <th className="px-4 py-2 text-left">Total Size</th>
-                        <th className="px-4 py-2 text-left">Progress</th>
-                        <th className="px-4 py-2 text-left">
+                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
+                            Name
+                        </th>
+                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
+                            Total Size
+                        </th>
+                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
+                            Progress
+                        </th>
+                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
                             Download Priority
                         </th>
-                        <th className="px-4 py-2 text-left">Remaining</th>
+                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
+                            Remaining
+                        </th>
                     </tr>
                 </thead>
                 <tbody>

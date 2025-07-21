@@ -17,11 +17,11 @@ def infer_connection_type(flags: int) -> str:
     return "BT"
 
 
-async def serialize_peer_info(handle: lt.torrent_handle) -> tuple[list[dict], int]:
+async def serialize_peer_info(handle: lt.torrent_handle) -> list[dict]:
     try:
         peers = await anyio.to_thread.run_sync(handle.get_peer_info)
     except Exception:
-        return [], 0
+        return []
 
     results = []
     lock = anyio.Lock()
@@ -54,5 +54,4 @@ async def serialize_peer_info(handle: lt.torrent_handle) -> tuple[list[dict], in
         for p in peers:
             tg.start_soon(run_and_store, p)
 
-    total_leeches = sum(1 for p in results if not p["seed"])
-    return results, total_leeches
+    return results

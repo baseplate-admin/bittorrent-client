@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import libtorrent as lt
 from seaderr.datastructures import EventDataclass
@@ -20,7 +20,7 @@ async def publish_resume_event(handle: lt.torrent_handle):
 
 
 class ResumeRequestPayload(BaseModel):
-    info_hash: str
+    info_hash: str = Field(...)
 
 
 @sio.on("libtorrent:resume")  # type: ignore

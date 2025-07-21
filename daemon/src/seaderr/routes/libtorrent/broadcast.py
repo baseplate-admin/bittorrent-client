@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from seaderr.decorators import validate_payload
 from seaderr.managers import BroadcastClientManager
@@ -19,7 +19,7 @@ poller_started = False
 
 
 class BroadcastRequestPayload(BaseModel):
-    event: Literal["start", "stop"]
+    event: Literal["start", "stop"] = Field(...)
 
 
 @sio.on("libtorrent:broadcast")  # type: ignore

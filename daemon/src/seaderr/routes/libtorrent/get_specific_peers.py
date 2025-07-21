@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from seaderr.decorators import validate_payload
 from seaderr.serializers import serialize_peer_info
@@ -8,7 +8,7 @@ sio = SIO.get_instance()
 
 
 class SpecificTorrentPeer(BaseModel):
-    info_hash: str
+    info_hash: str = Field(...)
 
 
 @sio.on("libtorrent:get_specific_peers")  # type: ignore

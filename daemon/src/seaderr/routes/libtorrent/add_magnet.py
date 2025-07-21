@@ -1,7 +1,7 @@
 import tempfile
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import libtorrent as lt
 from seaderr.datastructures import TorrentDataclass
@@ -35,10 +35,10 @@ torrent_store = ExpiringStore(
 
 
 class AddMagnetPayload(BaseModel):
-    action: Literal["fetch_metadata", "add", "remove"]
-    magnet_uri: str | None = None
-    save_path: str = tempfile.gettempdir()
-    info_hash: str | None = None
+    action: Literal["fetch_metadata", "add", "remove"] = Field(...)
+    magnet_uri: str | None = Field(default=None)
+    save_path: str = Field(default=tempfile.gettempdir())
+    info_hash: str | None = Field(default=None)
 
 
 @sio.on("libtorrent:add_magnet")  # type: ignore

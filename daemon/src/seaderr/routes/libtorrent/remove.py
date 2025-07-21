@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 import libtorrent as lt
 from seaderr.datastructures import EventDataclass
@@ -20,8 +20,8 @@ async def publish_remove_event(handle: lt.torrent_handle):
 
 
 class RemoveRequestPayload(BaseModel):
-    info_hash: str
-    remove_data: bool = False
+    info_hash: str = Field(...)
+    remove_data: bool = Field(default=False)
 
 
 @sio.on("libtorrent:remove")  # type: ignore

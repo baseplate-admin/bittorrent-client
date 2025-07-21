@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import threading
 from pprint import pprint
 from typing import Optional, Type
@@ -8,7 +8,7 @@ import libtorrent as lt
 
 class LibtorrentSession:
     _instance: Optional["LibtorrentSession"] = None
-    _lock = asyncio.Lock()
+    _lock = anyio.Lock()
 
     def __init__(self) -> None:
         self._initialized = False
@@ -22,7 +22,7 @@ class LibtorrentSession:
                 cls._instance = cls()
             if not cls._instance._initialized:
                 # Run session creation in a separate thread
-                cls._instance.session = await asyncio.to_thread(
+                cls._instance.session = await anyio.to_thread(
                     cls._instance._create_session
                 )
                 cls._instance._initialized = True
@@ -70,8 +70,8 @@ class LibtorrentSession:
             if cls._instance is None or not cls._instance._initialized:
                 return
             # Run pause_all_torrents in a separate thread
-            await asyncio.to_thread(cls._instance._pause_all_torrents)
-            await asyncio.sleep(1)
+            await anyio.to_thread(cls._instance._pause_all_torrents)
+            await anyio.sleep(1)
             cls._instance._initialized = False
 
     def _pause_all_torrents(self) -> None:

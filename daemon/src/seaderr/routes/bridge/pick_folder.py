@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 
 from cross_platform_folder_picker import open_folder_picker
 
@@ -14,7 +14,7 @@ async def pick_folder(sid: str):
     """
 
     try:
-        folder_path = await asyncio.to_thread(open_folder_picker)  # Run in thread
+        folder_path = await anyio.to_thread(open_folder_picker)  # Run in thread
         if folder_path:
             return {"status": "success", "path": folder_path}
         else:

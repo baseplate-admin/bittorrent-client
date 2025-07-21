@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import contextlib
 from typing import (
     Awaitable,
@@ -29,9 +29,9 @@ class ExpiringStore(Generic[T]):
         self._default_expiry = default_expiry
         self._on_cleanup = on_cleanup
         self._data: Dict[str, T] = {}
-        self._timers: Dict[str, asyncio.Task] = {}
+        self._timers: Dict[str, anyio.Task] = {}
         self._expiries: Dict[str, int] = {}
-        self._lock = asyncio.Lock()
+        self._lock = anyio.Lock()
 
     async def set(self, key: str, value: T, expiry: Optional[int] = None):
         if not isinstance(value, self._value_type):
@@ -58,17 +58,17 @@ class ExpiringStore(Generic[T]):
     async def _reset_timer(self, key: str):
         await self._cancel_timer(key)
         delay = self._expiries.get(key, self._default_expiry)
-        self._timers[key] = asyncio.create_task(self._expire_later(key, delay))
+        self._timers[key] = anyio.create_task(self._expire_later(key, delay))
 
     async def _cancel_timer(self, key: str):
         task = self._timers.pop(key, None)
         if task:
             task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
+            with contextlib.suppress(anyio.CancelledError):
                 await task
 
     async def _expire_later(self, key: str, delay: int):
-        await asyncio.sleep(delay)
+        await anyio.sleep(delay)
         async with self._lock:
             await self._expire_key(key)
 

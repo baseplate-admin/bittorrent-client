@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import time
 from typing import Awaitable, Callable, Literal, Optional
 
@@ -41,7 +41,7 @@ async def wait_for[T](
         if elapsed > timeout:
             raise TimeoutError("Timed out waiting for resource.")
 
-        await asyncio.sleep(delay)
+        await anyio.sleep(delay)
 
         match backoff:
             case "exponential":

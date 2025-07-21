@@ -1,5 +1,4 @@
-import asyncio
-
+import anyio
 import libtorrent as lt
 
 from seaderr.datastructures import EventDataclass
@@ -110,7 +109,7 @@ async def shared_poll_and_publish(bus: EventBus):
     lt_ses = await LibtorrentSession.get_session()
     while True:
         if broadcast_client_manager.count() == 0:
-            await asyncio.sleep(1)
+            await anyio.sleep(1)
             continue
 
         lt_ses.post_torrent_updates()
@@ -119,7 +118,7 @@ async def shared_poll_and_publish(bus: EventBus):
         for alert in alerts:
             await bus.publish(alert)
 
-        await asyncio.sleep(0.25)
+        await anyio.sleep(0.25)
 
 
 async def alert_consumer(alert):

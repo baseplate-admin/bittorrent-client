@@ -513,6 +513,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
+    { name = "anyio" },
     { name = "click" },
     { name = "colorama" },
     { name = "cross-platform-folder-picker" },
@@ -529,6 +530,7 @@ build = [
 [package.metadata]
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.21.0" },
+    { name = "anyio", specifier = ">=4.9.0" },
     { name = "click", specifier = ">=8.2.1" },
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "cross-platform-folder-picker", specifier = ">=0.0.3" },

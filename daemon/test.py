@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import tempfile
 
 import libtorrent as lt
@@ -21,7 +21,7 @@ async def main():
 
         print("Waiting for metadata...")
         while not handle.status().has_metadata:
-            await asyncio.sleep(1)
+            await anyio.sleep(1)
 
         print("Metadata fetched!")
 
@@ -39,4 +39,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

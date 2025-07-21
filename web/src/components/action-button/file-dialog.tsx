@@ -28,6 +28,13 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { FileInfo } from "@/types/socket/files";
 import { FileTreeTable } from "../file-table";
 
+type Metadata = {
+    name: string;
+    info_hash: string;
+    save_path: string;
+    size: string;
+};
+
 export function FileDialog({
     magnetLink,
     onClose,
@@ -40,7 +47,7 @@ export function FileDialog({
     const [folderValue, setFolderValue] = useState("");
     const [folderLoading, setFolderLoading] = useState(false);
 
-    const [metadata, setMetadata] = useState<TorrentInfo | null>(null);
+    const [metadata, setMetadata] = useState<Metadata | null>(null);
     const [files, setFiles] = useState<FileInfo[]>([]);
     const [torrentInfoHash, setTorrentInfoHash] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -64,8 +71,7 @@ export function FileDialog({
             (response: {
                 status: string;
                 message?: string;
-                metadata?: TorrentInfo;
-                files?: FileInfo[];
+                metadata?: Metadata;
             }) => {
                 setLoading(false);
                 if (response.status === "success") {
@@ -302,10 +308,10 @@ export function FileDialog({
                             </div>
                             <div>
                                 <strong>Size: </strong>
-                                {metadata?.total_size ? (
+                                {metadata?.size ? (
                                     <>
                                         {formatBytes({
-                                            bytes: metadata?.total_size,
+                                            bytes: Number(metadata?.size) ?? 0,
                                         })}
                                     </>
                                 ) : (
@@ -334,7 +340,7 @@ export function FileDialog({
                             <h3 className="text-primary border-b p-3 font-semibold">
                                 File List Preview
                             </h3>
-                            <div className="flex-grow overflow-auto">
+                            <div className="overflow-hidden">
                                 {loading ? (
                                     <div className="flex h-full items-center justify-center">
                                         <p>Loading files...</p>

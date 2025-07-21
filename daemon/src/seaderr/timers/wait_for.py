@@ -1,6 +1,7 @@
-import anyio
 import time
 from typing import Awaitable, Callable, Literal, Optional
+
+import anyio
 
 
 async def wait_for[T](

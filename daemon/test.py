@@ -1,6 +1,6 @@
-import anyio
 import tempfile
 
+import anyio
 import libtorrent as lt
 
 MAGNET_LINK = (

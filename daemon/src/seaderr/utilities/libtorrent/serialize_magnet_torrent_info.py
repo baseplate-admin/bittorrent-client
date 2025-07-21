@@ -2,6 +2,8 @@ import anyio
 import anyio.to_thread
 import libtorrent as lt
 
+from seaderr.serializers import serialize_file_info
+
 
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = await anyio.to_thread.run_sync(handle.get_torrent_info)
@@ -59,6 +61,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         )
         return info
 
+    files = await serialize_file_info(handle, ti)
     nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
     trackers = list(ti.trackers()) + handle.trackers()
 
@@ -77,6 +80,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
             "creation_date": int(ti.creation_date()),
             "num_files": int(ti.num_files()),
             "metadata_size": int(ti.metadata_size()),
+            "files": files,
             "trackers": trackers,
             "nodes": nodes,
             "url_seeds": getattr(ti, "url_seeds", lambda: [])(),

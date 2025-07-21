@@ -2,8 +2,6 @@ import anyio
 import anyio.to_thread
 import libtorrent as lt
 
-from seaderr.serializers import serialize_file_info
-
 
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
     ti = await anyio.to_thread.run_sync(handle.get_torrent_info)

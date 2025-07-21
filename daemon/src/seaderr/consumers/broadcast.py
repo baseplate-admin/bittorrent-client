@@ -4,8 +4,8 @@ import libtorrent as lt
 from seaderr.datastructures import EventDataclass
 from seaderr.enums import SyntheticEvent
 from seaderr.managers import BroadcastClientManager
+from seaderr.serializers import serialize_magnet_torrent_info
 from seaderr.singletons import SIO, EventBus, LibtorrentSession, Logger
-from seaderr.utilities import serialize_magnet_torrent_info
 
 event_bus = EventBus.get_bus()
 logger = Logger.get_logger()

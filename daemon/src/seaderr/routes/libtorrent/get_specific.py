@@ -1,5 +1,5 @@
+from seaderr.serializers import serialize_magnet_torrent_info
 from seaderr.singletons import SIO, LibtorrentSession
-from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
 

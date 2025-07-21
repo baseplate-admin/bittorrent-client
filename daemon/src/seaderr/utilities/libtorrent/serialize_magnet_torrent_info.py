@@ -6,6 +6,7 @@ import anyio.to_thread
 import libtorrent as lt
 
 
+# TODO: See how qBittorrent infers connection types
 def infer_connection_type(flags: int) -> str:
     WEB_SEED = 1 << 31
     HTTP_SEED = 1 << 30

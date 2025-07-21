@@ -346,7 +346,7 @@ export function FileDialog({
                             </div>
                         ) : (
                             <div className="overflow-hidden">
-                                <FileTreeTable fileData={files}></FileTreeTable>
+                                <FileTreeTable files={files}></FileTreeTable>
                             </div>
                         )}
                     </div>

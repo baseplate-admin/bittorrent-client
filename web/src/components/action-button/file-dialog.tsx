@@ -340,19 +340,20 @@ export function FileDialog({
                             <h3 className="text-primary border-b p-3 font-semibold">
                                 File List Preview
                             </h3>
-                            <div className="overflow-hidden">
-                                {loading ? (
-                                    <div className="flex h-full items-center justify-center">
-                                        <p>Loading files...</p>
-                                    </div>
-                                ) : files.length === 0 ? (
-                                    <div className="flex h-full items-center justify-center">
-                                        <p>No files available</p>
-                                    </div>
-                                ) : (
+
+                            {loading ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <p>Loading files...</p>
+                                </div>
+                            ) : files.length === 0 ? (
+                                <div className="flex h-full items-center justify-center">
+                                    <p>No files available</p>
+                                </div>
+                            ) : (
+                                <div className="max-w-full min-w-0 flex-1 overflow-x-auto">
                                     <FileTreeTable files={files} />
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

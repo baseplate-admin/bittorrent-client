@@ -2,14 +2,7 @@
 import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+
 import { formatBytes } from "@/lib/formatBytes";
 
 export interface FileInfo {
@@ -119,11 +112,8 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
 
     return (
         <>
-            <TableRow>
-                <TableCell
-                    style={{ paddingLeft: depth * 24 }}
-                    className="px-4 py-2"
-                >
+            <tr>
+                <td style={{ paddingLeft: depth * 24 }} className="px-4 py-2">
                     <div className="flex items-center">
                         {hasChildren ? (
                             <button
@@ -147,63 +137,54 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
                         )}
                         <span className="ml-1 select-text">{file.name}</span>
                     </div>
-                </TableCell>
-                <TableCell className="px-4 py-2">
+                </td>
+                <td className="px-4 py-2">
                     {formatBytes({ bytes: file.size })}
-                </TableCell>
-                <TableCell className="px-4 py-2">
+                </td>
+                <td className="px-4 py-2">
                     <Progress value={file.progress * 100} className="w-24" />
-                </TableCell>
-                <TableCell className="px-4 py-2">
-                    {formatPriority(file.priority)}
-                </TableCell>
-                <TableCell className="px-4 py-2">
+                </td>
+                <td className="px-4 py-2">{formatPriority(file.priority)}</td>
+                <td className="px-4 py-2">
                     {formatBytes({ bytes: file.remaining })}
-                </TableCell>
-            </TableRow>
+                </td>
+            </tr>
             {expanded &&
                 hasChildren &&
                 file.children!.map((child) => (
                     <RenderRow
                         key={child.path}
                         file={child}
-                        depth={(depth || 0) + 1}
+                        depth={depth + 1}
                     />
                 ))}
         </>
     );
 }
+
 export function FileTreeTable({ files }: { files: FileInfo[] }) {
-    const fileTree = useMemo(() => buildFileTree(files), [files]);
+    const fileTree = buildFileTree(files);
 
     return (
         <div className="overflow-hidden rounded-xl border shadow-sm">
-            <Table className="min-w-full text-sm">
-                <TableHeader className="bg-muted text-muted-foreground">
-                    <TableRow>
-                        <TableHead className="px-4 py-2 text-left">
-                            Name
-                        </TableHead>
-                        <TableHead className="px-4 py-2 text-left">
-                            Total Size
-                        </TableHead>
-                        <TableHead className="px-4 py-2 text-left">
-                            Progress
-                        </TableHead>
-                        <TableHead className="px-4 py-2 text-left">
+            <table className="min-w-full text-sm">
+                <thead className="bg-muted text-muted-foreground">
+                    <tr>
+                        <th className="px-4 py-2 text-left">Name</th>
+                        <th className="px-4 py-2 text-left">Total Size</th>
+                        <th className="px-4 py-2 text-left">Progress</th>
+                        <th className="px-4 py-2 text-left">
                             Download Priority
-                        </TableHead>
-                        <TableHead className="px-4 py-2 text-left">
-                            Remaining
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
+                        </th>
+                        <th className="px-4 py-2 text-left">Remaining</th>
+                    </tr>
+                </thead>
+                <tbody>
                     {fileTree.map((file) => (
                         <RenderRow key={file.path} file={file} />
                     ))}
-                </TableBody>
-            </Table>
+                </tbody>
+            </table>
         </div>
     );
 }

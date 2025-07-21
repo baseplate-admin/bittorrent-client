@@ -51,8 +51,7 @@ export function FileDialog({
     const [dialogOpen, setDialogOpen] = useState(true);
 
     useEffect(() => {
-        if (!dialogOpen) return;
-        if (!magnetLink) return;
+        if (!dialogOpen || !magnetLink) return;
 
         setLoading(true);
         socket.current?.emit(
@@ -69,7 +68,6 @@ export function FileDialog({
                 files?: FileInfo[];
             }) => {
                 setLoading(false);
-                console.log(response);
                 if (response.status === "success") {
                     setMetadata(response.metadata || null);
                     const infoHash = response.metadata?.info_hash;
@@ -106,7 +104,6 @@ export function FileDialog({
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    console.log("Torrent added successfully:", response);
                     resetForm();
                     closeDialog();
                 } else {
@@ -125,7 +122,6 @@ export function FileDialog({
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    console.log("Torrent cancelled successfully:", response);
                     resetForm();
                     closeDialog();
                 } else {
@@ -151,12 +147,13 @@ export function FileDialog({
 
     return (
         <Dialog open={dialogOpen} onOpenChange={closeDialog}>
-            <DialogContent className="max-h-[90vh] min-w-[70vw]">
+            <DialogContent className="max-h-[90vh] w-full min-w-[70vw]">
                 <DialogHeader>
                     <DialogTitle>Save Torrent</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex w-full max-w-[950px] gap-6">
+                <div className="flex w-full gap-6">
+                    {/* Left Pane */}
                     <div className="flex w-[40%] flex-col gap-6 overflow-y-auto pr-2">
                         <div className="grid gap-1">
                             <Label htmlFor="save-location">Save at</Label>
@@ -186,10 +183,7 @@ export function FileDialog({
                         </div>
 
                         <div className="grid gap-1">
-                            <Label
-                                className="inline-flex cursor-pointer items-center gap-2"
-                                htmlFor="incomplete-path-checkbox"
-                            >
+                            <Label className="inline-flex cursor-pointer items-center gap-2">
                                 <Checkbox
                                     id="incomplete-path-checkbox"
                                     checked={incompletePathEnabled}
@@ -241,23 +235,23 @@ export function FileDialog({
                                 />
                             </div>
                             <div className="flex flex-col flex-wrap gap-2">
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Start torrent
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Add to top of queue
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Download in sequential order
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Skip hash check
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Download first and last pieces first
                                 </Label>
@@ -283,6 +277,7 @@ export function FileDialog({
                                 </Select>
                             </div>
                         </fieldset>
+
                         <fieldset className="text-muted-foreground space-y-1 rounded border p-3 text-sm">
                             <legend className="text-muted-foreground font-medium">
                                 Torrent Information
@@ -319,8 +314,9 @@ export function FileDialog({
                         </fieldset>
                     </div>
 
-                    <div className="flex w-[70%] flex-col">
-                        <div className="bg-surface text-primary flex h-full flex-col rounded border">
+                    {/* Right Pane */}
+                    <div className="flex w-[60%] flex-col">
+                        <div className="bg-surface text-primary flex h-full flex-col rounded border p-3">
                             <h3 className="text-primary border-b p-3 font-semibold">
                                 File List Preview
                             </h3>

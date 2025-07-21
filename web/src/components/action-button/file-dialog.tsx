@@ -335,12 +335,11 @@ export function FileDialog({
                     </div>
 
                     {/* Right Pane */}
-                    <div className="flex w-[60%] flex-col">
-                        <div className="bg-surface text-primary flex h-full flex-col rounded border p-3">
+                    <div className="w-[60%] overflow-hidden">
+                        <div className="bg-surface text-primary h-full rounded border p-3">
                             <h3 className="text-primary border-b p-3 font-semibold">
                                 File List Preview
                             </h3>
-
                             {loading ? (
                                 <div className="flex h-full items-center justify-center">
                                     <p>Loading files...</p>
@@ -350,7 +349,7 @@ export function FileDialog({
                                     <p>No files available</p>
                                 </div>
                             ) : (
-                                <div className="max-w-full min-w-0 flex-1 overflow-x-auto">
+                                <div className="w-full overflow-auto">
                                     <FileTreeTable files={files} />
                                 </div>
                             )}

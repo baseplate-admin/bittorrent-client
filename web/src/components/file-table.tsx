@@ -168,29 +168,22 @@ function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
         </>
     );
 }
+
 export function FileTreeTable({ files }: { files: FileInfo[] }) {
     const fileTree = buildFileTree(files);
 
     return (
         <div className="overflow-hidden rounded-xl border shadow-sm">
-            <table className="min-w-full table-fixed text-sm">
+            <table className="min-w-full text-sm">
                 <thead className="bg-muted text-muted-foreground">
                     <tr>
-                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
-                            Name
-                        </th>
-                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
-                            Total Size
-                        </th>
-                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
-                            Progress
-                        </th>
-                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
+                        <th className="px-4 py-2 text-left">Name</th>
+                        <th className="px-4 py-2 text-left">Total Size</th>
+                        <th className="px-4 py-2 text-left">Progress</th>
+                        <th className="px-4 py-2 text-left">
                             Download Priority
                         </th>
-                        <th className="overflow-hidden px-4 py-2 text-left text-ellipsis whitespace-nowrap">
-                            Remaining
-                        </th>
+                        <th className="px-4 py-2 text-left">Remaining</th>
                     </tr>
                 </thead>
                 <tbody>

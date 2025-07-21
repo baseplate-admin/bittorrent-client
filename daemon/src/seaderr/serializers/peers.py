@@ -1,9 +1,9 @@
 import anyio
-import logging
 import libtorrent as lt
 
+from seaderr.singletons import Logger
 
-logger = logging.getLogger(__name__)
+logger = Logger.get_logger()
 
 
 def infer_connection_type(flags: int) -> str:

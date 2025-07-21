@@ -29,7 +29,7 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
                             <TooltipTrigger asChild>
                                 <Button size="icon" variant="ghost">
                                     <CountryFlag
-                                        iso={isoValue}
+                                        iso={isoValue}  
                                         title={isoValue}
                                     />
                                 </Button>

@@ -5,10 +5,8 @@ import anyio.to_thread
 import libtorrent as lt
 
 
-async def serialize_file_info(
-    handle: lt.torrent_handle, ti: lt.torrent_info
-) -> list[dict]:
-    fs = ti.files()
+async def serialize_file_info(handle: lt.torrent_handle) -> list[dict]:
+    fs = handle.get_torrent_info().files()
     num_files = fs.num_files()
 
     try:

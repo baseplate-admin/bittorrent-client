@@ -1,5 +1,8 @@
 import os
 
+import anyio
+import anyio.to_process
+import anyio.to_thread
 import libtorrent as lt
 
 
@@ -18,6 +21,60 @@ def infer_connection_type(flags: int) -> str:
     return "BT"
 
 
+def serialize_peer_list(peer_data: list[dict]) -> list[dict]:
+    peers_info = []
+    for p in peer_data:
+        seed = bool(p["flags"] & lt.peer_info.seed)
+        peers_info.append(
+            {
+                "ip": p["ip"][0],
+                "port": p["ip"][1],
+                "client": p["client"].decode("utf-8", "ignore"),
+                "connection_type": infer_connection_type(p["flags"]),
+                "progress": p["progress"],
+                "flags": p["flags"],
+                "download_queue_length": p["download_queue_length"],
+                "upload_queue_length": p["upload_queue_length"],
+                "up_speed": p["up_speed"],
+                "down_speed": p["down_speed"],
+                "total_download": p["total_download"],
+                "total_upload": p["total_upload"],
+                "seed": seed,
+            }
+        )
+    return peers_info
+
+
+async def serialize_peers_asyncio(
+    handle: lt.torrent_handle, max_peers: int = 1000
+) -> tuple[list[dict], int]:
+    try:
+        peers = await anyio.to_thread.run_sync(handle.get_peer_info)
+        peers = peers[:max_peers]
+
+        peer_data = [
+            {
+                "ip": (str(p.ip[0]), int(p.ip[1])),
+                "client": bytes(p.client),
+                "flags": int(p.flags),
+                "progress": float(p.progress),
+                "download_queue_length": int(p.download_queue_length),
+                "upload_queue_length": int(p.upload_queue_length),
+                "up_speed": int(p.up_speed),
+                "down_speed": int(p.down_speed),
+                "total_download": int(p.total_download),
+                "total_upload": int(p.total_upload),
+            }
+            for p in peers
+        ]
+
+        peers_info = await anyio.to_process.run_sync(serialize_peer_list, peer_data)
+        total_leeches = sum(1 for p in peers_info if not p["seed"])
+        return peers_info, total_leeches
+    except Exception:
+        return [], 0
+
+
 async def extract_files_info(
     handle: lt.torrent_handle, ti: lt.torrent_info
 ) -> list[dict]:
@@ -25,19 +82,14 @@ async def extract_files_info(
     num_files = fs.num_files()
 
     try:
-        file_progress = handle.file_progress()
+        file_progress = await anyio.to_thread.run_sync(handle.file_progress)
     except Exception:
         file_progress = [0] * num_files
 
     try:
-        file_priorities = handle.file_priorities()
+        file_priorities = await anyio.to_thread.run_sync(handle.file_priorities)
     except Exception:
         file_priorities = [0] * num_files
-
-    try:
-        file_availability = handle.file_availability()  # type: ignore[attr-defined]
-    except Exception:
-        file_availability = [0] * num_files
 
     files = []
     for idx in range(num_files):
@@ -47,15 +99,14 @@ async def extract_files_info(
         remaining = size - progress
 
         file_info = {
-            "index": int(idx),
+            "index": idx,
             "path": str(full_path),
-            "name": os.path.basename(full_path),  # <--- added file name here
+            "name": os.path.basename(full_path),
             "size": int(size),
             "offset": int(fs.file_offset(idx)),
             "progress": int(progress),
             "remaining": int(remaining),
             "priority": int(file_priorities[idx]),
-            "availability": int(file_availability[idx]),
         }
         files.append(file_info)
 
@@ -63,39 +114,10 @@ async def extract_files_info(
 
 
 async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
-    ti = handle.get_torrent_info()
-    status = handle.status()
+    ti = await anyio.to_thread.run_sync(handle.get_torrent_info)
+    status = await anyio.to_thread.run_sync(handle.status)
 
-    try:
-        peers = handle.get_peer_info()
-        peers_info = []
-        total_leeches = 0
-
-        for p in peers:
-            seed = bool(p.flags & lt.peer_info.seed)
-            if not seed:
-                total_leeches += 1
-
-            peers_info.append(
-                {
-                    "ip": p.ip[0],
-                    "port": int(p.ip[1]),
-                    "client": p.client.decode("utf-8", "ignore"),
-                    "connection_type": infer_connection_type(p.flags),
-                    "progress": float(p.progress),
-                    "flags": int(p.flags),
-                    "download_queue_length": int(p.download_queue_length),
-                    "upload_queue_length": int(p.upload_queue_length),
-                    "up_speed": int(p.up_speed),
-                    "down_speed": int(p.down_speed),
-                    "total_download": int(p.total_download),
-                    "total_upload": int(p.total_upload),
-                    "seed": seed,
-                }
-            )
-    except Exception:
-        peers_info = []
-        total_leeches = 0
+    peers_info, total_leeches = await serialize_peers_asyncio(handle)
 
     downloaded = (
         status.all_time_download or status.total_done or status.total_wanted_done or 0
@@ -151,7 +173,6 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         )
         return info
 
-    # Metadata present — use the extracted files info function
     files = await extract_files_info(handle, ti)
     nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
     trackers = list(ti.trackers()) + handle.trackers()

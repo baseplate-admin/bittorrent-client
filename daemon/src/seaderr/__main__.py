@@ -1,6 +1,7 @@
-import asyncio
 import logging as python_logging
+import traceback
 
+import anyio
 import click
 import uvicorn
 
@@ -29,7 +30,10 @@ async def run_app(host: str, port: int, debug: bool):
 @click.option("--port", default=8080, type=int, help="Port to listen on")
 @click.option("--debug", is_flag=True, type=bool, help="Run in debug mode")
 def main(host: str, port: int, debug: bool):
-    asyncio.run(run_app(host, port, debug))
+    try:
+        anyio.run(run_app, host, port, debug)
+    except Exception as e:
+        traceback.print_exception(e)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 from typing import Optional
 
 import aiosqlite
@@ -6,7 +6,7 @@ import aiosqlite
 
 class AioSQLite:
     _instance: Optional[aiosqlite.Connection] = None
-    _lock = asyncio.Lock()
+    _lock = anyio.Lock()
     _db_path: Optional[str] = None
 
     @classmethod

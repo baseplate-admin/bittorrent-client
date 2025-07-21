@@ -120,7 +120,6 @@ export interface TorrentInfo {
     seeds: number;
 
     // Peers & Leeches
-    peers: Peer[];
     connected_peers: number;
     connected_seeds: number;
     connected_leeches: number;

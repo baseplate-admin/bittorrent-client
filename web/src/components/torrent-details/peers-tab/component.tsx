@@ -114,7 +114,7 @@ export default function PeersTab({
     return (
         <ScrollArea ref={ref} className="h-96">
             {loading ? (
-                <div className="flex h-full items-center justify-center text-gray-500">
+                <div className="text-foreground flex h-full items-center justify-center">
                     Loading peers...
                 </div>
             ) : (

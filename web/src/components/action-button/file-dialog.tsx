@@ -293,8 +293,8 @@ export function FileDialog({
                             </div>
                         </fieldset>
                         {/* Torrent Metadata and Information */}
-                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
-                            <legend className="font-medium text-gray-300">
+                        <fieldset className="text-muted-foreground space-y-1 rounded border p-3 text-sm">
+                            <legend className="text-muted-foreground font-medium">
                                 Torrent Information
                             </legend>
                             <div>
@@ -331,22 +331,29 @@ export function FileDialog({
                     </div>
 
                     {/* Right side file list preview */}
-                    <div className="max-h-[480px] flex-1 overflow-auto rounded border bg-black/10 p-3 text-left text-gray-800">
-                        <h3 className="mb-2 font-semibold text-gray-100">
+                    <div className="bg-surface text-primary max-h-[480px] flex-1 overflow-auto rounded border p-3 text-left">
+                        <h3 className="text-primary mb-2 font-semibold">
                             File List Preview
                         </h3>
 
                         {loading ? (
-                            <div className="flex items-center justify-center py-10 text-gray-500">
+                            <div className="text-primary flex items-center justify-center py-10">
                                 Loading files...
                             </div>
                         ) : files.length === 0 ? (
-                            <div className="py-10 text-center text-gray-500">
+                            <div className="text-primary py-10 text-center">
                                 No files available
                             </div>
                         ) : (
                             <div className="overflow-hidden">
-                                <FileTreeTable fileData={files}></FileTreeTable>
+                                <FileTreeTable
+                                    files={files}
+                                    visibleColumns={[
+                                        "size",
+                                        "priority",
+                                        "remaining",
+                                    ]}
+                                ></FileTreeTable>
                             </div>
                         )}
                     </div>

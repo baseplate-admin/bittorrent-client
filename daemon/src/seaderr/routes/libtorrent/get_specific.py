@@ -1,4 +1,5 @@
 from seaderr.singletons import SIO, LibtorrentSession
+from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
 
@@ -17,36 +18,10 @@ async def get_specific(sid: str, data: dict):
             continue
 
         if str(handle.info_hash()) == info_hash:
-            status = handle.status()
-            try:
-                peers_info = handle.get_peer_info()
-                peers = [
-                    {
-                        "ip": str(p.ip),
-                        "client": p.client,
-                        "flags": str(p.flags),
-                        "progress": round(p.progress * 100, 2),
-                        "download_rate": p.down_speed,
-                        "upload_rate": p.up_speed,
-                    }
-                    for p in peers_info
-                ]
-            except Exception:
-                peers = []
-
-            torrent_info = {
-                "name": status.name,
-                "info_hash": str(handle.info_hash()),
-                "progress": round(status.progress * 100, 2),
-                "state": str(status.state).split(".")[-1],
-                "paused": handle.is_paused(),
-                "total_download": status.total_done,
-                "total_size": status.total_wanted,
-                "download_rate": status.download_rate,
-                "upload_rate": status.upload_rate,
-                "num_peers": status.num_peers,
-                "peers": peers,
+            metadata = await serialize_magnet_torrent_info(handle)
+            return {
+                "status": "success",
+                "torrent": metadata,
             }
-            return {"status": "success", "torrent": torrent_info}
 
     return {"status": "error", "message": "torrent not found"}

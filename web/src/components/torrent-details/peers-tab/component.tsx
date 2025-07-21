@@ -100,7 +100,6 @@ export default function PeersTab({
                 }
 
                 // Wait some time before next fetch to avoid spamming server
-                // Adjust delay as needed (e.g., 1 second)
                 await new Promise((res) => setTimeout(res, 1000));
             }
         }

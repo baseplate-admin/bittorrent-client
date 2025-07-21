@@ -39,6 +39,14 @@ export default function GeneralTab({
         addedTime: new Date(
             (torrentData?.added_time || 0) * 1000,
         ).toLocaleString(),
+        averageDownloadSpeed: formatBytes({
+            bytes: torrentData?.average_download_speed || 0,
+            perSecond: true,
+        }),
+        averageUploadSpeed: formatBytes({
+            bytes: torrentData?.average_upload_speed || 0,
+            perSecond: true,
+        }),
         completionTime: torrentData?.completion_time
             ? new Date(torrentData.completion_time * 1000).toLocaleString()
             : "—",
@@ -98,7 +106,10 @@ export default function GeneralTab({
     const tableData1 = [
         ["Time Active", mapping.activeTime],
         ["Downloaded", mapping.downloaded],
-        ["Download Speed", mapping.downloadSpeed],
+        [
+            "Download Speed",
+            `${mapping.downloadSpeed} (${mapping.averageDownloadSpeed})`,
+        ],
         ["Download Limit", "∞"],
         ["Share Ratio", mapping.shareRatio],
         ["Popularity", "16.12"],
@@ -107,7 +118,10 @@ export default function GeneralTab({
     const tableData2 = [
         ["ETA", mapping.eta],
         ["Uploaded", mapping.uploaded],
-        ["Upload Speed", mapping.uploadSpeed],
+        [
+            "Upload Speed",
+            `${mapping.uploadSpeed} (${mapping.averageUploadSpeed})`,
+        ],
         ["Upload Limit", "∞"],
         ["Reannounce In", mapping.nextAnnounce],
     ];

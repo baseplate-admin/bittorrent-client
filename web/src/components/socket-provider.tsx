@@ -17,6 +17,7 @@ import { useSocketConnection } from "@/hooks/use-socket";
 import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
 import { deepMerge } from "@/lib/deepMerge";
+import { calculateAvg } from "@/lib/calculateAvg";
 
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
@@ -92,6 +93,8 @@ export default function SocketProvider() {
                     return {
                         ...torrent,
                         eta: eta,
+                        average_download_speed: 0,
+                        average_upload_speed: 0,
                     };
                 });
                 updateTorrentsAtom();
@@ -139,6 +142,8 @@ export default function SocketProvider() {
                         total: newTorrent.total_size ?? 0,
                         downloadSpeed: newTorrent.download_rate,
                     });
+                    newTorrent.average_download_speed = 0;
+                    newTorrent.average_upload_speed = 0;
                     const exists = latestTorrentsRef.current.some(
                         (t) => t.info_hash === newTorrent.info_hash,
                     );
@@ -149,7 +154,6 @@ export default function SocketProvider() {
                 }
                 case "libtorrent:state_update": {
                     for (const status of response.statuses ?? []) {
-                        console.log(status);
                         const index = latestTorrentsRef.current.findIndex(
                             (t) => t.info_hash === status.info_hash,
                         );
@@ -164,34 +168,20 @@ export default function SocketProvider() {
                                 total: status.total_size ?? 0,
                                 downloadSpeed: status.download_rate ?? 0,
                             });
-                            const state = (
-                                [
-                                    "seeding",
-                                    "downloading",
-                                    "paused",
-                                    "checking",
-                                    "queued",
-                                    "error",
-                                    "unknown",
-                                ].includes(status.state)
-                                    ? status.state
-                                    : "unknown"
-                            ) as
-                                | "seeding"
-                                | "downloading"
-                                | "paused"
-                                | "checking"
-                                | "queued"
-                                | "error"
-                                | "unknown";
 
-                            status["eta"] = eta;
-                            status["state"] = state;
-
-                            latestTorrentsRef.current[index] = deepMerge(
-                                t,
-                                status,
+                            status.eta = eta;
+                            status.average_download_speed = calculateAvg(
+                                t.average_download_speed ?? 0,
+                                status.download_rate ?? 0,
                             );
+                            status.average_upload_speed = calculateAvg(
+                                t.average_upload_speed ?? 0,
+                                status.upload_rate ?? 0,
+                            );
+
+                            const newTorrentObject = deepMerge(t, status);
+                            latestTorrentsRef.current[index] = newTorrentObject;
+                            console.log(newTorrentObject);
                         }
                     }
                     break;

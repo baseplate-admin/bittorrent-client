@@ -144,8 +144,10 @@ export interface TorrentInfo {
         | "error"
         | "unknown";
     paused?: boolean;
+    peers_info?: TorrentPeer[];
 
     // Derived
     eta?: number;
-    peers_info?: TorrentPeer[];
+    average_download_speed?: number;
+    average_upload_speed?: number;
 }

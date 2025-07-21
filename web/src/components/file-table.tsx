@@ -1,8 +1,6 @@
-"use client";
 import React, { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -14,50 +12,12 @@ import {
 
 type FileItem = {
     name: string;
-    size: string;
+    size: number;
     progress: number;
-    priority: string;
-    remaining: string;
-    availability: string;
+    priority: number;
+    remaining: number;
     children?: FileItem[];
 };
-
-const fileData: FileItem[] = [
-    {
-        name: "Marvel's Spider-Man 2 [FitGirl Repack]",
-        size: "87.94 GiB",
-        progress: 100,
-        priority: "Normal",
-        remaining: "0 B",
-        availability: "N/A",
-        children: [
-            {
-                name: "MD5",
-                size: "102.2 KiB",
-                progress: 100,
-                priority: "Normal",
-                remaining: "0 B",
-                availability: "N/A",
-            },
-            {
-                name: "fg-01.bin",
-                size: "51.24 GiB",
-                progress: 100,
-                priority: "Normal",
-                remaining: "0 B",
-                availability: "N/A",
-            },
-            {
-                name: "fg-02.bin",
-                size: "7.46 GiB",
-                progress: 100,
-                priority: "Normal",
-                remaining: "0 B",
-                availability: "N/A",
-            },
-        ],
-    },
-];
 
 function FileRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
     const [expanded, setExpanded] = useState(true);
@@ -92,7 +52,6 @@ function FileRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
                 </TableCell>
                 <TableCell className="px-4 py-2">{file.priority}</TableCell>
                 <TableCell className="px-4 py-2">{file.remaining}</TableCell>
-                <TableCell className="px-4 py-2">{file.availability}</TableCell>
             </TableRow>
             {expanded &&
                 file.children?.map((child, idx) => (
@@ -102,7 +61,7 @@ function FileRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
     );
 }
 
-export default function FileTreeTable() {
+export function FileTreeTable({ fileData }: { fileData: FileItem[] }) {
     return (
         <div className="overflow-auto rounded-xl border shadow-sm">
             <Table className="min-w-full text-sm">
@@ -122,9 +81,6 @@ export default function FileTreeTable() {
                         </TableHead>
                         <TableHead className="px-4 py-2 text-left">
                             Remaining
-                        </TableHead>
-                        <TableHead className="px-4 py-2 text-left">
-                            Availability
                         </TableHead>
                     </TableRow>
                 </TableHeader>

@@ -3,4 +3,8 @@ export interface FileInfo {
     path: string;
     size: number;
     offset: number;
+    progress: number;
+    remaining: number;
+    priority: number;
+    name: string;
 }

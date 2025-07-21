@@ -1,7 +1,7 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import SocketProvider from "@/components/socket-provider";
-import ActionButtons from "@/components/action-buttons";
+import ActionButtons from "@/components/action-button/component";
 import TorrentDetails from "@/components/torrent-details/component";
 
 export default function TorrentsLayout({

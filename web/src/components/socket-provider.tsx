@@ -160,26 +160,34 @@ export default function SocketProvider() {
 
                         if (index !== -1) {
                             const t = latestTorrentsRef.current[index];
-                            const eta = calculateETA({
-                                downloaded: Number(
-                                    (status.total_size ?? 0) *
-                                        (status.progress / 100),
+                            const newObj = {
+                                eta: calculateETA({
+                                    downloaded: Number(
+                                        (status.total_size ?? 0) *
+                                            (status.progress / 100),
+                                    ),
+                                    total: status.total_size ?? 0,
+                                    downloadSpeed: status.download_rate ?? 0,
+                                }),
+                                state: status.state,
+                                download_rate: status.download_rate,
+                                upload_rate: status.upload_rate,
+                                total_size: status.total_size,
+                                name: status.name,
+                                average_download_speed: calculateAvg(
+                                    t.average_download_speed ?? 0,
+                                    status.download_rate ?? 0,
                                 ),
-                                total: status.total_size ?? 0,
-                                downloadSpeed: status.download_rate ?? 0,
-                            });
+                                average_upload_speed: calculateAvg(
+                                    t.average_upload_speed ?? 0,
+                                    status.upload_rate ?? 0,
+                                ),
+                                progress: status.progress,
+                                seeds: status.num_seeds,
+                                peers: status.num_peers,
+                            };
 
-                            status.eta = eta;
-                            status.average_download_speed = calculateAvg(
-                                t.average_download_speed ?? 0,
-                                status.download_rate ?? 0,
-                            );
-                            status.average_upload_speed = calculateAvg(
-                                t.average_upload_speed ?? 0,
-                                status.upload_rate ?? 0,
-                            );
-
-                            const newTorrentObject = deepMerge(t, status);
+                            const newTorrentObject = deepMerge(t, newObj);
                             latestTorrentsRef.current[index] = newTorrentObject;
                             console.log(newTorrentObject);
                         }

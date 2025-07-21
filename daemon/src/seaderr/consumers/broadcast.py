@@ -4,7 +4,6 @@ import libtorrent as lt
 from seaderr.datastructures import EventDataclass
 from seaderr.enums import SyntheticEvent
 from seaderr.managers import BroadcastClientManager
-from seaderr.serializers import serialize_magnet_torrent_info
 from seaderr.singletons import SIO, EventBus, LibtorrentSession, Logger
 
 event_bus = EventBus.get_bus()
@@ -82,20 +81,17 @@ async def serialize_alert(alert) -> dict:
             }
 
         for st in state_list:
-            try:
-                info_dict = await serialize_magnet_torrent_info(st.handle)
-            except Exception:
-                # fallback minimal fields
-                info_dict = {
-                    "info_hash": str(getattr(st, "info_hash", "unknown")),
-                    "name": getattr(st, "name", "unknown"),
-                    "progress": round(getattr(st, "progress", 0.0) * 100, 2),
-                    "download_rate": getattr(st, "download_rate", 0),
-                    "upload_rate": getattr(st, "upload_rate", 0),
-                    "num_peers": getattr(st, "num_peers", 0),
-                }
-
-            info_dict["state"] = lt_state_map.get(st.state, "unknown")
+            info_dict = {
+                "info_hash": str(getattr(st, "info_hash", "unknown")),
+                "name": getattr(st, "name", "unknown"),
+                "progress": round(getattr(st, "progress", 0.0) * 100, 2),
+                "download_rate": getattr(st, "download_rate", 0),
+                "upload_rate": getattr(st, "upload_rate", 0),
+                "num_peers": getattr(st, "num_peers", 0),
+                "num_seeds": getattr(st, "num_seeds", 0),
+                "total_size": getattr(st, "total_wanted", 0),
+                "state": lt_state_map.get(st.state, "unknown"),
+            }
             statuses.append(info_dict)
 
         return {"type": "libtorrent:state_update", "statuses": statuses}

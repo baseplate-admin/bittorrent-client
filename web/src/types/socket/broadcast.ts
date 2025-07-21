@@ -9,7 +9,17 @@ export type SerializedAlert =
     | { type: "libtorrent:peer_connected"; message: string } // IP string
     | {
           type: "libtorrent:state_update";
-          statuses: TorrentInfo[];
+          statuses: {
+              info_hash: string;
+              name: string;
+              progress: number;
+              download_rate: number;
+              upload_rate: number;
+              num_peers: number;
+              num_seeds: number;
+              total_size: number;
+              state: string;
+          }[];
       }
     | {
           type: "libtorrent:tracker_error";

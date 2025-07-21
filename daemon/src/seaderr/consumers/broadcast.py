@@ -69,17 +69,31 @@ async def serialize_alert(alert) -> dict:
         }
 
         statuses = []
-        for st in alert.status:
+
+        try:
+            state_list = (
+                alert.status
+            )  # May raise AttributeError or Boost.Python.ArgumentError
+        except Exception as e:
+            logger.error(f"Could not access state_update_alert.status: {e}")
+            return {
+                "type": "libtorrent:state_update",
+                "statuses": [],
+                "error": "status_unavailable",
+            }
+
+        for st in state_list:
             try:
                 info_dict = await serialize_magnet_torrent_info(st.handle)
-            except RuntimeError:
+            except Exception:
+                # fallback minimal fields
                 info_dict = {
-                    "info_hash": str(st.info_hash),
-                    "name": st.name,
-                    "progress": round(st.progress * 100, 2),
-                    "download_rate": st.download_rate,
-                    "upload_rate": st.upload_rate,
-                    "num_peers": st.num_peers,
+                    "info_hash": str(getattr(st, "info_hash", "unknown")),
+                    "name": getattr(st, "name", "unknown"),
+                    "progress": round(getattr(st, "progress", 0.0) * 100, 2),
+                    "download_rate": getattr(st, "download_rate", 0),
+                    "upload_rate": getattr(st, "upload_rate", 0),
+                    "num_peers": getattr(st, "num_peers", 0),
                 }
 
             info_dict["state"] = lt_state_map.get(st.state, "unknown")
@@ -88,11 +102,8 @@ async def serialize_alert(alert) -> dict:
         return {"type": "libtorrent:state_update", "statuses": statuses}
 
     else:
-        try:
-            raise ValueError(f"Unsupported alert type: {type(alert)}")
-        except Exception as e:
-            logger.error(e)
-            return {}
+        logger.error(f"Unsupported alert type: {type(alert)}")
+        return {}
 
 
 async def shared_poll_and_publish(bus: EventBus):
@@ -108,7 +119,7 @@ async def shared_poll_and_publish(bus: EventBus):
         for alert in alerts:
             await bus.publish(alert)
 
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.5)
 
 
 async def alert_consumer(alert):

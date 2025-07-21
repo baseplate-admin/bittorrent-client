@@ -75,7 +75,21 @@ export function FileDialog({
                         throw new Error("Info hash not found in metadata");
                     }
                     setTorrentInfoHash(infoHash);
-                    setFiles(response.metadata?.files || []);
+                    socket.current?.emit(
+                        "libtorrent:get_specific_files",
+                        {
+                            info_hash: infoHash,
+                        },
+                        (_response: {
+                            status: "error" | "success";
+
+                            files: FileInfo[];
+                        }) => {
+                            if (_response.status === "success") {
+                                setFiles(_response.files);
+                            }
+                        },
+                    );
                 } else {
                     console.error("Error fetching metadata:", response.message);
                     setMetadata(null);

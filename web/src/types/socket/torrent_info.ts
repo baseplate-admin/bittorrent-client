@@ -125,7 +125,6 @@ export interface TorrentInfo {
     connected_leeches: number;
 
     // File info
-    files: FileInfo[];
     trackers: TrackerInfo[];
     nodes: DHTNode[];
     url_seeds: string[];

@@ -3,8 +3,6 @@ import libtorrent as lt
 
 from seaderr.singletons import Logger
 
-logger = Logger.get_logger()
-
 
 def infer_connection_type(flags: int) -> str:
     WEB_SEED = 1 << 31
@@ -21,6 +19,8 @@ def infer_connection_type(flags: int) -> str:
 
 
 async def serialize_peer_info(handle: lt.torrent_handle) -> list[dict]:
+    logger = Logger.get_logger()
+
     try:
         peers = handle.get_peer_info()
     except Exception as e:

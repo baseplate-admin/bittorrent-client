@@ -2,6 +2,11 @@
 import { CountryFlag } from "@/components/country-flag";
 import { TableHeaderSortButton } from "@/components/table-header-sort-button";
 import { Button } from "@/components/ui/button";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Peer } from "@/types/socket/torrent_info";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -20,9 +25,17 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
                     {isoValue === null && typeof isoValue !== "string" ? (
                         <span>N/A</span>
                     ) : (
-                        <Button size="icon" variant="ghost">
-                            <CountryFlag iso={isoValue} title={isoValue} />
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost">
+                                    <CountryFlag
+                                        iso={isoValue}
+                                        title={isoValue}
+                                    />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isoValue}</TooltipContent>
+                        </Tooltip>
                     )}
                 </>
             );

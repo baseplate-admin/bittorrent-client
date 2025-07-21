@@ -2,7 +2,6 @@
 
 import { Folder, Loader2Icon } from "lucide-react";
 import { Button } from "../ui/button";
-
 import {
     Dialog,
     DialogClose,
@@ -51,10 +50,8 @@ export function FileDialog({
 
     const [dialogOpen, setDialogOpen] = useState(true);
 
-    // Fetch metadata when dialog opens or magnetLink changes
     useEffect(() => {
-        if (!dialogOpen) return;
-        if (!magnetLink) return;
+        if (!dialogOpen || !magnetLink) return;
 
         setLoading(true);
         socket.current?.emit(
@@ -71,7 +68,6 @@ export function FileDialog({
                 files?: FileInfo[];
             }) => {
                 setLoading(false);
-                console.log(response);
                 if (response.status === "success") {
                     setMetadata(response.metadata || null);
                     const infoHash = response.metadata?.info_hash;
@@ -87,10 +83,8 @@ export function FileDialog({
                 }
             },
         );
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dialogOpen, magnetLink]);
 
-    // Folder picker
     const handleFolderLocationClick = () => {
         setFolderLoading(true);
         socket.current?.emit("bridge:pick_folder", (response: any) => {
@@ -110,7 +104,6 @@ export function FileDialog({
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    console.log("Torrent added successfully:", response);
                     resetForm();
                     closeDialog();
                 } else {
@@ -129,7 +122,6 @@ export function FileDialog({
             (response: any) => {
                 setLoading(false);
                 if (response.status === "success") {
-                    console.log("Torrent cancelled successfully:", response);
                     resetForm();
                     closeDialog();
                 } else {
@@ -148,7 +140,6 @@ export function FileDialog({
         setTorrentInfoHash(null);
     };
 
-    // Close dialog handler
     const closeDialog = () => {
         setDialogOpen(false);
         onClose();
@@ -156,14 +147,14 @@ export function FileDialog({
 
     return (
         <Dialog open={dialogOpen} onOpenChange={closeDialog}>
-            <DialogContent className="min-w-[60vw] sm:max-w-[700px]">
+            <DialogContent className="max-h-[90vh] w-full min-w-[70vw]">
                 <DialogHeader>
                     <DialogTitle>Save Torrent</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex gap-6">
-                    <div className="flex w-[40%] flex-col gap-6">
-                        {/* Save at input */}
+                <div className="flex w-full gap-6">
+                    {/* Left Pane */}
+                    <div className="flex w-[40%] flex-col gap-6 overflow-y-auto pr-2">
                         <div className="grid gap-1">
                             <Label htmlFor="save-location">Save at</Label>
                             <div className="flex gap-2">
@@ -191,12 +182,8 @@ export function FileDialog({
                             </div>
                         </div>
 
-                        {/* Incomplete torrent path checkbox and input */}
                         <div className="grid gap-1">
-                            <Label
-                                className="inline-flex cursor-pointer items-center gap-2"
-                                htmlFor="incomplete-path-checkbox"
-                            >
+                            <Label className="inline-flex cursor-pointer items-center gap-2">
                                 <Checkbox
                                     id="incomplete-path-checkbox"
                                     checked={incompletePathEnabled}
@@ -213,7 +200,6 @@ export function FileDialog({
                             />
                         </div>
 
-                        {/* Remember last path */}
                         <div className="flex items-center gap-2">
                             <Checkbox
                                 id="remember-path"
@@ -230,7 +216,6 @@ export function FileDialog({
                             </Label>
                         </div>
 
-                        {/* Torrent options */}
                         <fieldset className="space-y-2 rounded border p-3">
                             <legend className="font-medium">
                                 Torrent options
@@ -250,23 +235,23 @@ export function FileDialog({
                                 />
                             </div>
                             <div className="flex flex-col flex-wrap gap-2">
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Start torrent
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Add to top of queue
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Download in sequential order
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Skip hash check
                                 </Label>
-                                <Label className="inline-flex cursor-pointer items-center gap-2">
+                                <Label className="inline-flex items-center gap-2">
                                     <Checkbox />
                                     Download first and last pieces first
                                 </Label>
@@ -292,9 +277,9 @@ export function FileDialog({
                                 </Select>
                             </div>
                         </fieldset>
-                        {/* Torrent Metadata and Information */}
-                        <fieldset className="space-y-1 rounded border p-3 text-sm text-gray-400">
-                            <legend className="font-medium text-gray-300">
+
+                        <fieldset className="text-muted-foreground space-y-1 rounded border p-3 text-sm">
+                            <legend className="text-muted-foreground font-medium">
                                 Torrent Information
                             </legend>
                             <div>
@@ -318,8 +303,7 @@ export function FileDialog({
                             </div>
                             <div>
                                 <strong>Info hash v1:</strong>{" "}
-                                {metadata?.info_hash ||
-                                    "c37c904c8bc99ef12a674b105748cdb3f6609e04"}
+                                {metadata?.info_hash || "N/A"}
                             </div>
                             <div>
                                 <strong>Info hash v2:</strong> N/A
@@ -330,31 +314,31 @@ export function FileDialog({
                         </fieldset>
                     </div>
 
-                    {/* Right side file list preview */}
-                    <div className="max-h-[480px] flex-1 overflow-auto rounded border bg-black/10 p-3 text-left text-gray-800">
-                        <h3 className="mb-2 font-semibold text-gray-100">
-                            File List Preview
-                        </h3>
-
-                        {loading ? (
-                            <div className="flex items-center justify-center py-10 text-gray-500">
-                                Loading files...
+                    {/* Right Pane */}
+                    <div className="flex w-[60%] flex-col">
+                        <div className="bg-surface text-primary flex h-full flex-col rounded border p-3">
+                            <h3 className="text-primary border-b p-3 font-semibold">
+                                File List Preview
+                            </h3>
+                            <div className="flex-grow overflow-auto">
+                                {loading ? (
+                                    <div className="flex h-full items-center justify-center">
+                                        <p>Loading files...</p>
+                                    </div>
+                                ) : files.length === 0 ? (
+                                    <div className="flex h-full items-center justify-center">
+                                        <p>No files available</p>
+                                    </div>
+                                ) : (
+                                    <FileTreeTable files={files} />
+                                )}
                             </div>
-                        ) : files.length === 0 ? (
-                            <div className="py-10 text-center text-gray-500">
-                                No files available
-                            </div>
-                        ) : (
-                            <div className="overflow-hidden">
-                                <FileTreeTable fileData={files}></FileTreeTable>
-                            </div>
-                        )}
+                        </div>
                     </div>
                 </div>
 
-                <DialogFooter className="mt-6 flex justify-end gap-3">
+                <DialogFooter className="mt-4 flex justify-end gap-3">
                     <DialogClose asChild>
-                        {/* Confirm / Cancel buttons */}
                         <div className="flex gap-2">
                             <Button
                                 onClick={confirmAddTorrent}

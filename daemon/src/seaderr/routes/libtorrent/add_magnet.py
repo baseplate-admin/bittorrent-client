@@ -9,7 +9,6 @@ from seaderr.decorators import validate_payload
 from seaderr.singletons import SIO, LibtorrentSession, Logger
 from seaderr.stores import ExpiringStore
 from seaderr.timers import wait_for
-from seaderr.utilities import serialize_magnet_torrent_info
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
@@ -78,12 +77,15 @@ async def add_magnet(sid: str, data: AddMagnetPayload):
                 str(handle.info_hash()), TorrentDataclass(torrent=handle)
             )
 
-            serialized_info = await serialize_magnet_torrent_info(handle)
-
             return {
                 "status": "success",
                 "message": "Metadata fetched and torrent paused",
-                "metadata": serialized_info,
+                "metadata": {
+                    "info_hash": str(handle.info_hash()),
+                    "name": handle.name(),
+                    "save_path": handle.save_path(),
+                    "size": handle.get_torrent_info().total_size(),
+                },
             }
         case "add" | "remove":
             if not data.info_hash:

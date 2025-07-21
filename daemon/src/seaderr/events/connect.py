@@ -5,5 +5,5 @@ logger = Logger.get_logger()
 
 
 @sio.event
-async def connect(sid: str, environ) -> None:
+async def connect(sid: str, environ, data) -> None:
     logger.info((f"Client connected: {sid}"))

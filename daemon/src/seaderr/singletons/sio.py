@@ -8,7 +8,11 @@ class SIO:
     _sio: socketio.AsyncServer
 
     def __init__(self) -> None:
-        self._sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
+        self._sio = socketio.AsyncServer(
+            async_mode="asgi",
+            cors_allowed_origins="*",
+            serializer="msgpack",
+        )
 
     @classmethod
     async def init(cls: Type["SIO"]) -> None:

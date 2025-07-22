@@ -1,28 +1,29 @@
 "use client";
+
+import { useEffect, useRef, useState, Fragment } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { calculateETA } from "@/lib/calculateEta";
-import { formatBytes } from "@/lib/formatBytes";
-import { formatDurationClean } from "@/lib/formatDurationClean";
-import { TorrentInfo } from "@/types/socket/torrent_info";
-import { Fragment, useEffect, useRef, useState } from "react";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TOOLTIP_DELAY } from "@/consts/tooltip";
+
+import { calculateETA } from "@/lib/calculateEta";
+import { formatBytes } from "@/lib/formatBytes";
+import { formatDurationClean } from "@/lib/formatDurationClean";
+import { TorrentInfo } from "@/types/socket/torrent_info";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
-import { POLLING_INTERVAL } from "@/consts/interval";
+import { TOOLTIP_DELAY } from "@/consts/tooltip";
 
 export default function GeneralTab({ infoHash }: { infoHash: string }) {
     const [tooltipOpen, setTooltipOpen] = useState(false);
-    const [torrentData, setTorrentData] = useState<TorrentInfo | null>();
-    const [loading, setLoading] = useState(true);
+    const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+    const [loading, setLoading] = useState(false);
 
     const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
-
+    const hasLoadedOnce = useRef(false);
     const socket = useSocketConnection();
     const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
         threshold: 0.5,
@@ -30,39 +31,59 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
 
     useEffect(() => {
         if (!isIntersecting) return;
-        async function handleUpdate() {
-            socket.current?.emit(
-                "libtorrent:get_specific",
-                { info_hash: infoHash },
-                (response: { status: string; torrent: TorrentInfo }) => {
-                    console.log(response);
-                    if (response.status === "success") {
-                        setTorrentData(response.torrent);
-                    } else {
-                        console.error(
-                            "Failed to fetch torrent data:",
-                            response,
-                        );
-                    }
-                },
-            );
-        }
-        handleUpdate().then(() => {
-            setLoading(false);
-        });
-        const interval = setInterval(async () => {
-            await handleUpdate();
-        }, POLLING_INTERVAL);
-        return () => {
-            clearInterval(interval);
-        };
-    }, [isIntersecting, socket]);
 
-    // Handlers for delayed tooltip
+        let mounted = true;
+
+        async function fetchAndUpdateLoop() {
+            while (mounted) {
+                if (!hasLoadedOnce.current) {
+                    setLoading(true);
+                }
+
+                await new Promise<void>((resolve) => {
+                    socket.current?.emit(
+                        "libtorrent:get_specific",
+                        { info_hash: infoHash },
+                        (response: {
+                            status: string;
+                            torrent: TorrentInfo;
+                        }) => {
+                            if (!mounted) return resolve();
+
+                            if (response.status === "success") {
+                                setTorrentData(response.torrent);
+                            } else {
+                                console.error(
+                                    "Failed to fetch torrent data:",
+                                    response,
+                                );
+                            }
+
+                            resolve();
+                        },
+                    );
+                });
+
+                if (!hasLoadedOnce.current) {
+                    setLoading(false);
+                    hasLoadedOnce.current = true;
+                }
+
+                await new Promise((res) => setTimeout(res, 1000));
+            }
+        }
+
+        fetchAndUpdateLoop();
+
+        return () => {
+            mounted = false;
+        };
+    }, [isIntersecting, socket, infoHash]);
+
     const handleMouseEnter = () => {
         hoverTimeout.current = setTimeout(() => {
             setTooltipOpen(true);
-        }, TOOLTIP_DELAY); // 2000ms = 2 seconds delay
+        }, TOOLTIP_DELAY);
     };
 
     const handleMouseLeave = () => {
@@ -140,7 +161,6 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
         })}`,
     };
 
-    // Data arrays for the 3 tables in upper section
     const tableData1 = [
         ["Time Active", mapping.activeTime],
         ["Downloaded", mapping.downloaded],
@@ -172,7 +192,6 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
         ["Last Seen Complete", mapping.completionTime],
     ];
 
-    // Info Section rows (some have colspan for value)
     const infoRows = [
         [
             ["Total Size", mapping.totalSize],
@@ -200,7 +219,6 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
     ) => {
         const colSpanValue =
             typeof colSpan === "string" ? Number(colSpan) : colSpan;
-
         return (
             <Fragment>
                 <td className="w-0 text-right whitespace-nowrap">{label}</td>
@@ -211,6 +229,7 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
             </Fragment>
         );
     };
+
     return (
         <div ref={ref}>
             {loading ? (
@@ -219,26 +238,22 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
                 </div>
             ) : (
                 <div>
-                    <div>
-                        <div className="mb-1 text-sm font-medium">
-                            Progress:
-                        </div>
-                        <Tooltip open={tooltipOpen}>
-                            <TooltipTrigger
-                                asChild
-                                onMouseEnter={handleMouseEnter}
-                                onMouseLeave={handleMouseLeave}
-                            >
-                                <Progress
-                                    value={mapping.progress}
-                                    className="h-6 rounded-sm"
-                                />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{mapping.progress.toFixed(2)}%</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </div>
+                    <div className="mb-1 text-sm font-medium">Progress:</div>
+                    <Tooltip open={tooltipOpen}>
+                        <TooltipTrigger
+                            asChild
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            <Progress
+                                value={mapping.progress}
+                                className="h-6 rounded-sm"
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{mapping.progress.toFixed(2)}%</p>
+                        </TooltipContent>
+                    </Tooltip>
 
                     <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
                         {[tableData1, tableData2, tableData3].map(
@@ -265,6 +280,7 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
                             ),
                         )}
                     </div>
+
                     <Separator className="my-4" />
 
                     <table className="w-full table-auto text-sm">

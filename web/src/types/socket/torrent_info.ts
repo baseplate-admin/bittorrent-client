@@ -140,3 +140,20 @@ export interface TorrentInfo {
     average_download_speed?: number;
     average_upload_speed?: number;
 }
+
+export interface BroadcastTorrentInfo {
+    // Identifiers
+    name: string;
+    info_hash: string;
+    progress: number; // 0–100 %
+    finished: boolean;
+    
+    // Bandwidth & Data
+    download_rate: number;
+    upload_rate: number;
+    num_peers: number;
+    num_seeds: number;
+    total_size: number | null;
+    state: string;
+    eta?: number;
+}

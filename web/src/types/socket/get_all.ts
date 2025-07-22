@@ -1,5 +1,5 @@
-import { TorrentInfo } from "./torrent_info";
+import { BroadcastTorrentInfo } from "./torrent_info";
 export interface GetAllResponse {
     status: string;
-    torrents: TorrentInfo[];
+    torrents: BroadcastTorrentInfo[];
 }

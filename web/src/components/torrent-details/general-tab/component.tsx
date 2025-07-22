@@ -20,7 +20,9 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>();
 
     const socket = useSocketConnection();
-    const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>();
+    const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
+        threshold: 0.5,
+    });
 
     useEffect(() => {
         if (!isIntersecting) return;

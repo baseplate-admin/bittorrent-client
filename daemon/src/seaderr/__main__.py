@@ -1,4 +1,5 @@
 import logging as python_logging
+import multiprocessing
 import traceback
 
 import anyio
@@ -20,7 +21,7 @@ async def run_app(host: str, port: int, debug: bool):
             host=host,
             port=port,
             log_config=None,
-            workers=4,
+            workers=multiprocessing.cpu_count(),
         )
         server = uvicorn.Server(config)
 

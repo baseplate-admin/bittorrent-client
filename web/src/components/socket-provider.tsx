@@ -18,6 +18,7 @@ import { PauseResponse } from "@/types/socket/pause";
 import { calculateETA } from "@/lib/calculateEta";
 import { deepMerge } from "@/lib/deepMerge";
 import { calculateAvg } from "@/lib/calculateAvg";
+import { POLLING_INTERVAL } from "@/consts/interval";
 
 export default function SocketProvider() {
     const [torrent, setTorrent] = useAtom(torrentAtom);
@@ -295,7 +296,7 @@ export default function SocketProvider() {
             if (firstLoad) {
                 updateTorrentsAtom();
             }
-        }, 750);
+        }, POLLING_INTERVAL);
 
         return () => clearInterval(interval);
     }, [updateTorrentsAtom, firstLoad]);

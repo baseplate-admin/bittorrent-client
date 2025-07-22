@@ -14,10 +14,14 @@ import {
 import { TOOLTIP_DELAY } from "@/consts/tooltip";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { POLLING_INTERVAL } from "@/consts/interval";
+
 export default function GeneralTab({ infoHash }: { infoHash: string }) {
     const [tooltipOpen, setTooltipOpen] = useState(false);
-    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>();
+    const [loading, setLoading] = useState(true);
+
+    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const socket = useSocketConnection();
     const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
@@ -26,7 +30,7 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
 
     useEffect(() => {
         if (!isIntersecting) return;
-        function handleUpdate() {
+        async function handleUpdate() {
             socket.current?.emit(
                 "libtorrent:get_specific",
                 { info_hash: infoHash },
@@ -43,10 +47,12 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
                 },
             );
         }
-        handleUpdate();
-        const interval = setInterval(() => {
-            handleUpdate();
-        }, 1000);
+        handleUpdate().then(() => {
+            setLoading(false);
+        });
+        const interval = setInterval(async () => {
+            await handleUpdate();
+        }, POLLING_INTERVAL);
         return () => {
             clearInterval(interval);
         };
@@ -207,63 +213,87 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
     };
     return (
         <div ref={ref}>
-            <div>
-                <div className="mb-1 text-sm font-medium">Progress:</div>
-                <Tooltip open={tooltipOpen}>
-                    <TooltipTrigger
-                        asChild
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                    >
-                        <Progress
-                            value={mapping.progress}
-                            className="h-6 rounded-sm"
-                        />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{mapping.progress.toFixed(2)}%</p>
-                    </TooltipContent>
-                </Tooltip>
-            </div>
+            {loading ? (
+                <div className="flex justify-center rounded-md border p-64">
+                    Loading...
+                </div>
+            ) : (
+                <div>
+                    <div>
+                        <div className="mb-1 text-sm font-medium">
+                            Progress:
+                        </div>
+                        <Tooltip open={tooltipOpen}>
+                            <TooltipTrigger
+                                asChild
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                            >
+                                <Progress
+                                    value={mapping.progress}
+                                    className="h-6 rounded-sm"
+                                />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{mapping.progress.toFixed(2)}%</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
-                {[tableData1, tableData2, tableData3].map((tableData, i) => (
-                    <table key={i} className="w-full table-auto">
+                    <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
+                        {[tableData1, tableData2, tableData3].map(
+                            (tableData, i) => (
+                                <table key={i} className="w-full table-auto">
+                                    <tbody>
+                                        {tableData.map(
+                                            ([label, value], idx) => (
+                                                <tr key={idx}>
+                                                    <td className="w-0 text-right whitespace-nowrap">
+                                                        {label}
+                                                    </td>
+                                                    <td className="w-0 px-1 text-center">
+                                                        :
+                                                    </td>
+                                                    <td className="font-semibold">
+                                                        {value}
+                                                    </td>
+                                                </tr>
+                                            ),
+                                        )}
+                                    </tbody>
+                                </table>
+                            ),
+                        )}
+                    </div>
+                    <Separator className="my-4" />
+
+                    <table className="w-full table-auto text-sm">
                         <tbody>
-                            {tableData.map(([label, value], idx) => (
-                                <tr key={idx}>
-                                    <td className="w-0 text-right whitespace-nowrap">
-                                        {label}
-                                    </td>
-                                    <td className="w-0 px-1 text-center">:</td>
-                                    <td className="font-semibold">{value}</td>
+                            {infoRows.map((row, i) => (
+                                <tr key={i}>
+                                    {row.length === 1
+                                        ? renderLabelValue(
+                                              row[0][0],
+                                              row[0][1],
+                                              row[0][2] ?? 1,
+                                          )
+                                        : row.map(([label, value], idx) => (
+                                              <Fragment
+                                                  key={label?.toString() || idx}
+                                              >
+                                                  {renderLabelValue(
+                                                      label,
+                                                      value,
+                                                      1,
+                                                  )}
+                                              </Fragment>
+                                          ))}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                ))}
-            </div>
-            <Separator className="my-4" />
-
-            <table className="w-full table-auto text-sm">
-                <tbody>
-                    {infoRows.map((row, i) => (
-                        <tr key={i}>
-                            {row.length === 1
-                                ? renderLabelValue(
-                                      row[0][0],
-                                      row[0][1],
-                                      row[0][2] ?? 1,
-                                  )
-                                : row.map(([label, value], idx) => (
-                                      <Fragment key={label?.toString() || idx}>
-                                          {renderLabelValue(label, value, 1)}
-                                      </Fragment>
-                                  ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                </div>
+            )}
         </div>
     );
 }

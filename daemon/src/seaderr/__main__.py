@@ -20,6 +20,7 @@ async def run_app(host: str, port: int, debug: bool):
             host=host,
             port=port,
             log_config=None,
+            workers=4,
         )
         server = uvicorn.Server(config)
 

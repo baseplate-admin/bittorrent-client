@@ -3,14 +3,14 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useAtom } from "jotai";
 import {
-    torrentAtom,
+    broadcastTorrentAtom,
     torrentUploadFileQueueAtom,
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
     torrentRemoveQueueAtom,
 } from "@/atoms/torrent";
 import { dequeue, peekQueue } from "@/lib/queue";
-import { TorrentInfo } from "@/types/socket/torrent_info";
+import { BroadcastTorrentInfo } from "@/types/socket/torrent_info";
 import { GetAllResponse } from "@/types/socket/get_all";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
@@ -21,7 +21,7 @@ import { calculateAvg } from "@/lib/calculateAvg";
 import { POLLING_INTERVAL } from "@/consts/interval";
 
 export default function SocketProvider() {
-    const [torrent, setTorrent] = useAtom(torrentAtom);
+    const [torrent, setTorrent] = useAtom(broadcastTorrentAtom);
 
     const [torrentUploadFileQueue] = useAtom(torrentUploadFileQueueAtom);
     const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(
@@ -36,7 +36,7 @@ export default function SocketProvider() {
 
     const [firstLoad, setFirstLoad] = useState<boolean>(true);
     const [broadcastStarted, setBroadcastStarted] = useState<boolean>(false);
-    const latestTorrentsRef = useRef<TorrentInfo[]>([]);
+    const latestTorrentsRef = useRef<BroadcastTorrentInfo[]>([]);
     const socketRef = useSocketConnection();
 
     const updateTorrentsAtom = useCallback(() => {
@@ -46,12 +46,12 @@ export default function SocketProvider() {
 
     const findTorrentByInfoHash = (
         infoHash: string,
-    ): TorrentInfo | undefined => {
+    ): BroadcastTorrentInfo | undefined => {
         return latestTorrentsRef.current.find((t) => t.info_hash === infoHash);
     };
 
     const getSpecificTorrentFromSocket = useCallback(
-        (info_hash: string): Promise<TorrentInfo> => {
+        (info_hash: string): Promise<BroadcastTorrentInfo> => {
             return new Promise((resolve, reject) => {
                 socketRef.current?.emit(
                     "libtorrent:get_specific",

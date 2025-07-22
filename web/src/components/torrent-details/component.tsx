@@ -2,9 +2,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAtomValue, useSetAtom } from "jotai";
-import { torrentAtom } from "@/atoms/torrent";
+import { broadcastTorrentAtom } from "@/atoms/torrent";
 import { selectedRowAtom, ignoredElementsRefAtom } from "@/atoms/table";
-import { TorrentInfo } from "@/types/socket/torrent_info";
+import { BroadcastTorrentInfo, TorrentInfo } from "@/types/socket/torrent_info";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 // Tabs import
@@ -15,12 +15,14 @@ import { cn } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 
 export default function TorrentDetails() {
-    const torrent = useAtomValue(torrentAtom);
+    const torrent = useAtomValue(broadcastTorrentAtom);
     const selectedRows = useAtomValue(selectedRowAtom);
     const setIgnoredElementsRef = useSetAtom(ignoredElementsRefAtom);
 
     const cardRef = useRef<HTMLDivElement>(null);
-    const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+    const [torrentData, setTorrentData] = useState<BroadcastTorrentInfo | null>(
+        null,
+    );
     const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
 
     useEffect(() => {
@@ -81,6 +83,12 @@ export default function TorrentDetails() {
                     >
                         <TabComponent
                             infoHash={torrentData.info_hash}
+                            averageDownloadSpeed={
+                                torrentData.average_download_speed
+                            }
+                            averageUploadSpeed={
+                                torrentData.average_upload_speed
+                            }
                         />
                     </div>
                 ))}

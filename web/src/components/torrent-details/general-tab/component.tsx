@@ -16,8 +16,18 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { TOOLTIP_DELAY } from "@/consts/tooltip";
+import { broadcastTorrentAtom } from "@/atoms/torrent";
+import { useAtomValue } from "jotai";
 
-export default function GeneralTab({ infoHash }: { infoHash: string }) {
+export default function GeneralTab({
+    infoHash,
+    averageDownloadSpeed,
+    averageUploadSpeed,
+}: {
+    infoHash: string;
+    averageDownloadSpeed: number;
+    averageUploadSpeed: number;
+}) {
     const [tooltipOpen, setTooltipOpen] = useState(false);
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
     const [loading, setLoading] = useState(false);
@@ -99,11 +109,11 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
             (torrentData?.added_time || 0) * 1000,
         ).toLocaleString(),
         averageDownloadSpeed: formatBytes({
-            bytes: torrentData?.average_download_speed || 0,
+            bytes: averageDownloadSpeed || 0,
             perSecond: true,
         }),
         averageUploadSpeed: formatBytes({
-            bytes: torrentData?.average_upload_speed || 0,
+            bytes: averageUploadSpeed || 0,
             perSecond: true,
         }),
         completionTime: torrentData?.completion_time

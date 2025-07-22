@@ -137,8 +137,6 @@ export interface TorrentInfo {
 
     // Derived
     eta?: number;
-    average_download_speed?: number;
-    average_upload_speed?: number;
 }
 
 export interface BroadcastTorrentInfo {
@@ -147,7 +145,11 @@ export interface BroadcastTorrentInfo {
     info_hash: string;
     progress: number; // 0–100 %
     finished: boolean;
-    
+
+    paused: boolean;
+    average_download_speed: number;
+    average_upload_speed: number;
+
     // Bandwidth & Data
     download_rate: number;
     upload_rate: number;

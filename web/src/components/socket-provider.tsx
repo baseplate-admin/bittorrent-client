@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useAtom } from "jotai";
 import {
-    torrentAtom,
+    broadcastTorrentAtom,
     torrentUploadFileQueueAtom,
     torrentPauseQueueAtom,
     torrentResumeQueueAtom,
@@ -21,7 +21,7 @@ import { calculateAvg } from "@/lib/calculateAvg";
 import { POLLING_INTERVAL } from "@/consts/interval";
 
 export default function SocketProvider() {
-    const [torrent, setTorrent] = useAtom(torrentAtom);
+    const [torrent, setTorrent] = useAtom(broadcastTorrentAtom);
 
     const [torrentUploadFileQueue] = useAtom(torrentUploadFileQueueAtom);
     const [torrentPauseQueue, setTorrentPauseQueue] = useAtom(

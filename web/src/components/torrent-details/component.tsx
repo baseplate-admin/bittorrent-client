@@ -80,7 +80,6 @@ export default function TorrentDetails() {
                         )}
                     >
                         <TabComponent
-                            torrentData={torrentData}
                             infoHash={torrentData.info_hash}
                         />
                     </div>

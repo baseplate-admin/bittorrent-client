@@ -233,7 +233,7 @@ export default function GeneralTab({ infoHash }: { infoHash: string }) {
     return (
         <div ref={ref}>
             {loading ? (
-                <div className="flex justify-center rounded-md border p-64">
+                <div className="flex justify-center rounded-md border p-44">
                     Loading...
                 </div>
             ) : (

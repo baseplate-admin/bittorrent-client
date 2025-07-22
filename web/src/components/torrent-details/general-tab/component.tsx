@@ -5,20 +5,50 @@ import { calculateETA } from "@/lib/calculateEta";
 import { formatBytes } from "@/lib/formatBytes";
 import { formatDurationClean } from "@/lib/formatDurationClean";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TOOLTIP_DELAY } from "@/consts/tooltip";
-export default function GeneralTab({
-    torrentData,
-}: {
-    torrentData: TorrentInfo;
-}) {
+import { useSocketConnection } from "@/hooks/use-socket";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+export default function GeneralTab({ infoHash }: { infoHash: string }) {
     const [tooltipOpen, setTooltipOpen] = useState(false);
     const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+    const [torrentData, setTorrentData] = useState<TorrentInfo | null>();
+
+    const socket = useSocketConnection();
+    const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>();
+
+    useEffect(() => {
+        if (!isIntersecting) return;
+        function handleUpdate() {
+            socket.current?.emit(
+                "libtorrent:get_specific",
+                { info_hash: infoHash },
+                (response: { status: string; torrent: TorrentInfo }) => {
+                    console.log(response);
+                    if (response.status === "success") {
+                        setTorrentData(response.torrent);
+                    } else {
+                        console.error(
+                            "Failed to fetch torrent data:",
+                            response,
+                        );
+                    }
+                },
+            );
+        }
+        handleUpdate();
+        const interval = setInterval(() => {
+            handleUpdate();
+        }, 1000);
+        return () => {
+            clearInterval(interval);
+        };
+    }, [isIntersecting, socket]);
 
     // Handlers for delayed tooltip
     const handleMouseEnter = () => {
@@ -68,7 +98,7 @@ export default function GeneralTab({
             perSecond: true,
         }),
         nextAnnounce:
-            torrentData?.next_announce > 0
+            (torrentData?.next_announce ?? 0 > 0)
                 ? formatDurationClean(torrentData?.next_announce || 0)
                 : "Announce in progress",
         uploadSpeed: formatBytes({
@@ -174,7 +204,7 @@ export default function GeneralTab({
         );
     };
     return (
-        <>
+        <div ref={ref}>
             <div>
                 <div className="mb-1 text-sm font-medium">Progress:</div>
                 <Tooltip open={tooltipOpen}>
@@ -232,6 +262,6 @@ export default function GeneralTab({
                     ))}
                 </tbody>
             </table>
-        </>
+        </div>
     );
 }

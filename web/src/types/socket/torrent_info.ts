@@ -131,16 +131,7 @@ export interface TorrentInfo {
     http_seeds: string[];
 
     // State
-    state:
-        | "metadata_present"
-        | "metadata_missing"
-        | "seeding"
-        | "downloading"
-        | "paused"
-        | "checking"
-        | "queued"
-        | "error"
-        | "unknown";
+    state: string;
     paused?: boolean;
     peers_info?: TorrentPeer[];
 

@@ -10,7 +10,7 @@ import {
     torrentRemoveQueueAtom,
 } from "@/atoms/torrent";
 import { dequeue, peekQueue } from "@/lib/queue";
-import { TorrentInfo, Peer } from "@/types/socket/torrent_info";
+import { TorrentInfo } from "@/types/socket/torrent_info";
 import { GetAllResponse } from "@/types/socket/get_all";
 import { BroadcastResponse, SerializedAlert } from "@/types/socket/broadcast";
 import { useSocketConnection } from "@/hooks/use-socket";
@@ -189,7 +189,7 @@ export default function SocketProvider() {
 
                             const newTorrentObject = deepMerge(t, newObj);
                             latestTorrentsRef.current[index] = newTorrentObject;
-                            console.log(newTorrentObject);
+                            // console.log(newTorrentObject);
                         }
                     }
                     break;

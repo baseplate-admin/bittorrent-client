@@ -1,4 +1,5 @@
 type Primitive = string | number | boolean | null | undefined;
+
 type DeepMerge<T> = {
     [K in keyof T]: T[K] extends Primitive
         ? T[K]
@@ -13,21 +14,30 @@ function isObject(item: unknown): item is object {
     return !!item && typeof item === "object" && !Array.isArray(item);
 }
 
-export function deepMerge<T>(target: T, source: Partial<T>): DeepMerge<T> {
+/**
+ * Deep merge `updates` into `target`, recursively replacing values.
+ * @param target - full object to update
+ * @param updates - partial object with new values to apply
+ * @returns new object with updated values
+ */
+export function deepMerge<T>(target: T, updates: Partial<T>): DeepMerge<T> {
+    // shallow clone target so we don't mutate original
     const output = { ...target } as any;
 
-    if (isObject(target) && isObject(source)) {
-        for (const key of Object.keys(source) as (keyof T)[]) {
-            const sourceValue = source[key];
+    if (isObject(target) && isObject(updates)) {
+        for (const key of Object.keys(updates) as (keyof T)[]) {
+            const updateValue = updates[key];
             const targetValue = target[key];
 
-            if (Array.isArray(sourceValue)) {
-                // Replace arrays (customize if you want array merging)
-                output[key] = sourceValue;
-            } else if (isObject(sourceValue) && isObject(targetValue)) {
-                output[key] = deepMerge(targetValue, sourceValue);
+            if (Array.isArray(updateValue)) {
+                // Replace arrays outright; customize here to merge arrays differently if needed
+                output[key] = updateValue;
+            } else if (isObject(updateValue) && isObject(targetValue)) {
+                // Recursively merge nested objects
+                output[key] = deepMerge(targetValue, updateValue);
             } else {
-                output[key] = sourceValue;
+                // Primitive or undefined: replace with updateValue
+                output[key] = updateValue;
             }
         }
     }

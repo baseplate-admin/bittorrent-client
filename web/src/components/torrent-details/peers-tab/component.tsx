@@ -3,19 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { PeerTabDataTable } from "./data-table";
 import { columns } from "./columns";
-import { TorrentInfo, Peer } from "@/types/socket/torrent_info";
+import { Peer } from "@/types/socket/torrent_info";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getCountryISOFromIp } from "@/lib/getCountryISOFromIp";
 import { isValidIP } from "@/lib/isValidIp";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useSocketConnection } from "@/hooks/use-socket";
 
-export default function PeersTab({
-    torrentData,
-}: {
-    torrentData: TorrentInfo;
-}) {
-    const [rawPeers, setRawPeers] = useState<Peer[]>([]);
+export default function PeersTab({ infoHash }: { infoHash: string }) {
     const [enrichedPeers, setEnrichedPeers] = useState<Peer[]>([]);
     const [loading, setLoading] = useState(false);
     const hasLoadedOnce = useRef(false);
@@ -41,7 +36,7 @@ export default function PeersTab({
                 const peers = await new Promise<Peer[]>((resolve) => {
                     socket.current?.emit(
                         "libtorrent:get_specific_peers",
-                        { info_hash: torrentData.info_hash },
+                        { info_hash: infoHash },
                         (response: {
                             status: "success" | "error";
                             peers: Peer[];
@@ -56,8 +51,6 @@ export default function PeersTab({
                 });
 
                 if (!mounted) break;
-
-                setRawPeers(peers);
 
                 if (peers.length > 0) {
                     const enriched = await Promise.all(
@@ -109,7 +102,7 @@ export default function PeersTab({
         return () => {
             mounted = false;
         };
-    }, [socket, isIntersecting, torrentData.info_hash]);
+    }, [socket, isIntersecting, infoHash]);
 
     return (
         <ScrollArea ref={ref} className="h-96">

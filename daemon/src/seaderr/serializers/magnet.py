@@ -59,7 +59,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
         )
         return info
 
-    nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
+    # nodes = [{"host": host, "port": port} for host, port in ti.nodes()]
     trackers = list(ti.trackers()) + handle.trackers()
 
     info.update(
@@ -78,7 +78,7 @@ async def serialize_magnet_torrent_info(handle: lt.torrent_handle) -> dict:
             "num_files": int(ti.num_files()),
             "metadata_size": int(ti.metadata_size()),
             "trackers": trackers,
-            "nodes": nodes,
+            # "nodes": nodes,
             "url_seeds": getattr(ti, "url_seeds", lambda: [])(),
             "http_seeds": getattr(ti, "http_seeds", lambda: [])(),
         }

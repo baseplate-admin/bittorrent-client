@@ -79,7 +79,9 @@ export default function TorrentDetails() {
                             selectedTabIndex === i ? "block" : "hidden",
                         )}
                     >
-                        <TabComponent torrentData={torrentData} />
+                        <TabComponent
+                            infoHash={torrentData.info_hash}
+                        />
                     </div>
                 ))}
                 <Separator className="my-4" />

@@ -1,30 +1,89 @@
 "use client";
+
+import { useEffect, useRef, useState, Fragment } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { calculateETA } from "@/lib/calculateEta";
-import { formatBytes } from "@/lib/formatBytes";
-import { formatDurationClean } from "@/lib/formatDurationClean";
-import { TorrentInfo } from "@/types/socket/torrent_info";
-import { Fragment, useRef, useState } from "react";
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TOOLTIP_DELAY } from "@/consts/tooltip";
-export default function GeneralTab({
-    torrentData,
-}: {
-    torrentData: TorrentInfo;
-}) {
-    const [tooltipOpen, setTooltipOpen] = useState(false);
-    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
-    // Handlers for delayed tooltip
+import { calculateETA } from "@/lib/calculateEta";
+import { formatBytes } from "@/lib/formatBytes";
+import { formatDurationClean } from "@/lib/formatDurationClean";
+import { TorrentInfo } from "@/types/socket/torrent_info";
+import { useSocketConnection } from "@/hooks/use-socket";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { TOOLTIP_DELAY } from "@/consts/tooltip";
+
+export default function GeneralTab({ infoHash }: { infoHash: string }) {
+    const [tooltipOpen, setTooltipOpen] = useState(false);
+    const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+    const hasLoadedOnce = useRef(false);
+    const socket = useSocketConnection();
+    const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
+        threshold: 0.5,
+    });
+
+    useEffect(() => {
+        if (!isIntersecting) return;
+
+        let mounted = true;
+
+        async function fetchAndUpdateLoop() {
+            while (mounted) {
+                if (!hasLoadedOnce.current) {
+                    setLoading(true);
+                }
+
+                await new Promise<void>((resolve) => {
+                    socket.current?.emit(
+                        "libtorrent:get_specific",
+                        { info_hash: infoHash },
+                        (response: {
+                            status: string;
+                            torrent: TorrentInfo;
+                        }) => {
+                            if (!mounted) return resolve();
+
+                            if (response.status === "success") {
+                                setTorrentData(response.torrent);
+                            } else {
+                                console.error(
+                                    "Failed to fetch torrent data:",
+                                    response,
+                                );
+                            }
+
+                            resolve();
+                        },
+                    );
+                });
+
+                if (!hasLoadedOnce.current) {
+                    setLoading(false);
+                    hasLoadedOnce.current = true;
+                }
+
+                await new Promise((res) => setTimeout(res, 1000));
+            }
+        }
+
+        fetchAndUpdateLoop();
+
+        return () => {
+            mounted = false;
+        };
+    }, [isIntersecting, socket, infoHash]);
+
     const handleMouseEnter = () => {
         hoverTimeout.current = setTimeout(() => {
             setTooltipOpen(true);
-        }, TOOLTIP_DELAY); // 2000ms = 2 seconds delay
+        }, TOOLTIP_DELAY);
     };
 
     const handleMouseLeave = () => {
@@ -68,7 +127,7 @@ export default function GeneralTab({
             perSecond: true,
         }),
         nextAnnounce:
-            torrentData?.next_announce > 0
+            (torrentData?.next_announce ?? 0 > 0)
                 ? formatDurationClean(torrentData?.next_announce || 0)
                 : "Announce in progress",
         uploadSpeed: formatBytes({
@@ -102,7 +161,6 @@ export default function GeneralTab({
         })}`,
     };
 
-    // Data arrays for the 3 tables in upper section
     const tableData1 = [
         ["Time Active", mapping.activeTime],
         ["Downloaded", mapping.downloaded],
@@ -134,7 +192,6 @@ export default function GeneralTab({
         ["Last Seen Complete", mapping.completionTime],
     ];
 
-    // Info Section rows (some have colspan for value)
     const infoRows = [
         [
             ["Total Size", mapping.totalSize],
@@ -162,7 +219,6 @@ export default function GeneralTab({
     ) => {
         const colSpanValue =
             typeof colSpan === "string" ? Number(colSpan) : colSpan;
-
         return (
             <Fragment>
                 <td className="w-0 text-right whitespace-nowrap">{label}</td>
@@ -173,65 +229,87 @@ export default function GeneralTab({
             </Fragment>
         );
     };
-    return (
-        <>
-            <div>
-                <div className="mb-1 text-sm font-medium">Progress:</div>
-                <Tooltip open={tooltipOpen}>
-                    <TooltipTrigger
-                        asChild
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                    >
-                        <Progress
-                            value={mapping.progress}
-                            className="h-6 rounded-sm"
-                        />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{mapping.progress.toFixed(2)}%</p>
-                    </TooltipContent>
-                </Tooltip>
-            </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
-                {[tableData1, tableData2, tableData3].map((tableData, i) => (
-                    <table key={i} className="w-full table-auto">
+    return (
+        <div ref={ref}>
+            {loading ? (
+                <div className="flex justify-center rounded-md border p-44">
+                    Loading...
+                </div>
+            ) : (
+                <div>
+                    <div className="mb-1 text-sm font-medium">Progress:</div>
+                    <Tooltip open={tooltipOpen}>
+                        <TooltipTrigger
+                            asChild
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                        >
+                            <Progress
+                                value={mapping.progress}
+                                className="h-6 rounded-sm"
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>{mapping.progress.toFixed(2)}%</p>
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
+                        {[tableData1, tableData2, tableData3].map(
+                            (tableData, i) => (
+                                <table key={i} className="w-full table-auto">
+                                    <tbody>
+                                        {tableData.map(
+                                            ([label, value], idx) => (
+                                                <tr key={idx}>
+                                                    <td className="w-0 text-right whitespace-nowrap">
+                                                        {label}
+                                                    </td>
+                                                    <td className="w-0 px-1 text-center">
+                                                        :
+                                                    </td>
+                                                    <td className="font-semibold">
+                                                        {value}
+                                                    </td>
+                                                </tr>
+                                            ),
+                                        )}
+                                    </tbody>
+                                </table>
+                            ),
+                        )}
+                    </div>
+
+                    <Separator className="my-4" />
+
+                    <table className="w-full table-auto text-sm">
                         <tbody>
-                            {tableData.map(([label, value], idx) => (
-                                <tr key={idx}>
-                                    <td className="w-0 text-right whitespace-nowrap">
-                                        {label}
-                                    </td>
-                                    <td className="w-0 px-1 text-center">:</td>
-                                    <td className="font-semibold">{value}</td>
+                            {infoRows.map((row, i) => (
+                                <tr key={i}>
+                                    {row.length === 1
+                                        ? renderLabelValue(
+                                              row[0][0],
+                                              row[0][1],
+                                              row[0][2] ?? 1,
+                                          )
+                                        : row.map(([label, value], idx) => (
+                                              <Fragment
+                                                  key={label?.toString() || idx}
+                                              >
+                                                  {renderLabelValue(
+                                                      label,
+                                                      value,
+                                                      1,
+                                                  )}
+                                              </Fragment>
+                                          ))}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                ))}
-            </div>
-            <Separator className="my-4" />
-
-            <table className="w-full table-auto text-sm">
-                <tbody>
-                    {infoRows.map((row, i) => (
-                        <tr key={i}>
-                            {row.length === 1
-                                ? renderLabelValue(
-                                      row[0][0],
-                                      row[0][1],
-                                      row[0][2] ?? 1,
-                                  )
-                                : row.map(([label, value], idx) => (
-                                      <Fragment key={label?.toString() || idx}>
-                                          {renderLabelValue(label, value, 1)}
-                                      </Fragment>
-                                  ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </>
+                </div>
+            )}
+        </div>
     );
 }

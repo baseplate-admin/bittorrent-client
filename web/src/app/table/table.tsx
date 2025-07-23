@@ -25,6 +25,7 @@ export const DataTable = <TValue,>({
     columns: ColumnDef<User, TValue>[];
     data: User[];
 }) => {
+    "use no memo";
     const [colSizing, setColSizing] = useState<ColumnSizingState>({});
     useEffect(() => {
         console.log("Column Sizing Changed:", colSizing);
@@ -45,30 +46,34 @@ export const DataTable = <TValue,>({
         <div className="rounded-md border">
             <Table style={{ width: table.getTotalSize() }}>
                 <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                                return (
-                                    <TableHead
-                                        key={header.id}
-                                        className="relative"
-                                        style={{
-                                            width: header.getSize(),
-                                        }}
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef
-                                                      .header,
-                                                  header.getContext(),
-                                              )}
-                                        <ColumnResizer header={header} />
-                                    </TableHead>
-                                );
-                            })}
-                        </TableRow>
-                    ))}
+                    {table.getHeaderGroups().map((headerGroup) => {
+                        return (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => {
+                                    return (
+                                        <TableHead
+                                            key={header.id}
+                                            className="relative"
+                                            style={{
+                                                width: header.getSize(),
+                                            }}
+                                        >
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                      header.column.columnDef
+                                                          .header,
+                                                      header.getContext(),
+                                                  )}
+                                            <ColumnResizer<User>
+                                                header={header}
+                                            />
+                                        </TableHead>
+                                    );
+                                })}
+                            </TableRow>
+                        );
+                    })}
                 </TableHeader>
                 <TableBody>
                     {table.getRowModel().rows?.length ? (

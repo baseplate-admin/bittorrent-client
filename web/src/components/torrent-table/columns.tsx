@@ -1,10 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { formatBytes } from "@/lib/formatBytes";
-import { TorrentInfo } from "@/types/socket/torrent_info";
+import { BroadcastTorrentInfo } from "@/types/socket/torrent_info";
 import { snakeToSpace } from "@/lib/snakeToSpace";
 import { useRef, useState } from "react";
 import { Progress } from "@/components/ui/progress";
@@ -21,7 +19,7 @@ const columnsMetadata: {
     key: string;
     cell?: (context: {
         getValue: () => any;
-        row: { original: TorrentInfo };
+        row: { original: BroadcastTorrentInfo };
     }) => React.ReactNode;
     keyName?: string;
 }[] = [
@@ -183,7 +181,7 @@ const columnsMetadata: {
     },
 ];
 
-export const torrentTableColumns: ColumnDef<TorrentInfo>[] =
+export const torrentTableColumns: ColumnDef<BroadcastTorrentInfo>[] =
     columnsMetadata.map(({ key, cell, keyName }) => ({
         accessorKey: key,
         size: 300,

@@ -134,17 +134,10 @@ function createColumns(
     toggle: (path: string) => void,
     selected: Set<string>,
     setSelected: (path: string, checked: boolean) => void,
-    visibleColumns: ColumnId[] = [
-        "name",
-        "size",
-        "progress",
-        "priority",
-        "remaining",
-    ],
+    visibleColumns: ColumnId[],
 ): ColumnDef<FileItem>[] {
     const baseColumns: ColumnDef<FileItem>[] = [];
 
-    // Selection Checkbox column
     baseColumns.push({
         id: "select",
         header: () => null,
@@ -153,9 +146,7 @@ function createColumns(
             return (
                 <Checkbox
                     checked={selected.has(file.path)}
-                    onCheckedChange={(v) => {
-                        setSelected(file.path, Boolean(v));
-                    }}
+                    onCheckedChange={(v) => setSelected(file.path, Boolean(v))}
                 />
             );
         },
@@ -171,10 +162,11 @@ function createColumns(
                 const file = row.original;
                 const hasChildren = !!file.children?.length;
                 const isExpanded = expandedRows.has(file.path);
+                const isSelected = selected.has(file.path);
 
                 return (
                     <div
-                        className="flex items-center"
+                        className={`flex items-center ${!isSelected ? "opacity-50" : ""}`}
                         style={{ paddingLeft: file.depth * 24 }}
                     >
                         {hasChildren ? (
@@ -248,7 +240,9 @@ export function FileTreeTable({
     }, [allRows]);
 
     const [expandedRows, setExpandedRows] = useState<Set<string>>(rootPaths);
-    const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+    const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => {
+        return new Set(allRows.map((r) => r.path)); // all selected initially
+    });
 
     const visibleRows = useMemo(() => {
         const visible: FileItem[] = [];
@@ -270,14 +264,33 @@ export function FileTreeTable({
     };
 
     const setSelected = (path: string, checked: boolean) => {
+        const affectedPaths = new Set<string>();
+        const baseDepth = allRows.find((r) => r.path === path)?.depth ?? 0;
+        let startCollecting = false;
+
+        for (const r of allRows) {
+            if (r.path === path) {
+                startCollecting = true;
+                affectedPaths.add(r.path); // Always include the clicked folder
+                continue;
+            }
+            if (startCollecting) {
+                if (r.depth <= baseDepth) break; // stop when sibling/parent appears
+                affectedPaths.add(r.path);
+            }
+        }
+
         setSelectedPaths((prev) => {
             const copy = new Set(prev);
-            checked ? copy.add(path) : copy.delete(path);
+            if (checked) {
+                affectedPaths.forEach((p) => copy.add(p));
+            } else {
+                affectedPaths.forEach((p) => copy.delete(p));
+            }
             onSelectChange?.(Array.from(copy));
             return copy;
         });
     };
-
     const table = useReactTable({
         data: visibleRows,
         columns: createColumns(
@@ -310,18 +323,24 @@ export function FileTreeTable({
                 </TableHeader>
 
                 <TableBody>
-                    {table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
-                            {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>
-                                    {flexRender(
-                                        cell.column.columnDef.cell,
-                                        cell.getContext(),
-                                    )}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    ))}
+                    {table.getRowModel().rows.map((row) => {
+                        const selected = selectedPaths.has(row.original.path);
+                        return (
+                            <TableRow
+                                key={row.id}
+                                className={!selected ? "opacity-50" : ""}
+                            >
+                                {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>
+                                        {flexRender(
+                                            cell.column.columnDef.cell,
+                                            cell.getContext(),
+                                        )}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        );
+                    })}
                 </TableBody>
             </Table>
         </div>

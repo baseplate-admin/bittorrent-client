@@ -7,6 +7,7 @@ import {
     useReactTable,
     SortingState,
     getSortedRowModel,
+    ColumnSizingState,
 } from "@tanstack/react-table";
 
 import {
@@ -25,12 +26,13 @@ import { useAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RowContextMenu } from "./row-context-menu";
 import { cn } from "@/lib/utils";
+import { ColumnResizer } from "../column-resizer";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface TorrentDataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
 }
-
 export function TorrentDataTable<TData, TValue>({
     columns,
     data,
@@ -38,6 +40,7 @@ export function TorrentDataTable<TData, TValue>({
     "use no memo";
     const [sorting, setSorting] = useState<SortingState>([]);
     const [rowSelection, setRowSelection] = useAtom(selectedRowAtom);
+    const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
     const [ignoredElementsRef, setIgnoredElementsRef] = useAtom(
         ignoredElementsRefAtom,
     );
@@ -52,18 +55,25 @@ export function TorrentDataTable<TData, TValue>({
         };
     }, [tableRef, setIgnoredElementsRef]);
 
+    useEffect(() => {
+        console.log("Column sizing changed:", columnSizing);
+    }, [columnSizing]);
+
     const table = useReactTable({
         data,
         columns,
+        enableColumnResizing: true,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onSortingChange: setSorting,
+        onColumnSizingChange: setColumnSizing,
+        columnResizeMode: "onChange",
         state: {
             sorting,
             rowSelection,
+            columnSizing,
         },
         onRowSelectionChange: setRowSelection,
-        columnResizeMode: "onChange",
     });
 
     const handleRowClick = (rowId: string) => {
@@ -92,18 +102,24 @@ export function TorrentDataTable<TData, TValue>({
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [setRowSelection, ignoredElementsRef]);
-
     return (
-        <div className="h-full rounded-md border">
-            <div role="table" ref={tableRef}>
-                <Table>
+        <div
+            className="h-full w-full rounded-md border"
+            role="table"
+            ref={tableRef}
+        >
+            <ScrollArea className="h-full w-full">
+                <Table style={{ width: table.getTotalSize() }}>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
                                     <TableHead
                                         key={header.id}
-                                        className="text-center"
+                                        className="relative text-center"
+                                        style={{
+                                            width: header.getSize(),
+                                        }}
                                     >
                                         {header.isPlaceholder
                                             ? null
@@ -112,6 +128,8 @@ export function TorrentDataTable<TData, TValue>({
                                                       .header,
                                                   header.getContext(),
                                               )}
+
+                                        <ColumnResizer<TData> header={header} />
                                     </TableHead>
                                 ))}
                             </TableRow>
@@ -150,6 +168,13 @@ export function TorrentDataTable<TData, TValue>({
                                                     .map((cell) => (
                                                         <TableCell
                                                             key={cell.id}
+                                                            style={{
+                                                                width: cell.column.getSize(),
+                                                                minWidth:
+                                                                    cell.column
+                                                                        .columnDef
+                                                                        .minSize,
+                                                            }}
                                                         >
                                                             {flexRender(
                                                                 cell.column
@@ -176,7 +201,8 @@ export function TorrentDataTable<TData, TValue>({
                         )}
                     </TableBody>
                 </Table>
-            </div>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
         </div>
     );
 }

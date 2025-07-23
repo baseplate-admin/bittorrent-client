@@ -7,6 +7,7 @@ import {
     useReactTable,
     SortingState,
     getSortedRowModel,
+    ColumnSizingState,
 } from "@tanstack/react-table";
 
 import {
@@ -25,7 +26,7 @@ import { useAtom } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RowContextMenu } from "./row-context-menu";
 import { cn } from "@/lib/utils";
-
+import { ColumnResizer } from "../column-resizer";
 interface TorrentDataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
@@ -38,6 +39,7 @@ export function TorrentDataTable<TData, TValue>({
     "use no memo";
     const [sorting, setSorting] = useState<SortingState>([]);
     const [rowSelection, setRowSelection] = useAtom(selectedRowAtom);
+    const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
     const [ignoredElementsRef, setIgnoredElementsRef] = useAtom(
         ignoredElementsRefAtom,
     );
@@ -55,15 +57,18 @@ export function TorrentDataTable<TData, TValue>({
     const table = useReactTable({
         data,
         columns,
+        enableColumnResizing: true,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onSortingChange: setSorting,
+        onColumnSizingChange: setColumnSizing,
+        columnResizeMode: "onChange",
         state: {
             sorting,
             rowSelection,
+            columnSizing,
         },
         onRowSelectionChange: setRowSelection,
-        columnResizeMode: "onChange",
     });
 
     const handleRowClick = (rowId: string) => {
@@ -103,7 +108,7 @@ export function TorrentDataTable<TData, TValue>({
                                 {headerGroup.headers.map((header) => (
                                     <TableHead
                                         key={header.id}
-                                        className="text-center"
+                                        className="relative text-center"
                                     >
                                         {header.isPlaceholder
                                             ? null
@@ -112,6 +117,8 @@ export function TorrentDataTable<TData, TValue>({
                                                       .header,
                                                   header.getContext(),
                                               )}
+
+                                        <ColumnResizer<TData> header={header} />
                                     </TableHead>
                                 ))}
                             </TableRow>

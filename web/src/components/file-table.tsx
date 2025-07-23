@@ -41,6 +41,17 @@ interface FileItem {
     depth: number;
 }
 
+const priorityOptions: Record<number, string> = {
+    0: "Do Not Download",
+    1: "Low",
+    // 2: "Low",
+    // 3: "Normal",
+    4: "Normal",
+    // 5: "High",
+    6: "High",
+    7: "Maximum",
+} as const;
+
 function buildFlatFileTree(files: FileInfo[]): FileItem[] {
     const root: Record<string, any> = {};
 
@@ -209,14 +220,6 @@ function createColumns(
             header: "Download Priority",
             cell: ({ row }) => {
                 const file = row.original;
-
-                const priorityOptions: Record<number, string> = {
-                    0: "Do Not Download",
-                    1: "Low",
-                    4: "Normal",
-                    6: "High",
-                    7: "Maximum",
-                };
 
                 return (
                     <Select

@@ -194,28 +194,25 @@ function createColumns(
 }
 
 // -------------------- Component --------------------
-
 export function FileTreeTable({ files }: { files: FileInfo[] }) {
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(
-        new Set([""]),
-    );
-
+    "use no memo";
     const allRows = useMemo(() => buildFlatFileTree(files), [files]);
+
+    // Collect all root-level paths to expand them by default
+    const rootPaths = useMemo(() => {
+        return new Set(allRows.filter((r) => r.depth === 0).map((r) => r.path));
+    }, [allRows]);
+
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(rootPaths);
 
     const visibleRows = useMemo(() => {
         const visible: FileItem[] = [];
-        const parentPaths = new Set([""]);
-
         for (const row of allRows) {
             const parent = row.path.split("/").slice(0, -1).join("/");
             if (row.depth === 0 || expandedRows.has(parent)) {
                 visible.push(row);
-                if (!expandedRows.has(row.path)) {
-                    parentPaths.delete(row.path);
-                }
             }
         }
-
         return visible;
     }, [allRows, expandedRows]);
 

@@ -312,8 +312,6 @@ export function FileTreeTable({
                     r.path.startsWith(currentPath + "/"),
             );
             for (const child of children) {
-                // Only add direct children (depth = parent depth + 1)
-                // To avoid duplicates and only direct descendants, but to be safe add all descendants
                 if (!result.includes(child.path)) stack.push(child.path);
             }
         }
@@ -346,13 +344,16 @@ export function FileTreeTable({
 
     // Handle priority change and update state to re-render UI
     const onPriorityChange = (path: string, newPriority: number) => {
-        setAllRows((prevRows) => {
-            // Update the priority of the changed row
-            const updatedRows = prevRows.map((r) =>
-                r.path === path ? { ...r, priority: newPriority } : r,
-            );
+        // Find all descendants (including the folder itself)
+        const descendants = getDescendantPaths(path);
 
-            // Optional: recalc folder priorities if you want, but skipping for simplicity
+        setAllRows((prevRows) => {
+            const updatedRows = prevRows.map((r) => {
+                if (descendants.includes(r.path)) {
+                    return { ...r, priority: newPriority };
+                }
+                return r;
+            });
 
             return updatedRows;
         });

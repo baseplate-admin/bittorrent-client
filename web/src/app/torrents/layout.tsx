@@ -10,7 +10,7 @@ export default function TorrentsLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex    ">
+        <div className="flex">
             <SidebarProvider>
                 <div className="flex-shrink-0">
                     <AppSidebar />

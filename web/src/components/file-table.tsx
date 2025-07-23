@@ -16,6 +16,7 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { FileInfo } from "@/types/socket/files";
 import { formatBytes } from "@/lib/formatBytes";
@@ -128,11 +129,11 @@ function buildFlatFileTree(files: FileInfo[]): FileItem[] {
     return flatten(root);
 }
 
-// -------------------- Columns --------------------
-
 function createColumns(
     expandedRows: Set<string>,
     toggle: (path: string) => void,
+    selected: Set<string>,
+    setSelected: (path: string, checked: boolean) => void,
     visibleColumns: ColumnId[] = [
         "name",
         "size",
@@ -141,6 +142,26 @@ function createColumns(
         "remaining",
     ],
 ): ColumnDef<FileItem>[] {
+    const baseColumns: ColumnDef<FileItem>[] = [];
+
+    // Selection Checkbox column
+    baseColumns.push({
+        id: "select",
+        header: () => null,
+        cell: ({ row }) => {
+            const file = row.original;
+            return (
+                <Checkbox
+                    checked={selected.has(file.path)}
+                    onCheckedChange={(v) => {
+                        setSelected(file.path, Boolean(v));
+                    }}
+                />
+            );
+        },
+        size: 32,
+    });
+
     const allColumns: ColumnDef<FileItem>[] = [
         {
             id: "name",
@@ -206,19 +227,19 @@ function createColumns(
         },
     ];
 
-    return allColumns.filter((col) =>
-        visibleColumns.includes(col.id as ColumnId),
+    return baseColumns.concat(
+        allColumns.filter((col) => visibleColumns.includes(col.id as ColumnId)),
     );
 }
-
-// -------------------- Component --------------------
 
 export function FileTreeTable({
     files,
     visibleColumns = ["name", "size", "progress", "priority", "remaining"],
+    onSelectChange,
 }: {
     files: FileInfo[];
     visibleColumns?: ColumnId[];
+    onSelectChange?: (selectedPaths: string[]) => void;
 }) {
     const allRows = useMemo(() => buildFlatFileTree(files), [files]);
 
@@ -227,6 +248,7 @@ export function FileTreeTable({
     }, [allRows]);
 
     const [expandedRows, setExpandedRows] = useState<Set<string>>(rootPaths);
+    const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
 
     const visibleRows = useMemo(() => {
         const visible: FileItem[] = [];
@@ -247,9 +269,24 @@ export function FileTreeTable({
         });
     };
 
+    const setSelected = (path: string, checked: boolean) => {
+        setSelectedPaths((prev) => {
+            const copy = new Set(prev);
+            checked ? copy.add(path) : copy.delete(path);
+            onSelectChange?.(Array.from(copy));
+            return copy;
+        });
+    };
+
     const table = useReactTable({
         data: visibleRows,
-        columns: createColumns(expandedRows, toggle, visibleColumns),
+        columns: createColumns(
+            expandedRows,
+            toggle,
+            selectedPaths,
+            setSelected,
+            visibleColumns,
+        ),
         getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.path,
     });

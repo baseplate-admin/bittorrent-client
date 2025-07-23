@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
     ColumnDef,
     useReactTable,
@@ -27,6 +27,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+
 export type ColumnId = "name" | "size" | "progress" | "priority" | "remaining";
 
 interface FileItem {
@@ -38,20 +39,6 @@ interface FileItem {
     children?: FileItem[];
     path: string;
     depth: number;
-}
-
-function formatPriority(priority: number): string {
-    const map: Record<number, string> = {
-        0: "Do Not Download",
-        1: "Low",
-        2: "Low",
-        3: "Normal",
-        4: "Normal",
-        5: "High",
-        6: "High",
-        7: "Maximum",
-    };
-    return map[priority] ?? "Unknown";
 }
 
 function buildFlatFileTree(files: FileInfo[]): FileItem[] {
@@ -141,7 +128,9 @@ function createColumns(
     selected: Set<string>,
     setSelected: (path: string, checked: boolean) => void,
     visibleColumns: ColumnId[],
-): ColumnDef<FileItem>[] {
+    onPriorityChange: (path: string, priority: number) => void,
+    allRowsMap: Map<string, FileItem>,
+) {
     const baseColumns: ColumnDef<FileItem>[] = [];
 
     baseColumns.push({
@@ -179,6 +168,7 @@ function createColumns(
                             <button
                                 onClick={() => toggle(file.path)}
                                 className="mr-1 focus:outline-none"
+                                aria-label={isExpanded ? "Collapse" : "Expand"}
                             >
                                 {isExpanded ? (
                                     <ChevronDown size={14} />
@@ -229,14 +219,12 @@ function createColumns(
                     7: "Maximum",
                 };
 
-                const updatePriority = (newPriority: number) => {
-                    file.priority = newPriority;
-                };
-
                 return (
                     <Select
                         value={String(file.priority)}
-                        onValueChange={(val) => updatePriority(Number(val))}
+                        onValueChange={(val) =>
+                            onPriorityChange(file.path, Number(val))
+                        }
                     >
                         <SelectTrigger className="h-8 w-40 text-xs">
                             <SelectValue placeholder="Select priority" />
@@ -276,7 +264,19 @@ export function FileTreeTable({
     visibleColumns?: ColumnId[];
     onSelectChange?: (selectedPaths: string[]) => void;
 }) {
-    const allRows = useMemo(() => buildFlatFileTree(files), [files]);
+    // Manage files state so we can update priority etc
+    const [allRows, setAllRows] = useState<FileItem[]>(() =>
+        buildFlatFileTree(files),
+    );
+
+    // Create a map for quick path -> FileItem lookup
+    const allRowsMap = useMemo(() => {
+        const map = new Map<string, FileItem>();
+        for (const row of allRows) {
+            map.set(row.path, row);
+        }
+        return map;
+    }, [allRows]);
 
     const rootPaths = useMemo(() => {
         return new Set(allRows.filter((r) => r.depth === 0).map((r) => r.path));
@@ -287,6 +287,7 @@ export function FileTreeTable({
         return new Set(allRows.map((r) => r.path)); // all selected initially
     });
 
+    // Handle visible rows based on expansion
     const visibleRows = useMemo(() => {
         const visible: FileItem[] = [];
         for (const row of allRows) {
@@ -298,6 +299,27 @@ export function FileTreeTable({
         return visible;
     }, [allRows, expandedRows]);
 
+    // Recursive function to get all descendants paths of a folder
+    const getDescendantPaths = (path: string): string[] => {
+        const result: string[] = [];
+        const stack = [path];
+        while (stack.length > 0) {
+            const currentPath = stack.pop()!;
+            result.push(currentPath);
+            const children = allRows.filter(
+                (r) =>
+                    r.path !== currentPath &&
+                    r.path.startsWith(currentPath + "/"),
+            );
+            for (const child of children) {
+                // Only add direct children (depth = parent depth + 1)
+                // To avoid duplicates and only direct descendants, but to be safe add all descendants
+                if (!result.includes(child.path)) stack.push(child.path);
+            }
+        }
+        return result;
+    };
+
     const toggle = (path: string) => {
         setExpandedRows((prev) => {
             const copy = new Set(prev);
@@ -307,33 +329,35 @@ export function FileTreeTable({
     };
 
     const setSelected = (path: string, checked: boolean) => {
-        const affectedPaths = new Set<string>();
-        const baseDepth = allRows.find((r) => r.path === path)?.depth ?? 0;
-        let startCollecting = false;
-
-        for (const r of allRows) {
-            if (r.path === path) {
-                startCollecting = true;
-                affectedPaths.add(r.path); // Always include the clicked folder
-                continue;
-            }
-            if (startCollecting) {
-                if (r.depth <= baseDepth) break; // stop when sibling/parent appears
-                affectedPaths.add(r.path);
-            }
-        }
+        // Get all descendants to propagate selection/deselection
+        const descendants = getDescendantPaths(path);
 
         setSelectedPaths((prev) => {
             const copy = new Set(prev);
             if (checked) {
-                affectedPaths.forEach((p) => copy.add(p));
+                descendants.forEach((p) => copy.add(p));
             } else {
-                affectedPaths.forEach((p) => copy.delete(p));
+                descendants.forEach((p) => copy.delete(p));
             }
             onSelectChange?.(Array.from(copy));
             return copy;
         });
     };
+
+    // Handle priority change and update state to re-render UI
+    const onPriorityChange = (path: string, newPriority: number) => {
+        setAllRows((prevRows) => {
+            // Update the priority of the changed row
+            const updatedRows = prevRows.map((r) =>
+                r.path === path ? { ...r, priority: newPriority } : r,
+            );
+
+            // Optional: recalc folder priorities if you want, but skipping for simplicity
+
+            return updatedRows;
+        });
+    };
+
     const table = useReactTable({
         data: visibleRows,
         columns: createColumns(
@@ -342,6 +366,8 @@ export function FileTreeTable({
             selectedPaths,
             setSelected,
             visibleColumns,
+            onPriorityChange,
+            allRowsMap,
         ),
         getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.path,

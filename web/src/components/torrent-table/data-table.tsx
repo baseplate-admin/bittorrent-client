@@ -27,11 +27,12 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { RowContextMenu } from "./row-context-menu";
 import { cn } from "@/lib/utils";
 import { ColumnResizer } from "../column-resizer";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
 interface TorrentDataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
 }
-
 export function TorrentDataTable<TData, TValue>({
     columns,
     data,
@@ -101,99 +102,107 @@ export function TorrentDataTable<TData, TValue>({
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, [setRowSelection, ignoredElementsRef]);
-
     return (
         <div
             className="h-full w-full rounded-md border"
             role="table"
             ref={tableRef}
         >
-            <Table style={{ width: table.getTotalSize() }}>
-                <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => (
-                                <TableHead
-                                    key={header.id}
-                                    className="relative text-center"
-                                    style={{
-                                        width: header.getSize(),
-                                    }}
-                                >
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                              header.column.columnDef.header,
-                                              header.getContext(),
-                                          )}
-
-                                    <ColumnResizer<TData> header={header} />
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    {table.getRowModel().rows.length ? (
-                        table.getRowModel().rows.map((row) => {
-                            const isSelected = !!rowSelection[row.id];
-
-                            return (
-                                <Fragment key={row.id}>
-                                    <RowContextMenu
-                                        rowData={row.original as TorrentInfo}
+            <ScrollArea className="w-full">
+                <Table style={{ width: table.getTotalSize() }}>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableHead
+                                        key={header.id}
+                                        className="relative text-center"
+                                        style={{
+                                            width: header.getSize(),
+                                        }}
                                     >
-                                        <TableRow
-                                            onClick={() =>
-                                                handleRowClick(row.id)
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                  header.column.columnDef
+                                                      .header,
+                                                  header.getContext(),
+                                              )}
+
+                                        <ColumnResizer<TData> header={header} />
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows.length ? (
+                            table.getRowModel().rows.map((row) => {
+                                const isSelected = !!rowSelection[row.id];
+
+                                return (
+                                    <Fragment key={row.id}>
+                                        <RowContextMenu
+                                            rowData={
+                                                row.original as TorrentInfo
                                             }
-                                            data-state={
-                                                isSelected
-                                                    ? "selected"
-                                                    : undefined
-                                            }
-                                            className={cn(
-                                                isSelected ? "bg-blue-100" : "",
-                                                "cursor-pointer",
-                                            )}
                                         >
-                                            {row
-                                                .getVisibleCells()
-                                                .map((cell) => (
-                                                    <TableCell
-                                                        key={cell.id}
-                                                        style={{
-                                                            width: cell.column.getSize(),
-                                                            minWidth:
+                                            <TableRow
+                                                onClick={() =>
+                                                    handleRowClick(row.id)
+                                                }
+                                                data-state={
+                                                    isSelected
+                                                        ? "selected"
+                                                        : undefined
+                                                }
+                                                className={cn(
+                                                    isSelected
+                                                        ? "bg-blue-100"
+                                                        : "",
+                                                    "cursor-pointer",
+                                                )}
+                                            >
+                                                {row
+                                                    .getVisibleCells()
+                                                    .map((cell) => (
+                                                        <TableCell
+                                                            key={cell.id}
+                                                            style={{
+                                                                width: cell.column.getSize(),
+                                                                minWidth:
+                                                                    cell.column
+                                                                        .columnDef
+                                                                        .minSize,
+                                                            }}
+                                                        >
+                                                            {flexRender(
                                                                 cell.column
                                                                     .columnDef
-                                                                    .minSize,
-                                                        }}
-                                                    >
-                                                        {flexRender(
-                                                            cell.column
-                                                                .columnDef.cell,
-                                                            cell.getContext(),
-                                                        )}
-                                                    </TableCell>
-                                                ))}
-                                        </TableRow>
-                                    </RowContextMenu>
-                                </Fragment>
-                            );
-                        })
-                    ) : (
-                        <TableRow>
-                            <TableCell
-                                colSpan={columns.length}
-                                className="h-24 text-center"
-                            >
-                                No results.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                                                                    .cell,
+                                                                cell.getContext(),
+                                                            )}
+                                                        </TableCell>
+                                                    ))}
+                                            </TableRow>
+                                        </RowContextMenu>
+                                    </Fragment>
+                                );
+                            })
+                        ) : (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columns.length}
+                                    className="h-24 text-center"
+                                >
+                                    No results.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+                <ScrollBar orientation="horizontal" />
+            </ScrollArea>
         </div>
     );
 }

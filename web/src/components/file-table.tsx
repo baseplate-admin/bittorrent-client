@@ -196,8 +196,9 @@ function createColumns(
 // -------------------- Component --------------------
 
 export function FileTreeTable({ files }: { files: FileInfo[] }) {
-    "use no memo";
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(
+        new Set([""]),
+    );
 
     const allRows = useMemo(() => buildFlatFileTree(files), [files]);
 

@@ -345,7 +345,14 @@ export function FileDialog({
                                 </div>
                             ) : (
                                 <ScrollArea className="flex-grow">
-                                    <FileTreeTable files={files} />
+                                    <FileTreeTable
+                                        files={files}
+                                        visibleColumns={[
+                                            "name",
+                                            "size",
+                                            "priority",
+                                        ]}
+                                    />
                                     <ScrollBar orientation="horizontal" />
                                 </ScrollArea>
                             )}

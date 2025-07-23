@@ -20,6 +20,8 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { FileInfo } from "@/types/socket/files";
 import { formatBytes } from "@/lib/formatBytes";
 
+export type ColumnId = "name" | "size" | "progress" | "priority" | "remaining";
+
 interface FileItem {
     name: string;
     size: number;
@@ -131,9 +133,17 @@ function buildFlatFileTree(files: FileInfo[]): FileItem[] {
 function createColumns(
     expandedRows: Set<string>,
     toggle: (path: string) => void,
+    visibleColumns: ColumnId[] = [
+        "name",
+        "size",
+        "progress",
+        "priority",
+        "remaining",
+    ],
 ): ColumnDef<FileItem>[] {
-    return [
+    const allColumns: ColumnDef<FileItem>[] = [
         {
+            id: "name",
             accessorKey: "name",
             header: "Name",
             cell: ({ row }) => {
@@ -166,11 +176,13 @@ function createColumns(
             },
         },
         {
+            id: "size",
             accessorKey: "size",
             header: "Total Size",
             cell: ({ row }) => formatBytes({ bytes: row.original.size }),
         },
         {
+            id: "progress",
             accessorKey: "progress",
             header: "Progress",
             cell: ({ row }) => (
@@ -181,24 +193,35 @@ function createColumns(
             ),
         },
         {
+            id: "priority",
             accessorKey: "priority",
             header: "Download Priority",
             cell: ({ row }) => formatPriority(row.original.priority),
         },
         {
+            id: "remaining",
             accessorKey: "remaining",
             header: "Remaining",
             cell: ({ row }) => formatBytes({ bytes: row.original.remaining }),
         },
     ];
+
+    return allColumns.filter((col) =>
+        visibleColumns.includes(col.id as ColumnId),
+    );
 }
 
 // -------------------- Component --------------------
-export function FileTreeTable({ files }: { files: FileInfo[] }) {
-    "use no memo";
+
+export function FileTreeTable({
+    files,
+    visibleColumns = ["name", "size", "progress", "priority", "remaining"],
+}: {
+    files: FileInfo[];
+    visibleColumns?: ColumnId[];
+}) {
     const allRows = useMemo(() => buildFlatFileTree(files), [files]);
 
-    // Collect all root-level paths to expand them by default
     const rootPaths = useMemo(() => {
         return new Set(allRows.filter((r) => r.depth === 0).map((r) => r.path));
     }, [allRows]);
@@ -226,7 +249,7 @@ export function FileTreeTable({ files }: { files: FileInfo[] }) {
 
     const table = useReactTable({
         data: visibleRows,
-        columns: createColumns(expandedRows, toggle),
+        columns: createColumns(expandedRows, toggle, visibleColumns),
         getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.path,
     });

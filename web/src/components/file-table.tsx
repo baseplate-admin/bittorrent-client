@@ -213,10 +213,7 @@ function createColumns(
                 const priorityOptions: Record<number, string> = {
                     0: "Do Not Download",
                     1: "Low",
-                    2: "Low",
-                    3: "Normal",
                     4: "Normal",
-                    5: "High",
                     6: "High",
                     7: "Maximum",
                 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useRef } from "react";
 import {
     ColumnDef,
     useReactTable,
@@ -125,11 +125,10 @@ function buildFlatFileTree(files: FileInfo[]): FileItem[] {
 function createColumns(
     expandedRows: Set<string>,
     toggle: (path: string) => void,
-    selected: Set<string>,
-    setSelected: (path: string, checked: boolean) => void,
+    allRows: FileItem[],
+    setPriorityByCheckbox: (path: string, checked: boolean) => void,
     visibleColumns: ColumnId[],
     onPriorityChange: (path: string, priority: number) => void,
-    allRowsMap: Map<string, FileItem>,
 ) {
     const baseColumns: ColumnDef<FileItem>[] = [];
 
@@ -138,10 +137,13 @@ function createColumns(
         header: () => null,
         cell: ({ row }) => {
             const file = row.original;
+            const isChecked = file.priority > 0;
             return (
                 <Checkbox
-                    checked={selected.has(file.path)}
-                    onCheckedChange={(v) => setSelected(file.path, Boolean(v))}
+                    checked={isChecked}
+                    onCheckedChange={(v) =>
+                        setPriorityByCheckbox(file.path, Boolean(v))
+                    }
                 />
             );
         },
@@ -157,7 +159,7 @@ function createColumns(
                 const file = row.original;
                 const hasChildren = !!file.children?.length;
                 const isExpanded = expandedRows.has(file.path);
-                const isSelected = selected.has(file.path);
+                const isSelected = file.priority > 0;
 
                 return (
                     <div
@@ -264,28 +266,25 @@ export function FileTreeTable({
     visibleColumns?: ColumnId[];
     onSelectChange?: (selectedPaths: string[]) => void;
 }) {
-    // Manage files state so we can update priority etc
     const [allRows, setAllRows] = useState<FileItem[]>(() =>
         buildFlatFileTree(files),
     );
 
-    // Create a map for quick path -> FileItem lookup
-    const allRowsMap = useMemo(() => {
-        const map = new Map<string, FileItem>();
-        for (const row of allRows) {
-            map.set(row.path, row);
-        }
-        return map;
-    }, [allRows]);
+    // Map path => saved priority (for restoring on re-check)
+    const savedPriorities = useRef<Map<string, number>>(new Map());
 
     const rootPaths = useMemo(() => {
         return new Set(allRows.filter((r) => r.depth === 0).map((r) => r.path));
     }, [allRows]);
 
     const [expandedRows, setExpandedRows] = useState<Set<string>>(rootPaths);
-    const [selectedPaths, setSelectedPaths] = useState<Set<string>>(() => {
-        return new Set(allRows.map((r) => r.path)); // all selected initially
-    });
+
+    // Compute selectedPaths from priorities (priority > 0)
+    const selectedPaths = useMemo(() => {
+        return new Set(
+            allRows.filter((r) => r.priority > 0).map((r) => r.path),
+        );
+    }, [allRows]);
 
     // Handle visible rows based on expansion
     const visibleRows = useMemo(() => {
@@ -299,7 +298,7 @@ export function FileTreeTable({
         return visible;
     }, [allRows, expandedRows]);
 
-    // Recursive function to get all descendants paths of a folder
+    // Get all descendants for a path
     const getDescendantPaths = (path: string): string[] => {
         const result: string[] = [];
         const stack = [path];
@@ -326,37 +325,72 @@ export function FileTreeTable({
         });
     };
 
-    const setSelected = (path: string, checked: boolean) => {
-        // Get all descendants to propagate selection/deselection
-        const descendants = getDescendantPaths(path);
-
-        setSelectedPaths((prev) => {
-            const copy = new Set(prev);
-            if (checked) {
-                descendants.forEach((p) => copy.add(p));
-            } else {
-                descendants.forEach((p) => copy.delete(p));
-            }
-            onSelectChange?.(Array.from(copy));
-            return copy;
-        });
-    };
-
-    // Handle priority change and update state to re-render UI
-    const onPriorityChange = (path: string, newPriority: number) => {
-        // Find all descendants (including the folder itself)
+    // Checkbox toggle updates priority to 0 or restores saved
+    const setPriorityByCheckbox = (path: string, checked: boolean) => {
         const descendants = getDescendantPaths(path);
 
         setAllRows((prevRows) => {
-            const updatedRows = prevRows.map((r) => {
+            return prevRows.map((r) => {
                 if (descendants.includes(r.path)) {
-                    return { ...r, priority: newPriority };
+                    if (!checked) {
+                        // Save previous priority before zeroing
+                        if (r.priority !== 0) {
+                            savedPriorities.current.set(r.path, r.priority);
+                        }
+                        return { ...r, priority: 0 };
+                    } else {
+                        // Restore saved or default priority (3)
+                        const saved = savedPriorities.current.get(r.path);
+                        if (saved !== undefined) {
+                            savedPriorities.current.delete(r.path);
+                            return { ...r, priority: saved };
+                        }
+                        if (r.priority === 0) {
+                            return { ...r, priority: 3 };
+                        }
+                    }
                 }
                 return r;
             });
-
-            return updatedRows;
         });
+
+        // Notify selected paths after update
+        // Delay call to next tick to let state update propagate
+        setTimeout(() => {
+            onSelectChange?.(
+                allRows
+                    .filter((r) =>
+                        descendants.includes(r.path) ? checked : r.priority > 0,
+                    )
+                    .map((r) => r.path),
+            );
+        }, 0);
+    };
+
+    const onPriorityChange = (path: string, newPriority: number) => {
+        const descendants = getDescendantPaths(path);
+
+        setAllRows((prevRows) =>
+            prevRows.map((r) => {
+                if (descendants.includes(r.path)) {
+                    if (newPriority === 0 && r.priority !== 0) {
+                        savedPriorities.current.set(r.path, r.priority);
+                    }
+                    if (newPriority !== 0) {
+                        savedPriorities.current.delete(r.path);
+                    }
+                    return { ...r, priority: newPriority };
+                }
+                return r;
+            }),
+        );
+
+        // Notify selected after priority change
+        setTimeout(() => {
+            onSelectChange?.(
+                allRows.filter((r) => r.priority > 0).map((r) => r.path),
+            );
+        }, 0);
     };
 
     const table = useReactTable({
@@ -364,11 +398,10 @@ export function FileTreeTable({
         columns: createColumns(
             expandedRows,
             toggle,
-            selectedPaths,
-            setSelected,
+            allRows,
+            setPriorityByCheckbox,
             visibleColumns,
             onPriorityChange,
-            allRowsMap,
         ),
         getCoreRowModel: getCoreRowModel(),
         getRowId: (row) => row.path,
@@ -394,11 +427,11 @@ export function FileTreeTable({
 
                 <TableBody>
                     {table.getRowModel().rows.map((row) => {
-                        const selected = selectedPaths.has(row.original.path);
+                        const isSelected = row.original.priority > 0;
                         return (
                             <TableRow
                                 key={row.id}
-                                className={!selected ? "opacity-50" : ""}
+                                className={!isSelected ? "opacity-50" : ""}
                             >
                                 {row.getVisibleCells().map((cell) => (
                                     <TableCell key={cell.id}>

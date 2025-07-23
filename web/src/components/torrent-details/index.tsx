@@ -4,13 +4,13 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAtomValue, useSetAtom } from "jotai";
 import { broadcastTorrentAtom } from "@/atoms/torrent";
 import { selectedRowAtom, ignoredElementsRefAtom } from "@/atoms/table";
-import { BroadcastTorrentInfo, TorrentInfo } from "@/types/socket/torrent_info";
+import { BroadcastTorrentInfo } from "@/types/socket/torrent_info";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 // Tabs import
-import GeneralTab from "./general-tab/component";
-import TrackersTab from "./tracker-tab/component";
-import PeersTab from "./peers-tab/component";
+import GeneralTab from "./general-tab";
+import TrackersTab from "./tracker-tab";
+import PeersTab from "./peers-tab";
 import { cn } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 

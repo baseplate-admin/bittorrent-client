@@ -6,20 +6,22 @@ import TorrentDetails from "@/components/torrent-details/component";
 
 export default function TorrentsLayout({
     children,
-}: Readonly<{
+}: {
     children: React.ReactNode;
-}>) {
+}) {
     return (
-        <>
+        <div className="flex h-[100dvh] w-[100dvw]">
             <SidebarProvider>
-                <AppSidebar />
+                <div className="flex-shrink-0">
+                    <AppSidebar />
+                </div>
                 <SocketProvider />
-                <main className="flex w-full flex-col justify-between gap-4 p-4">
+                <main className="flex flex-1 flex-col justify-between gap-4 overflow-auto p-4">
                     <ActionButtons />
                     {children}
                     <TorrentDetails />
                 </main>
             </SidebarProvider>
-        </>
+        </div>
     );
 }

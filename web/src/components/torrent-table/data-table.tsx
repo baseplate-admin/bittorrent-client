@@ -108,7 +108,7 @@ export function TorrentDataTable<TData, TValue>({
             role="table"
             ref={tableRef}
         >
-            <ScrollArea className="w-full">
+            <ScrollArea className="w-full overflow-x-auto">
                 <Table style={{ width: table.getTotalSize() }}>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (

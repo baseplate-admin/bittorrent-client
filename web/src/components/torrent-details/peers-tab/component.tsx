@@ -10,11 +10,18 @@ import { isValidIP } from "@/lib/isValidIp";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useSocketConnection } from "@/hooks/use-socket";
 
+type EnrichedPeer = Peer & {
+    isoCode?: string;
+    country?: string;
+};
+
 export default function PeersTab({ infoHash }: { infoHash: string }) {
-    const [enrichedPeers, setEnrichedPeers] = useState<Peer[]>([]);
+    const [enrichedPeers, setEnrichedPeers] = useState<EnrichedPeer[]>([]);
     const [loading, setLoading] = useState(false);
     const hasLoadedOnce = useRef(false);
-    const enrichmentCache = useRef(new Map<string, string | null>());
+    const enrichmentCache = useRef(
+        new Map<string, { isoCode?: string; country?: string } | undefined>(),
+    );
 
     const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
         threshold: 0.5,
@@ -58,24 +65,41 @@ export default function PeersTab({ infoHash }: { infoHash: string }) {
                             const ip = peer.ip;
 
                             if (!isValidIP(ip)) {
-                                return { ...peer, isoCode: null };
+                                return {
+                                    ...peer,
+                                    isoCode: undefined,
+                                    country: undefined,
+                                };
                             }
 
                             if (enrichmentCache.current.has(ip)) {
+                                const cached = enrichmentCache.current.get(ip);
                                 return {
                                     ...peer,
-                                    isoCode: enrichmentCache.current.get(ip),
+                                    isoCode: cached?.isoCode ?? undefined,
+                                    country: cached?.country ?? undefined,
                                 };
                             }
 
                             try {
-                                const isoCode = await getCountryISOFromIp(ip);
-                                enrichmentCache.current.set(ip, isoCode);
-                                return { ...peer, isoCode };
+                                const geoInfo = await getCountryISOFromIp(ip);
+                                enrichmentCache.current.set(ip, {
+                                    isoCode: geoInfo?.isoCode ?? undefined,
+                                    country: geoInfo?.country ?? undefined,
+                                });
+                                return {
+                                    ...peer,
+                                    isoCode: geoInfo?.isoCode ?? undefined,
+                                    country: geoInfo?.country ?? undefined,
+                                };
                             } catch (e) {
                                 console.warn("Could not fetch ISO for", ip, e);
-                                enrichmentCache.current.set(ip, null);
-                                return { ...peer, isoCode: null };
+                                enrichmentCache.current.set(ip, undefined);
+                                return {
+                                    ...peer,
+                                    isoCode: undefined,
+                                    country: undefined,
+                                };
                             }
                         }),
                     );
@@ -92,7 +116,6 @@ export default function PeersTab({ infoHash }: { infoHash: string }) {
                     hasLoadedOnce.current = true;
                 }
 
-                // Wait some time before next fetch to avoid spamming server
                 await new Promise((res) => setTimeout(res, 1000));
             }
         }

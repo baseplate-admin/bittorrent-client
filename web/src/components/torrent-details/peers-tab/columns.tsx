@@ -19,25 +19,32 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
         accessorKey: "isoCode",
         header: TableHeaderSortButton("Country/Region"),
         cell: (info) => {
-            const isoValue = info.getValue() as string;
+            const isoValue = info.getValue() as string | undefined;
+            // Get the entire row's data to access `country`
+            const rowData = info.row.original as {
+                isoCode?: string;
+                country?: string;
+            };
+
+            if (!isoValue) {
+                return <span>N/A</span>;
+            }
+
             return (
-                <>
-                    {isoValue === null && typeof isoValue !== "string" ? (
-                        <span>N/A</span>
-                    ) : (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost">
-                                    <CountryFlag
-                                        iso={isoValue}  
-                                        title={isoValue}
-                                    />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>{isoValue}</TooltipContent>
-                        </Tooltip>
-                    )}
-                </>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label={rowData.country ?? isoValue}
+                        >
+                            <CountryFlag iso={isoValue} title={isoValue} />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {rowData.country ?? isoValue}
+                    </TooltipContent>
+                </Tooltip>
             );
         },
     },

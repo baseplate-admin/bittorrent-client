@@ -31,11 +31,14 @@ async function loadMaxmind(): Promise<Maxmind> {
 }
 
 export const getCountryISOFromIp = (() => {
-    return async function (ip: string): Promise<string | null> {
+    return async function (ip: string) {
         try {
             const maxmindInstance = await loadMaxmind();
             const result = maxmindInstance.lookup_city(ip);
-            return result?.country?.iso_code ?? null;
+            return {
+                isoCode: result?.country?.iso_code ?? null,
+                country: result?.country?.names?.en ?? null,
+            };
         } catch (err) {
             console.error("getCountryISOFromIp error:", err);
             return null;

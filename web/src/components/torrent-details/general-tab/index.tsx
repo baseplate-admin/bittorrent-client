@@ -16,8 +16,6 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { TOOLTIP_DELAY } from "@/consts/tooltip";
-import { broadcastTorrentAtom } from "@/atoms/torrent";
-import { useAtomValue } from "jotai";
 
 export default function GeneralTab({
     infoHash,

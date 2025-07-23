@@ -1,17 +1,24 @@
 "use client";
-import React, { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+
+import React, { useMemo, useState } from "react";
+import {
+    ColumnDef,
+    useReactTable,
+    getCoreRowModel,
+    flexRender,
+} from "@tanstack/react-table";
+import {
+    Table,
+    TableHeader,
+    TableRow,
+    TableHead,
+    TableBody,
+    TableCell,
+} from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
-
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { FileInfo } from "@/types/socket/files";
 import { formatBytes } from "@/lib/formatBytes";
-
-export interface FileInfo {
-    path: string;
-    size: number;
-    progress: number;
-    remaining: number;
-    priority: number;
-}
 
 interface FileItem {
     name: string;
@@ -21,9 +28,24 @@ interface FileItem {
     priority: number;
     children?: FileItem[];
     path: string;
+    depth: number;
 }
 
-function buildFileTree(files: FileInfo[]): FileItem[] {
+function formatPriority(priority: number): string {
+    const map: Record<number, string> = {
+        0: "Do Not Download",
+        1: "Low",
+        2: "Low",
+        3: "Normal",
+        4: "Normal",
+        5: "High",
+        6: "High",
+        7: "Maximum",
+    };
+    return map[priority] ?? "Unknown";
+}
+
+function buildFlatFileTree(files: FileInfo[]): FileItem[] {
     const root: Record<string, any> = {};
 
     for (const file of files) {
@@ -53,11 +75,14 @@ function buildFileTree(files: FileInfo[]): FileItem[] {
         }
     }
 
-    function convert(node: Record<string, any>): FileItem[] {
-        return Object.values(node).map((entry: any) => {
+    function flatten(node: Record<string, any>, depth = 0): FileItem[] {
+        const items: FileItem[] = [];
+
+        for (const entry of Object.values(node)) {
             let children: FileItem[] | undefined;
+
             if (entry.children && Object.keys(entry.children).length) {
-                children = convert(entry.children);
+                children = flatten(entry.children, depth + 1);
                 entry.size = children.reduce(
                     (sum: number, c: FileItem) => sum + c.size,
                     0,
@@ -72,12 +97,12 @@ function buildFileTree(files: FileInfo[]): FileItem[] {
                     0,
                 );
                 entry.priority = children.reduce(
-                    (max: number, c: FileItem) =>
-                        c.priority > max ? c.priority : max,
+                    (max: number, c: FileItem) => Math.max(max, c.priority),
                     0,
                 );
             }
-            return {
+
+            const flat: FileItem = {
                 name: entry.name,
                 size: entry.size,
                 progress: entry.progress,
@@ -85,113 +110,162 @@ function buildFileTree(files: FileInfo[]): FileItem[] {
                 priority: entry.priority,
                 path: entry.path,
                 children,
+                depth,
             };
-        });
+
+            items.push(flat);
+
+            if (children) {
+                items.push(...children);
+            }
+        }
+
+        return items;
     }
 
-    return convert(root);
+    return flatten(root);
 }
 
-function formatPriority(priority: number): string {
-    const map: Record<number, string> = {
-        0: "Do Not Download",
-        1: "Low",
-        2: "Low",
-        3: "Normal",
-        4: "Normal",
-        5: "High",
-        6: "High",
-        7: "Maximum",
-    };
-    return map[priority] ?? "Unknown";
-}
-// Recursive row renderer
-function RenderRow({ file, depth = 0 }: { file: FileItem; depth?: number }) {
-    const [expanded, setExpanded] = useState(true);
-    const hasChildren = file.children && file.children.length > 0;
+// -------------------- Columns --------------------
 
-    return (
-        <>
-            <tr>
-                <td
-                    style={{ paddingLeft: depth * 24 }}
-                    className="max-w-0 overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap"
-                >
-                    <div className="flex items-center gap-1">
+function createColumns(
+    expandedRows: Set<string>,
+    toggle: (path: string) => void,
+): ColumnDef<FileItem>[] {
+    return [
+        {
+            accessorKey: "name",
+            header: "Name",
+            cell: ({ row }) => {
+                const file = row.original;
+                const hasChildren = !!file.children?.length;
+                const isExpanded = expandedRows.has(file.path);
+
+                return (
+                    <div
+                        className="flex items-center"
+                        style={{ paddingLeft: file.depth * 24 }}
+                    >
                         {hasChildren ? (
                             <button
-                                onClick={() => setExpanded(!expanded)}
-                                aria-label={
-                                    expanded
-                                        ? "Collapse folder"
-                                        : "Expand folder"
-                                }
-                                className="shrink-0 focus:outline-none"
-                                type="button"
+                                onClick={() => toggle(file.path)}
+                                className="mr-1 focus:outline-none"
                             >
-                                {expanded ? (
+                                {isExpanded ? (
                                     <ChevronDown size={14} />
                                 ) : (
                                     <ChevronRight size={14} />
                                 )}
                             </button>
                         ) : (
-                            <span className="inline-block w-4 shrink-0" />
+                            <span className="inline-block w-4" />
                         )}
-                        <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
-                            {file.name}
-                        </span>
+                        <span className="truncate">{file.name}</span>
                     </div>
-                </td>
-                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
-                    {formatBytes({ bytes: file.size })}
-                </td>
-                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
-                    <Progress value={file.progress * 100} className="w-24" />
-                </td>
-                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
-                    {formatPriority(file.priority)}
-                </td>
-                <td className="overflow-hidden px-4 py-2 text-ellipsis whitespace-nowrap">
-                    {formatBytes({ bytes: file.remaining })}
-                </td>
-            </tr>
-            {expanded &&
-                hasChildren &&
-                file.children!.map((child) => (
-                    <RenderRow
-                        key={child.path}
-                        file={child}
-                        depth={depth + 1}
-                    />
-                ))}
-        </>
-    );
+                );
+            },
+        },
+        {
+            accessorKey: "size",
+            header: "Total Size",
+            cell: ({ row }) => formatBytes({ bytes: row.original.size }),
+        },
+        {
+            accessorKey: "progress",
+            header: "Progress",
+            cell: ({ row }) => (
+                <Progress
+                    value={row.original.progress * 100}
+                    className="w-24"
+                />
+            ),
+        },
+        {
+            accessorKey: "priority",
+            header: "Download Priority",
+            cell: ({ row }) => formatPriority(row.original.priority),
+        },
+        {
+            accessorKey: "remaining",
+            header: "Remaining",
+            cell: ({ row }) => formatBytes({ bytes: row.original.remaining }),
+        },
+    ];
 }
 
+// -------------------- Component --------------------
+
 export function FileTreeTable({ files }: { files: FileInfo[] }) {
-    const fileTree = buildFileTree(files);
+    "use no memo";
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+    const allRows = useMemo(() => buildFlatFileTree(files), [files]);
+
+    const visibleRows = useMemo(() => {
+        const visible: FileItem[] = [];
+        const parentPaths = new Set([""]);
+
+        for (const row of allRows) {
+            const parent = row.path.split("/").slice(0, -1).join("/");
+            if (row.depth === 0 || expandedRows.has(parent)) {
+                visible.push(row);
+                if (!expandedRows.has(row.path)) {
+                    parentPaths.delete(row.path);
+                }
+            }
+        }
+
+        return visible;
+    }, [allRows, expandedRows]);
+
+    const toggle = (path: string) => {
+        setExpandedRows((prev) => {
+            const copy = new Set(prev);
+            copy.has(path) ? copy.delete(path) : copy.add(path);
+            return copy;
+        });
+    };
+
+    const table = useReactTable({
+        data: visibleRows,
+        columns: createColumns(expandedRows, toggle),
+        getCoreRowModel: getCoreRowModel(),
+        getRowId: (row) => row.path,
+    });
 
     return (
-        <div className="overflow-hidden rounded-xl border shadow-sm">
-            <table className="min-w-full text-sm">
-                <thead className="bg-muted text-muted-foreground">
-                    <tr>
-                        <th className="px-4 py-2 text-left">Name</th>
-                        <th className="px-4 py-2 text-left">Total Size</th>
-                        <th className="px-4 py-2 text-left">Progress</th>
-                        <th className="px-4 py-2 text-left">
-                            Download Priority
-                        </th>
-                        <th className="px-4 py-2 text-left">Remaining</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {fileTree.map((file) => (
-                        <RenderRow key={file.path} file={file} />
+        <div className="rounded-xl border shadow-sm">
+            <Table>
+                <TableHeader className="bg-muted text-muted-foreground">
+                    {table.getHeaderGroups().map((group) => (
+                        <TableRow key={group.id}>
+                            {group.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                    {flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext(),
+                                    )}
+                                </TableHead>
+                            ))}
+                        </TableRow>
                     ))}
-                </tbody>
-            </table>
+                </TableHeader>
+
+                <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id}>
+                            {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id}>
+                                    {flexRender(
+                                        cell.column.columnDef.cell,
+                                        cell.getContext(),
+                                    )}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
         </div>
     );
 }

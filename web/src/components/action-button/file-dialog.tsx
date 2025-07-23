@@ -24,9 +24,9 @@ import {
     SelectValue,
 } from "../ui/select";
 import { formatBytes } from "@/lib/formatBytes";
-import { TorrentInfo } from "@/types/socket/torrent_info";
 import { FileInfo } from "@/types/socket/files";
 import { FileTreeTable } from "../file-table";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 
 type Metadata = {
     name: string;
@@ -88,7 +88,6 @@ export function FileDialog({
                         },
                         (_response: {
                             status: "error" | "success";
-
                             files: FileInfo[];
                         }) => {
                             if (_response.status === "success") {
@@ -167,14 +166,14 @@ export function FileDialog({
 
     return (
         <Dialog open={dialogOpen} onOpenChange={closeDialog}>
-            <DialogContent className="max-h-[90vh] w-full min-w-[70vw]">
+            <DialogContent className="flex h-[90vh] w-full min-w-[70vw] flex-col">
                 <DialogHeader>
                     <DialogTitle>Save Torrent</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex w-full gap-6">
+                <div className="flex flex-grow gap-6 overflow-hidden">
                     {/* Left Pane */}
-                    <div className="flex w-[40%] flex-col gap-6 overflow-y-auto pr-2">
+                    <div className="flex min-h-0 w-[40%] flex-col gap-6 overflow-auto pr-2">
                         <div className="grid gap-1">
                             <Label htmlFor="save-location">Save at</Label>
                             <div className="flex gap-2">
@@ -308,15 +307,11 @@ export function FileDialog({
                             </div>
                             <div>
                                 <strong>Size: </strong>
-                                {metadata?.size ? (
-                                    <>
-                                        {formatBytes({
-                                            bytes: Number(metadata?.size) ?? 0,
-                                        })}
-                                    </>
-                                ) : (
-                                    "Not available (Free space on disk: 736.55 GiB)"
-                                )}
+                                {metadata?.size
+                                    ? formatBytes({
+                                          bytes: Number(metadata.size),
+                                      })
+                                    : "Not available (Free space on disk: 736.55 GiB)"}
                             </div>
                             <div>
                                 <strong>Date:</strong> Not Available
@@ -335,23 +330,24 @@ export function FileDialog({
                     </div>
 
                     {/* Right Pane */}
-                    <div className="w-[60%] overflow-hidden">
-                        <div className="bg-surface text-primary h-full rounded border p-3">
+                    <div className="flex min-h-0 w-[60%] flex-col overflow-hidden">
+                        <div className="bg-surface text-primary flex flex-grow flex-col overflow-hidden rounded border p-3">
                             <h3 className="text-primary border-b p-3 font-semibold">
                                 File List Preview
                             </h3>
                             {loading ? (
-                                <div className="flex h-full items-center justify-center">
+                                <div className="flex flex-grow items-center justify-center">
                                     <p>Loading files...</p>
                                 </div>
                             ) : files.length === 0 ? (
-                                <div className="flex h-full items-center justify-center">
+                                <div className="flex flex-grow items-center justify-center">
                                     <p>No files available</p>
                                 </div>
                             ) : (
-                                <div className="w-full overflow-auto">
+                                <ScrollArea className="flex-grow">
                                     <FileTreeTable files={files} />
-                                </div>
+                                    <ScrollBar orientation="horizontal" />
+                                </ScrollArea>
                             )}
                         </div>
                     </div>

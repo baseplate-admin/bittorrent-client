@@ -20,7 +20,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { FileInfo } from "@/types/socket/files";
 import { formatBytes } from "@/lib/formatBytes";
-
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 export type ColumnId = "name" | "size" | "progress" | "priority" | "remaining";
 
 interface FileItem {
@@ -209,7 +215,44 @@ function createColumns(
             id: "priority",
             accessorKey: "priority",
             header: "Download Priority",
-            cell: ({ row }) => formatPriority(row.original.priority),
+            cell: ({ row }) => {
+                const file = row.original;
+
+                const priorityOptions: Record<number, string> = {
+                    0: "Do Not Download",
+                    1: "Low",
+                    2: "Low",
+                    3: "Normal",
+                    4: "Normal",
+                    5: "High",
+                    6: "High",
+                    7: "Maximum",
+                };
+
+                const updatePriority = (newPriority: number) => {
+                    file.priority = newPriority;
+                };
+
+                return (
+                    <Select
+                        value={String(file.priority)}
+                        onValueChange={(val) => updatePriority(Number(val))}
+                    >
+                        <SelectTrigger className="h-8 w-40 text-xs">
+                            <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Object.entries(priorityOptions).map(
+                                ([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                        {label}
+                                    </SelectItem>
+                                ),
+                            )}
+                        </SelectContent>
+                    </Select>
+                );
+            },
         },
         {
             id: "remaining",

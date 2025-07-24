@@ -27,10 +27,10 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowUpDownDualColor } from "@/icons/ArrowUpDownDualColor";
-
+import { ArrowUpDownDualColor } from "@/styled-components/icons/ArrowUpDownDualColor";
+import { parseCustomPathname } from "./utils";
 const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     {
         title: "All",
@@ -151,8 +151,14 @@ export function AppSidebar() {
                                     <CollapsibleContent className="ml-4">
                                         <div className="flex flex-col gap-0.5">
                                             {items.map((item) => {
+                                                const absolutePath =
+                                                    parseCustomPathname({
+                                                        currentPathname:
+                                                            pathname,
+                                                        relativeUrl: item.url,
+                                                    });
                                                 const isActive =
-                                                    pathname === item.url;
+                                                    pathname === absolutePath;
 
                                                 return (
                                                     <SidebarMenuItem
@@ -164,9 +170,9 @@ export function AppSidebar() {
                                                             <Link
                                                                 href={item.url}
                                                                 className={cn(
-                                                                    "text-foreground/80 flex items-center justify-start gap-2",
                                                                     isActive &&
                                                                         "bg-muted/70",
+                                                                    "text-foreground/80 flex items-center justify-start gap-2",
                                                                 )}
                                                             >
                                                                 {item.icon}

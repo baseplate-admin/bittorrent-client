@@ -2,11 +2,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     // images: { unoptimized: true },
-    output: "standalone",
+    // output: "standalone",
+    output: "export",
     productionBrowserSourceMaps: true,
     experimental: {
         reactCompiler: true,
         inlineCss: true,
+        taint: true,
     },
     compiler: {
         styledComponents: true,

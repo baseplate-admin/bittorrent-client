@@ -29,6 +29,7 @@ export function FileTreeTable({
     visibleColumns?: ColumnId[];
     onSelectChange?: (selectedPaths: string[]) => void;
 }) {
+    "use no memo";
     const [allRows, setAllRows] = useState<FileItem[]>(() =>
         buildFlatFileTree(files),
     );

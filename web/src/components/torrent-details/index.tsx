@@ -11,10 +11,24 @@ import { cn } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 
 // Tabs import
-import GeneralTab from "./general-tab";
-import TrackersTab from "./tracker-tab";
-import PeersTab from "./peers-tab";
 import NoTorrentSelected from "./no-torrent-selected";
+import dynamic from "next/dynamic";
+import TrackerTabLoading from "./tracker-tab/loading";
+import PeersTabLoading from "./peers-tab/loading";
+import GeneralTabLoading from "./general-tab/loading";
+
+const GeneralTab = dynamic(() => import("./general-tab"), {
+    loading: () => <GeneralTabLoading />,
+    ssr: false,
+});
+const TrackersTab = dynamic(() => import("./tracker-tab"), {
+    loading: () => <TrackerTabLoading />,
+    ssr: false,
+});
+const PeersTab = dynamic(() => import("./peers-tab"), {
+    loading: () => <PeersTabLoading />,
+    ssr: false,
+});
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(broadcastTorrentAtom);

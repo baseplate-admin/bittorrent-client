@@ -16,6 +16,7 @@ import { TorrentInfo } from "@/types/socket/torrent_info";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { TOOLTIP_DELAY } from "@/consts/tooltip";
+import GeneralTabLoading from "./loading";
 
 export default function GeneralTab({
     infoHash,
@@ -235,9 +236,7 @@ export default function GeneralTab({
     return (
         <div ref={ref}>
             {!hasLoadedOnce.current ? (
-                <div className="flex justify-center rounded-md border p-44">
-                    Loading...
-                </div>
+                <GeneralTabLoading />
             ) : (
                 <div>
                     <div className="mb-0.5 text-sm font-medium">Progress:</div>

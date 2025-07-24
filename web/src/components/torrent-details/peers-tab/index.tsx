@@ -9,6 +9,7 @@ import { getCountryISOFromIp } from "@/lib/getCountryISOFromIp";
 import { isValidIP } from "@/lib/isValidIp";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useSocketConnection } from "@/hooks/use-socket";
+import PeersTabLoading from "./loading";
 
 type EnrichedPeer = Peer & {
     isoCode?: string;
@@ -130,9 +131,7 @@ export default function PeersTab({ infoHash }: { infoHash: string }) {
     return (
         <ScrollArea ref={ref} className="h-96">
             {loading ? (
-                <div className="text-foreground flex h-full items-center justify-center">
-                    Loading peers...
-                </div>
+                <PeersTabLoading />
             ) : (
                 <PeerTabDataTable data={enrichedPeers} columns={columns} />
             )}

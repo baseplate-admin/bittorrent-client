@@ -108,7 +108,6 @@ export default function ActionButtons() {
                             onClick={() =>
                                 handleDownloadButtonClick(closeDialog)
                             }
-                            variant="outline"
                         >
                             Download
                         </Button>

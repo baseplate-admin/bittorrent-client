@@ -55,10 +55,6 @@ export function TorrentDataTable<TData, TValue>({
         };
     }, [tableRef, setIgnoredElementsRef]);
 
-    useEffect(() => {
-        console.log("Column sizing changed:", columnSizing);
-    }, [columnSizing]);
-
     const table = useReactTable({
         data,
         columns,
@@ -103,104 +99,105 @@ export function TorrentDataTable<TData, TValue>({
         };
     }, [setRowSelection, ignoredElementsRef]);
     return (
-        <div
-            className="h-full w-full rounded-md border"
-            role="table"
-            ref={tableRef}
-        >
+        <div className="h-full w-full rounded-md border">
             <ScrollArea className="h-full w-full">
-                <Table style={{ width: table.getTotalSize() }}>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableHead
-                                        key={header.id}
-                                        className="relative text-center"
-                                        style={{
-                                            width: header.getSize(),
-                                        }}
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                  header.column.columnDef
-                                                      .header,
-                                                  header.getContext(),
-                                              )}
-
-                                        <ColumnResizer<TData> header={header} />
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {table.getRowModel().rows.length ? (
-                            table.getRowModel().rows.map((row) => {
-                                const isSelected = !!rowSelection[row.id];
-
-                                return (
-                                    <Fragment key={row.id}>
-                                        <RowContextMenu
-                                            rowData={
-                                                row.original as TorrentInfo
-                                            }
+                <div ref={tableRef} role="table">
+                    <Table style={{ width: table.getTotalSize() }}>
+                        <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead
+                                            key={header.id}
+                                            className="relative text-center"
+                                            style={{
+                                                width: header.getSize(),
+                                            }}
                                         >
-                                            <TableRow
-                                                onClick={() =>
-                                                    handleRowClick(row.id)
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(
+                                                      header.column.columnDef
+                                                          .header,
+                                                      header.getContext(),
+                                                  )}
+
+                                            <ColumnResizer<TData>
+                                                header={header}
+                                            />
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows.length ? (
+                                table.getRowModel().rows.map((row) => {
+                                    const isSelected = !!rowSelection[row.id];
+
+                                    return (
+                                        <Fragment key={row.id}>
+                                            <RowContextMenu
+                                                rowData={
+                                                    row.original as TorrentInfo
                                                 }
-                                                data-state={
-                                                    isSelected
-                                                        ? "selected"
-                                                        : undefined
-                                                }
-                                                className={cn(
-                                                    isSelected
-                                                        ? "bg-blue-100"
-                                                        : "",
-                                                    "cursor-pointer",
-                                                )}
                                             >
-                                                {row
-                                                    .getVisibleCells()
-                                                    .map((cell) => (
-                                                        <TableCell
-                                                            key={cell.id}
-                                                            style={{
-                                                                width: cell.column.getSize(),
-                                                                minWidth:
+                                                <TableRow
+                                                    onClick={() =>
+                                                        handleRowClick(row.id)
+                                                    }
+                                                    data-state={
+                                                        isSelected
+                                                            ? "selected"
+                                                            : undefined
+                                                    }
+                                                    className={cn(
+                                                        isSelected
+                                                            ? "bg-blue-100"
+                                                            : "",
+                                                        "cursor-pointer",
+                                                    )}
+                                                >
+                                                    {row
+                                                        .getVisibleCells()
+                                                        .map((cell) => (
+                                                            <TableCell
+                                                                key={cell.id}
+                                                                style={{
+                                                                    width: cell.column.getSize(),
+                                                                    minWidth:
+                                                                        cell
+                                                                            .column
+                                                                            .columnDef
+                                                                            .minSize,
+                                                                }}
+                                                            >
+                                                                {flexRender(
                                                                     cell.column
                                                                         .columnDef
-                                                                        .minSize,
-                                                            }}
-                                                        >
-                                                            {flexRender(
-                                                                cell.column
-                                                                    .columnDef
-                                                                    .cell,
-                                                                cell.getContext(),
-                                                            )}
-                                                        </TableCell>
-                                                    ))}
-                                            </TableRow>
-                                        </RowContextMenu>
-                                    </Fragment>
-                                );
-                            })
-                        ) : (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center"
-                                >
-                                    No results.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                                                                        .cell,
+                                                                    cell.getContext(),
+                                                                )}
+                                                            </TableCell>
+                                                        ))}
+                                                </TableRow>
+                                            </RowContextMenu>
+                                        </Fragment>
+                                    );
+                                })
+                            ) : (
+                                <TableRow>
+                                    <TableCell
+                                        colSpan={columns.length}
+                                        className="h-24 text-center"
+                                    >
+                                        No results.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
                 <ScrollBar orientation="horizontal" />
             </ScrollArea>
         </div>

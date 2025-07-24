@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"; // import scrollarea f
 import { useEffect, useRef, useState } from "react";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import TrackerTabLoading from "./loading";
 
 export default function TrackersTab({ infoHash }: { infoHash: string }) {
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
@@ -70,21 +71,17 @@ export default function TrackersTab({ infoHash }: { infoHash: string }) {
     }, [isIntersecting, socket, infoHash]);
 
     return (
-        <div ref={ref}>
+        <ScrollArea className="h-96" ref={ref}>
             {loading ? (
-                <div className="text-foreground flex h-full items-center justify-center">
-                    Loading trackers...
-                </div>
+                <TrackerTabLoading />
             ) : (
                 <>
-                    <ScrollArea className="h-96">
-                        <TrackerTabDataTable
-                            columns={columns}
-                            data={torrentData?.trackers || []}
-                        />
-                    </ScrollArea>
+                    <TrackerTabDataTable
+                        columns={columns}
+                        data={torrentData?.trackers || []}
+                    />
                 </>
             )}
-        </div>
+        </ScrollArea>
     );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { Folder, Loader2Icon } from "lucide-react";
-import { Button } from "../ui/button";
 import {
     Dialog,
     DialogClose,
@@ -12,21 +11,16 @@ import {
 } from "@/components/ui/dialog";
 import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "../ui/label";
 import { useSocketConnection } from "@/hooks/use-socket";
-import { Checkbox } from "../ui/checkbox";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "../ui/select";
+
 import { formatBytes } from "@/lib/formatBytes";
 import { FileInfo } from "@/types/socket/files";
-import { FileTreeTable } from "../file-table";
-import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { FileTreeTable } from "@/components/file-table";
 
 type Metadata = {
     name: string;

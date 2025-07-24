@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useSetAtom } from "jotai";
 import { torrentUploadFileQueueAtom } from "@/atoms/torrent";
 import { ignoredElementsRefAtom } from "@/atoms/table";
-import { FileDialog } from "./file-dialog";
+import { FileDialog } from "./dialogs/file";
 
 export default function ActionButtons() {
     const [openDialogIndex, setOpenDialogIndex] = useState<number | null>(null);

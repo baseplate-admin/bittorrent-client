@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { PeerTabDataTable } from "./data-table";
 import { columns } from "./columns";
 import { Peer } from "@/types/socket/torrent_info";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { getCountryISOFromIp } from "@/lib/getCountryISOFromIp";
 import { isValidIP } from "@/lib/isValidIP";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -130,12 +130,20 @@ export default function PeersTab({ infoHash }: { infoHash: string }) {
     }, [socket, isIntersecting, infoHash]);
 
     return (
-        <ScrollArea ref={ref} className="h-96">
+        <div ref={ref} className="flex h-96 w-full flex-1 flex-col">
             {loading ? (
                 <PeersTabLoading />
             ) : (
-                <PeerTabDataTable data={enrichedPeers} columns={columns} />
+                <ScrollArea className="mt-2 w-full flex-1 overflow-x-auto">
+                    <div>
+                        <PeerTabDataTable
+                            data={enrichedPeers}
+                            columns={columns}
+                        />
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
             )}
-        </ScrollArea>
+        </div>
     );
 }

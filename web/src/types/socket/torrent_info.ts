@@ -71,8 +71,8 @@ export interface Peer {
     progress: string;
     down_speed: number;
     up_speed: number;
-    downloaded: number;
-    uploaded: number;
+    total_download: number;
+    total_upload: number;
 }
 
 export interface TorrentInfo {

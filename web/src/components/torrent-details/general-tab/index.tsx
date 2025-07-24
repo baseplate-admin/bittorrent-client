@@ -225,7 +225,7 @@ export default function GeneralTab({
             <Fragment>
                 <td className="w-0 text-right whitespace-nowrap">{label}</td>
                 <td className="w-0 px-1 text-center">:</td>
-                <td className="font-semibold" colSpan={colSpanValue}>
+                <td className="font-semibold capitalize" colSpan={colSpanValue}>
                     {value}
                 </td>
             </Fragment>

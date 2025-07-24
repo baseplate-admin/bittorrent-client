@@ -7,6 +7,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatBytes } from "@/lib/formatBytes";
 import { Peer } from "@/types/socket/torrent_info";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -81,6 +82,42 @@ export const columns: ColumnDef<SyntheticPeer>[] = [
         cell: (info) => {
             const client = info.getValue() as string;
             return <span>{client}</span>;
+        },
+    },
+    {
+        accessorKey: "down_speed",
+        header: TableHeaderSortButton("Download Speed"),
+        cell: (info) => {
+            const speed = info.getValue() as number;
+            return (
+                <span>{formatBytes({ bytes: speed, perSecond: true })}</span>
+            );
+        },
+    },
+    {
+        accessorKey: "up_speed",
+        header: TableHeaderSortButton("Upload Speed"),
+        cell: (info) => {
+            const speed = info.getValue() as number;
+            return (
+                <span>{formatBytes({ bytes: speed, perSecond: true })}</span>
+            );
+        },
+    },
+    {
+        accessorKey: "total_download",
+        header: TableHeaderSortButton("Downloaded"),
+        cell: (info) => {
+            const speed = info.getValue() as number;
+            return <span>{formatBytes({ bytes: speed })}</span>;
+        },
+    },
+    {
+        accessorKey: "total_upload",
+        header: TableHeaderSortButton("Uploaded"),
+        cell: (info) => {
+            const speed = info.getValue() as number;
+            return <span>{formatBytes({ bytes: speed })}</span>;
         },
     },
 ];

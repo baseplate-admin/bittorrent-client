@@ -13,8 +13,8 @@ import { Separator } from "../ui/separator";
 // Tabs import
 import GeneralTab from "./tabs/general";
 import TrackersTab from "./tabs/tracker";
-import PeersTab from "./tabs/peers";    
-import NoTorrentSelected from "./no-torrent-selected";
+import PeersTab from "./tabs/peers";
+import HybridSelectedComponent from "./hybrid-selected-component";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(broadcastTorrentAtom);
@@ -52,11 +52,18 @@ export default function TorrentDetails() {
     }, [torrent, indexNum]);
 
     if (keys.length > 1) {
-        return <div ref={cardRef}>Error: More than one row selected</div>;
+        return (
+            <HybridSelectedComponent
+                text="Multiple Torrent Selected"
+                ref={cardRef}
+            />
+        );
     }
 
     if (keys.length === 0 || torrentData === null) {
-        return <NoTorrentSelected ref={cardRef} />;
+        return (
+            <HybridSelectedComponent text="No Torrent Selected" ref={cardRef} />
+        );
     }
 
     const tabs = [

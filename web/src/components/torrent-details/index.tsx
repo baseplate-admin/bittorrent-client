@@ -17,6 +17,30 @@ import TrackerTabLoading from "./tracker-tab/loading";
 import PeersTabLoading from "./peers-tab/loading";
 import GeneralTabLoading from "./general-tab/loading";
 
+const tabs = Object.freeze([
+    {
+        label: "General",
+        component: dynamic(() => import("./general-tab"), {
+            loading: () => <GeneralTabLoading />,
+            ssr: false,
+        }),
+    },
+    {
+        label: "Trackers",
+        component: dynamic(() => import("./tracker-tab"), {
+            loading: () => <TrackerTabLoading />,
+            ssr: false,
+        }),
+    },
+    {
+        label: "Peers",
+        component: dynamic(() => import("./peers-tab"), {
+            loading: () => <PeersTabLoading />,
+            ssr: false,
+        }),
+    },
+]);
+
 export default function TorrentDetails() {
     const torrent = useAtomValue(broadcastTorrentAtom);
     const selectedRows = useAtomValue(selectedRowAtom);
@@ -51,30 +75,6 @@ export default function TorrentDetails() {
             setTorrentData(null);
         }
     }, [torrent, indexNum]);
-
-    const tabs = Object.freeze([
-        {
-            label: "General",
-            component: dynamic(() => import("./general-tab"), {
-                loading: () => <GeneralTabLoading />,
-                ssr: false,
-            }),
-        },
-        {
-            label: "Trackers",
-            component: dynamic(() => import("./tracker-tab"), {
-                loading: () => <TrackerTabLoading />,
-                ssr: false,
-            }),
-        },
-        {
-            label: "Peers",
-            component: dynamic(() => import("./peers-tab"), {
-                loading: () => <PeersTabLoading />,
-                ssr: false,
-            }),
-        },
-    ]);
 
     if (keys.length > 1) {
         return <div ref={cardRef}>Error: More than one row selected</div>;

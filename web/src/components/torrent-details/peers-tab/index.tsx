@@ -130,11 +130,11 @@ export default function PeersTab({ infoHash }: { infoHash: string }) {
     }, [socket, isIntersecting, infoHash]);
 
     return (
-        <div ref={ref} className="flex h-96 w-full flex-1 flex-col">
+        <div ref={ref} className="flex h-94 w-full flex-1 flex-col">
             {loading ? (
                 <PeersTabLoading />
             ) : (
-                <ScrollArea className="mt-2 w-full flex-1 overflow-x-auto">
+                <ScrollArea className="w-full flex-1 overflow-x-auto pb-4">
                     <div>
                         <PeerTabDataTable
                             data={enrichedPeers}

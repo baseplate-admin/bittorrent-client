@@ -3,7 +3,7 @@
 import { TorrentInfo } from "@/types/socket/torrent_info";
 import { TrackerTabDataTable } from "./data-table";
 import { columns } from "./columns";
-import { ScrollArea } from "@/components/ui/scroll-area"; // import scrollarea from your UI
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useEffect, useRef, useState } from "react";
 import { useSocketConnection } from "@/hooks/use-socket";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -21,7 +21,6 @@ export default function TrackersTab({ infoHash }: { infoHash: string }) {
 
     useEffect(() => {
         if (!isIntersecting) return;
-
         let mounted = true;
 
         async function fetchAndUpdateLoop() {
@@ -39,7 +38,6 @@ export default function TrackersTab({ infoHash }: { infoHash: string }) {
                             torrent: TorrentInfo;
                         }) => {
                             if (!mounted) return resolve();
-
                             if (response.status === "success") {
                                 setTorrentData(response.torrent);
                             } else {
@@ -48,7 +46,6 @@ export default function TrackersTab({ infoHash }: { infoHash: string }) {
                                     response,
                                 );
                             }
-
                             resolve();
                         },
                     );
@@ -64,24 +61,26 @@ export default function TrackersTab({ infoHash }: { infoHash: string }) {
         }
 
         fetchAndUpdateLoop();
-
         return () => {
             mounted = false;
         };
     }, [isIntersecting, socket, infoHash]);
 
     return (
-        <ScrollArea className="h-96" ref={ref}>
+        <div ref={ref} className="flex h-94 w-full flex-1 flex-col">
             {loading ? (
                 <TrackerTabLoading />
             ) : (
-                <>
-                    <TrackerTabDataTable
-                        columns={columns}
-                        data={torrentData?.trackers || []}
-                    />
-                </>
+                <ScrollArea className="w-full flex-1 overflow-x-auto pb-4">
+                    <div>
+                        <TrackerTabDataTable
+                            columns={columns}
+                            data={torrentData?.trackers || []}
+                        />
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
             )}
-        </ScrollArea>
+        </div>
     );
 }

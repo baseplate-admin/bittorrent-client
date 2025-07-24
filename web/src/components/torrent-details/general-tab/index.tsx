@@ -240,7 +240,7 @@ export default function GeneralTab({
                 </div>
             ) : (
                 <div>
-                    <div className="mb-1 text-sm font-medium">Progress:</div>
+                    <div className="mb-0.5 text-sm font-medium">Progress:</div>
                     <Tooltip open={tooltipOpen}>
                         <TooltipTrigger
                             asChild

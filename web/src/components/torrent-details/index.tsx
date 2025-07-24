@@ -14,6 +14,7 @@ import { Separator } from "../ui/separator";
 import GeneralTab from "./general-tab";
 import TrackersTab from "./tracker-tab";
 import PeersTab from "./peers-tab";
+import NoTorrentSelected from "./no-torrent-selected";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(broadcastTorrentAtom);
@@ -55,14 +56,7 @@ export default function TorrentDetails() {
     }
 
     if (keys.length === 0 || torrentData === null) {
-        return (
-            <div
-                ref={cardRef}
-                className="flex justify-center rounded-md border p-64"
-            >
-                No torrent selected
-            </div>
-        );
+        return <NoTorrentSelected ref={cardRef} />;
     }
 
     const tabs = [

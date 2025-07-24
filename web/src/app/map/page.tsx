@@ -16,6 +16,8 @@ export function MapContainer() {
                 style: "https://demotiles.maplibre.org/style.json",
                 center: [0, 20],
                 zoom: 2,
+                dragRotate: false,
+                renderWorldCopies: false,
             });
 
             mapRef.current.on("load", async () => {

@@ -45,6 +45,7 @@
         "eslint-config-next": "^15.4.2",
         "framer-motion": "^12.23.6",
         "jotai": "^2.12.5",
+        "maplibre-gl": "^5.6.1",
         "prettier": "^3.6.2",
         "prettier-plugin-packagejson": "^2.5.18",
         "prettier-plugin-tailwindcss": "^0.6.14",

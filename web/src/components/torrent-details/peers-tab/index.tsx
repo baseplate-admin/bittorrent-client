@@ -6,10 +6,11 @@ import { columns } from "./columns";
 import { Peer } from "@/types/socket/torrent_info";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getCountryISOFromIp } from "@/lib/getCountryISOFromIp";
-import { isValidIP } from "@/lib/isValidIp";
+import { isValidIP } from "@/lib/isValidIP";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 import { useSocketConnection } from "@/hooks/use-socket";
 import PeersTabLoading from "./loading";
+import { isGlobalIP } from "@/lib/isGlobalIP";
 
 type EnrichedPeer = Peer & {
     isoCode?: string;
@@ -65,7 +66,7 @@ export default function PeersTab({ infoHash }: { infoHash: string }) {
                         peers.map(async (peer) => {
                             const ip = peer.ip;
 
-                            if (!isValidIP(ip)) {
+                            if (!isValidIP(ip) && isGlobalIP(ip)) {
                                 return {
                                     ...peer,
                                     isoCode: undefined,

@@ -16,6 +16,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { useState } from "react";
+import { TrackerTabContextMenu } from "./context-menu";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -68,26 +69,29 @@ export function TrackerTabDataTable<TData, TValue>({
                 </TableHeader>
 
                 <TableBody>
-                    {table.getRowModel().rows?.length ? (
+                    {table.getRowModel().rows.length ? (
                         table.getRowModel().rows.map((row) => (
-                            <TableRow
-                                key={row.id}
-                                data-state={
-                                    row.getIsSelected() ? "selected" : undefined
-                                }
-                            >
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell
-                                        className="text-left"
-                                        key={cell.id}
-                                    >
-                                        {flexRender(
-                                            cell.column.columnDef.cell,
-                                            cell.getContext(),
-                                        )}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
+                            <TrackerTabContextMenu key={row.id}>
+                                <TableRow
+                                    data-state={
+                                        row.getIsSelected()
+                                            ? "selected"
+                                            : undefined
+                                    }
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell
+                                            className="text-left"
+                                            key={cell.id}
+                                        >
+                                            {flexRender(
+                                                cell.column.columnDef.cell,
+                                                cell.getContext(),
+                                            )}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </TrackerTabContextMenu>
                         ))
                     ) : (
                         <TableRow>

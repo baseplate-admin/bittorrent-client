@@ -11,7 +11,6 @@ import {
     Square,
 } from "lucide-react";
 import Link from "next/link";
-import styles from "@/styles/logos/arrow-up-down.module.css";
 import React, { useState } from "react";
 import {
     Sidebar,
@@ -30,6 +29,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { ArrowUpDownDualColor } from "@/icons/ArrowUpDownDualColor";
 
 const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
     {
@@ -88,9 +88,9 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
         title: "Active",
         url: "./active",
         icon: (
-            <ArrowUpDown
+            <ArrowUpDownDualColor
                 strokeWidth={4}
-                className={`${styles.red_black} [--first-color:theme(colors.green.600)] [--second-color:theme(colors.blue.500)]`}
+                className={`[--first-color:theme(colors.green.600)] [--second-color:theme(colors.blue.500)]`}
             />
         ),
     },
@@ -98,9 +98,9 @@ const items: Array<{ title: string; url: string; icon: React.ReactElement }> = [
         title: "Inactive",
         url: "./inactive",
         icon: (
-            <ArrowUpDown
+            <ArrowUpDownDualColor
                 strokeWidth={4}
-                className={`${styles.red_black} [--first-color:theme(colors.red.500)] [--second-color:theme(colors.red.500)]`}
+                className={`[--first-color:theme(colors.red.500)] [--second-color:theme(colors.red.500)]`}
             />
         ),
     },

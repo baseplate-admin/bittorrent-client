@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     productionBrowserSourceMaps: true,
     experimental: {
         reactCompiler: true,
+        inlineCss: true,
+    },
+    compiler: {
+        styledComponents: true,
     },
     turbopack: {
         rules: {

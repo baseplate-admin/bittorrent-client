@@ -28,7 +28,6 @@ export default function GeneralTab({
 }) {
     const [tooltipOpen, setTooltipOpen] = useState(false);
     const [torrentData, setTorrentData] = useState<TorrentInfo | null>(null);
-    const [loading, setLoading] = useState(false);
 
     const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
     const hasLoadedOnce = useRef(false);
@@ -44,10 +43,6 @@ export default function GeneralTab({
 
         async function fetchAndUpdateLoop() {
             while (mounted) {
-                if (!hasLoadedOnce.current) {
-                    setLoading(true);
-                }
-
                 await new Promise<void>((resolve) => {
                     socket.current?.emit(
                         "libtorrent:get_specific",
@@ -73,7 +68,6 @@ export default function GeneralTab({
                 });
 
                 if (!hasLoadedOnce.current) {
-                    setLoading(false);
                     hasLoadedOnce.current = true;
                 }
 
@@ -240,7 +234,7 @@ export default function GeneralTab({
 
     return (
         <div ref={ref}>
-            {loading ? (
+            {!hasLoadedOnce.current ? (
                 <div className="flex justify-center rounded-md border p-44">
                     Loading...
                 </div>

@@ -18,7 +18,14 @@ import { FileInfo } from "@/types/socket/files";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { FileTreeTable } from "@/components/file-table";
 
@@ -50,22 +57,23 @@ export function FileDialog({
     const [rememberPath, setRememberPath] = useState(false);
 
     const [dialogOpen, setDialogOpen] = useState(true);
-
+    useEffect(() => {
+        console.log(files);
+    }, [files]);
     useEffect(() => {
         if (!dialogOpen || !magnetLink) return;
 
         setLoading(true);
         socket.current?.emit(
-            "libtorrent:add_magnet",
+            "libtorrent:fetch_metadata",
             {
-                action: "fetch_metadata",
                 magnet_uri: magnetLink,
-                save_path: folderValue || ".",
             },
             (response: {
                 status: string;
                 message?: string;
                 metadata?: Metadata;
+                files: FileInfo[];
             }) => {
                 setLoading(false);
                 if (response.status === "success") {
@@ -74,21 +82,8 @@ export function FileDialog({
                     if (!infoHash) {
                         throw new Error("Info hash not found in metadata");
                     }
+                    setFiles(response.files);
                     setTorrentInfoHash(infoHash);
-                    socket.current?.emit(
-                        "libtorrent:get_specific_files",
-                        {
-                            info_hash: infoHash,
-                        },
-                        (_response: {
-                            status: "error" | "success";
-                            files: FileInfo[];
-                        }) => {
-                            if (_response.status === "success") {
-                                setFiles(_response.files);
-                            }
-                        },
-                    );
                 } else {
                     console.error("Error fetching metadata:", response.message);
                     setMetadata(null);
@@ -113,14 +108,17 @@ export function FileDialog({
         setLoading(true);
         socket.current?.emit(
             "libtorrent:add_magnet",
-            { action: "add", info_hash: torrentInfoHash },
-            (response: any) => {
-                setLoading(false);
+            {
+                magnet_uri: magnetLink,
+                save_path: folderValue || "",
+            },
+            (response: {
+                status: "success" | "error";
+                info_hash: string;
+                message?: string;
+            }) => {
                 if (response.status === "success") {
-                    resetForm();
-                    closeDialog();
-                } else {
-                    console.error("Error adding torrent:", response.message);
+                    // TODO: SHow something here
                 }
             },
         );

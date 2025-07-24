@@ -11,35 +11,10 @@ import { cn } from "@/lib/utils";
 import { Separator } from "../ui/separator";
 
 // Tabs import
+import GeneralTab from "./tabs/general";
+import TrackersTab from "./tabs/tracker";
+import PeersTab from "./tabs/peers";    
 import NoTorrentSelected from "./no-torrent-selected";
-import dynamic from "next/dynamic";
-import TrackerTabLoading from "./tabs/tracker/loading";
-import PeersTabLoading from "./tabs/peers/loading";
-import GeneralTabLoading from "./tabs/general/loading";
-
-const tabs = Object.freeze([
-    {
-        label: "General",
-        component: dynamic(() => import("./tabs/general"), {
-            loading: () => <GeneralTabLoading />,
-            ssr: false,
-        }),
-    },
-    {
-        label: "Trackers",
-        component: dynamic(() => import("./tabs/tracker"), {
-            loading: () => <TrackerTabLoading />,
-            ssr: false,
-        }),
-    },
-    {
-        label: "Peers",
-        component: dynamic(() => import("./tabs/peers"), {
-            loading: () => <PeersTabLoading />,
-            ssr: false,
-        }),
-    },
-]);
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(broadcastTorrentAtom);
@@ -83,6 +58,12 @@ export default function TorrentDetails() {
     if (keys.length === 0 || torrentData === null) {
         return <NoTorrentSelected ref={cardRef} />;
     }
+
+    const tabs = [
+        { label: "General", component: GeneralTab },
+        { label: "Trackers", component: TrackersTab },
+        { label: "Peers", component: PeersTab },
+    ] as const;
 
     return (
         <Card className="w-full" ref={cardRef}>

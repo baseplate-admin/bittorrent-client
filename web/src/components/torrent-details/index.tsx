@@ -9,12 +9,11 @@ import { RefObject, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Separator } from "../ui/separator";
-import dynamic from "next/dynamic";
 
 // Tabs import
-const GeneralTab = dynamic(() => import("./general-tab"));
-const TrackersTab = dynamic(() => import("./tracker-tab"));
-const PeersTab = dynamic(() => import("./peers-tab"));
+import GeneralTab from "./general-tab";
+import TrackersTab from "./tracker-tab";
+import PeersTab from "./peers-tab";
 
 export default function TorrentDetails() {
     const torrent = useAtomValue(broadcastTorrentAtom);

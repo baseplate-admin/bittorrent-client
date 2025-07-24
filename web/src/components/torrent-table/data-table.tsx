@@ -46,25 +46,23 @@ export function TorrentDataTable<TData, TValue>({
     );
     const tableRef = useRef<HTMLTableElement>(null);
     const scrollBarRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         console.log(scrollBarRef);
     }, [scrollBarRef]);
     useEffect(() => {
-        const refs = [tableRef, scrollBarRef];
+        setIgnoredElementsRef((prev) => [
+            ...prev,
+            ...[tableRef, scrollBarRef]
+                .filter((ref) => ref.current)
+                .map((ref) => ref as RefObject<HTMLElement>),
+        ]);
 
-        for (const ref of refs) {
-            if (ref.current) {
-                setIgnoredElementsRef((prev) => [
-                    ...prev,
-                    ref as RefObject<HTMLElement>,
-                ]);
-            }
-            return () => {
-                setIgnoredElementsRef((prev) =>
-                    prev.filter((el) => el !== ref),
-                );
-            };
-        }
+        return () => {
+            setIgnoredElementsRef((prev) =>
+                prev.filter((el) => el !== tableRef && el !== scrollBarRef),
+            );
+        };
     }, [tableRef, scrollBarRef, setIgnoredElementsRef]);
 
     const table = useReactTable({
@@ -96,7 +94,6 @@ export function TorrentDataTable<TData, TValue>({
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (event.button !== 0) return; // Only left click
-            console.log(ignoredElementsRef);
             const target = event.target as Node;
             for (const ref of ignoredElementsRef) {
                 if (ref.current && ref.current.contains(target)) {
@@ -112,7 +109,7 @@ export function TorrentDataTable<TData, TValue>({
     }, [setRowSelection, ignoredElementsRef]);
     return (
         <div className="h-full w-full rounded-md border">
-            <ScrollArea className="flex h-full w-full flex-col justify-between">
+            <ScrollArea className="relative h-full w-full">
                 <div ref={tableRef} role="table">
                     <Table style={{ width: table.getTotalSize() }}>
                         <TableHeader>
@@ -210,8 +207,11 @@ export function TorrentDataTable<TData, TValue>({
                         </TableBody>
                     </Table>
                 </div>
-                <div className="h-4 bg-white" ref={scrollBarRef}>
-                    <ScrollBar ref={scrollBarRef} orientation="horizontal" />
+                <div
+                    className="absolute bottom-0 left-0 h-4 w-full bg-transparent"
+                    ref={scrollBarRef}
+                >
+                    <ScrollBar orientation="horizontal" />
                 </div>
             </ScrollArea>
         </div>

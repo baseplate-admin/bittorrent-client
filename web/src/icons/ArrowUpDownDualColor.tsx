@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { ArrowUpDown, type LucideProps } from "lucide-react";
 
-const StyledArrowUpDown = styled(ArrowUpDown)<LucideProps>`
+export const ArrowUpDownDualColor = styled(ArrowUpDown)<LucideProps>`
     path:nth-last-of-type(1),
     path:nth-last-of-type(2) {
         stroke: var(--first-color, "white") !important;
@@ -11,7 +11,3 @@ const StyledArrowUpDown = styled(ArrowUpDown)<LucideProps>`
         stroke: var(--second-color, "white") !important;
     }
 `;
-
-export function ArrowUpDownDualColor(props: LucideProps) {
-    return <StyledArrowUpDown {...props} />;
-}

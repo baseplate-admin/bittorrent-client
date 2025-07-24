@@ -108,14 +108,17 @@ export function FileDialog({
         setLoading(true);
         socket.current?.emit(
             "libtorrent:add_magnet",
-            { action: "add", info_hash: torrentInfoHash },
-            (response: any) => {
-                setLoading(false);
+            {
+                magnet_uri: magnetLink,
+                save_path: folderValue || "",
+            },
+            (response: {
+                status: "success" | "error";
+                info_hash: string;
+                message?: string;
+            }) => {
                 if (response.status === "success") {
-                    resetForm();
-                    closeDialog();
-                } else {
-                    console.error("Error adding torrent:", response.message);
+                    // TODO: SHow something here
                 }
             },
         );

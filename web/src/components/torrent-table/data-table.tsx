@@ -48,9 +48,6 @@ export function TorrentDataTable<TData, TValue>({
     const scrollBarRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        console.log(scrollBarRef);
-    }, [scrollBarRef]);
-    useEffect(() => {
         setIgnoredElementsRef((prev) => [
             ...prev,
             ...[tableRef, scrollBarRef]

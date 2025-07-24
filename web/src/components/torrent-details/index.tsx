@@ -13,28 +13,28 @@ import { Separator } from "../ui/separator";
 // Tabs import
 import NoTorrentSelected from "./no-torrent-selected";
 import dynamic from "next/dynamic";
-import TrackerTabLoading from "./tracker-tab/loading";
-import PeersTabLoading from "./peers-tab/loading";
-import GeneralTabLoading from "./general-tab/loading";
+import TrackerTabLoading from "./tabs/tracker/loading";
+import PeersTabLoading from "./tabs/peers/loading";
+import GeneralTabLoading from "./tabs/general/loading";
 
 const tabs = Object.freeze([
     {
         label: "General",
-        component: dynamic(() => import("./general-tab"), {
+        component: dynamic(() => import("./tabs/general"), {
             loading: () => <GeneralTabLoading />,
             ssr: false,
         }),
     },
     {
         label: "Trackers",
-        component: dynamic(() => import("./tracker-tab"), {
+        component: dynamic(() => import("./tabs/tracker"), {
             loading: () => <TrackerTabLoading />,
             ssr: false,
         }),
     },
     {
         label: "Peers",
-        component: dynamic(() => import("./peers-tab"), {
+        component: dynamic(() => import("./tabs/peers"), {
             loading: () => <PeersTabLoading />,
             ssr: false,
         }),

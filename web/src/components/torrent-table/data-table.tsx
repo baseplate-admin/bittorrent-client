@@ -24,7 +24,7 @@ import { Fragment, RefObject, useEffect, useRef, useState } from "react";
 import {
     ignoredElementsRefAtom,
     selectedRowAtom,
-    ignoreTableClearAtom,
+    canTorrentDetailsClearAtom,
 } from "@/atoms/table";
 import { useAtom, useAtomValue } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
@@ -48,7 +48,7 @@ export function TorrentDataTable<TData, TValue>({
     const [ignoredElementsRef, setIgnoredElementsRef] = useAtom(
         ignoredElementsRefAtom,
     );
-    const ignoreTableClear = useAtomValue(ignoreTableClearAtom);
+    const canTorrentDetailsClear = useAtomValue(canTorrentDetailsClearAtom);
     const tableRef = useRef<HTMLTableElement>(null);
     const scrollBarRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +95,7 @@ export function TorrentDataTable<TData, TValue>({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (ignoreTableClear) return;
+            if (!canTorrentDetailsClear) return;
             if (event.button !== 0) return; // Only left click
             const target = event.target as Node;
 

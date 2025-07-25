@@ -4,4 +4,4 @@ import { RefObject } from "react";
 
 export const selectedRowAtom = atom<RowSelectionState>({});
 export const ignoredElementsRefAtom = atom<RefObject<HTMLElement>[]>([]);
-export const ignoreTableClearAtom = atom<boolean>(false);
+export const canTorrentDetailsClearAtom = atom<boolean>(true);

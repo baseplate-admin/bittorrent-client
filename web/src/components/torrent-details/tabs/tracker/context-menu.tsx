@@ -6,7 +6,10 @@ import {
     ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 
-import { ignoredElementsRefAtom, ignoreTableClearAtom } from "@/atoms/table";
+import {
+    ignoredElementsRefAtom,
+    canTorrentDetailsClearAtom,
+} from "@/atoms/table";
 import { useSetAtom } from "jotai";
 import { useCallback, useRef, useState } from "react";
 import {
@@ -36,8 +39,7 @@ export function TrackerTabContextMenu({
     const [openDialog, setOpenDialog] = useState<"add" | "edit" | null>(null);
 
     const setIgnoredElements = useSetAtom(ignoredElementsRefAtom);
-    const clearTimer = useRef<NodeJS.Timeout | null>(null);
-    const setIgnoreTableClear = useSetAtom(ignoreTableClearAtom);
+    const setCanTorrentDetailsClear = useSetAtom(canTorrentDetailsClearAtom);
     const lastNodeRef = useRef<HTMLDivElement | null>(null);
     const socket = useSocketConnection();
 
@@ -69,12 +71,11 @@ export function TrackerTabContextMenu({
 
     const handleContextMenuOpenChange = (open: boolean) => {
         if (open) {
-            setIgnoreTableClear(true);
+            setCanTorrentDetailsClear(false);
         } else {
-            if (clearTimer.current) clearTimeout(clearTimer.current);
-            clearTimer.current = setTimeout(() => {
-                setIgnoreTableClear(false);
-            }, CONTEXT_MENU_ATOM_SET_INTERVAL);
+            setTimeout(() => {
+                setCanTorrentDetailsClear(true);
+            });
         }
     };
 
@@ -107,7 +108,6 @@ export function TrackerTabContextMenu({
                 trackers: Array.isArray(trackerURL) ? trackerURL : [trackerURL],
             },
             (response: { status: "success" | "error"; message: string }) => {
-                console.log(response);
                 if (response.status === "success") {
                     console.log("Reannounced to tracker successfully");
                 } else {

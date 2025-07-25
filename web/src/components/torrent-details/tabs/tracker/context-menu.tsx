@@ -23,6 +23,7 @@ import { TrackerInfo } from "@/types/socket/torrent_info";
 import { AddTrackerDialog } from "./dialogs/add-tracker";
 import { EditTrackerDialog } from "./dialogs/edit-tracker";
 import { useSocketConnection } from "@/hooks/use-socket";
+import { CAN_TORRENT_DETAILS_ATOM_SET_INTERVAL } from "@/consts/atoms";
 
 export function TrackerTabContextMenu({
     rowData,
@@ -42,9 +43,7 @@ export function TrackerTabContextMenu({
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
 
     const setIgnoredElements = useSetAtom(ignoredElementsRefAtom);
-    const [canTorentDetailsClear, setCanTorrentDetailsClear] = useAtom(
-        canTorrentDetailsClearAtom,
-    );
+    const setCanTorrentDetailsClear = useSetAtom(canTorrentDetailsClearAtom);
     const lastNodeRef = useRef<HTMLDivElement | null>(null);
     const socket = useSocketConnection();
 
@@ -122,7 +121,7 @@ export function TrackerTabContextMenu({
         if (openDialog === null && !contextMenuOpen) {
             setTimeout(() => {
                 setCanTorrentDetailsClear(true);
-            }, 250);
+            }, CAN_TORRENT_DETAILS_ATOM_SET_INTERVAL);
         } else {
             setTimeout(() => {
                 setCanTorrentDetailsClear(false);

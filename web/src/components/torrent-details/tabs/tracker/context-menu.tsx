@@ -11,7 +11,7 @@ import {
     canTorrentDetailsClearAtom,
 } from "@/atoms/table";
 import { useSetAtom } from "jotai";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Copy,
     Megaphone,
@@ -43,6 +43,18 @@ export function TrackerTabContextMenu({
     const lastNodeRef = useRef<HTMLDivElement | null>(null);
     const socket = useSocketConnection();
 
+    useEffect(() => {
+        if (openDialog !== null) {
+            // Dialog opened — disable clearing immediately
+            setCanTorrentDetailsClear(false);
+        } else {
+            // Dialog closed — re-enable clearing after delay
+            setTimeout(() => {
+                setCanTorrentDetailsClear(true);
+            });
+        }
+    }, [openDialog, setCanTorrentDetailsClear]);
+
     const contextMenuRefCallback = useCallback(
         (node: HTMLDivElement | null) => {
             if (node) {
@@ -73,9 +85,11 @@ export function TrackerTabContextMenu({
         if (open) {
             setCanTorrentDetailsClear(false);
         } else {
-            setTimeout(() => {
-                setCanTorrentDetailsClear(true);
-            });
+            if (openDialog === null) {
+                setTimeout(() => {
+                    setCanTorrentDetailsClear(true);
+                });
+            }
         }
     };
 
@@ -118,7 +132,9 @@ export function TrackerTabContextMenu({
             },
         );
     };
-
+    useEffect(() => {
+        console.log(openDialog);
+    }, [openDialog]);
     const handleCopyButtonClick = async () => {
         await navigator.clipboard.writeText(rowData.url);
     };

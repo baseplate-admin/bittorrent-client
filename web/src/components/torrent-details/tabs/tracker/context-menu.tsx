@@ -100,10 +100,6 @@ export function TrackerTabContextMenu({
     const handleReannounceButtonClick = (
         trackerURL: string | Array<string>,
     ) => {
-        console.log({
-            info_hash: infoHash,
-            trackers: Array.isArray(trackerURL) ? trackerURL : [trackerURL],
-        });
         socket.current?.emit(
             "libtorrent:force_reannounce",
             {
@@ -180,7 +176,13 @@ export function TrackerTabContextMenu({
                         <Megaphone className="h-4 w-4" />
                         Force Reannounce to Tracker
                     </ContextMenuItem>
-                    <ContextMenuItem>
+                    <ContextMenuItem
+                        onClick={() => {
+                            handleReannounceButtonClick(
+                                allRows.map((row) => row.url),
+                            );
+                        }}
+                    >
                         <Megaphone className="h-4 w-4" />
                         Force Reannounce to all Trackers
                     </ContextMenuItem>

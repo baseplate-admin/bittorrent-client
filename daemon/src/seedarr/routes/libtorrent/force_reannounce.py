@@ -23,44 +23,53 @@ def _force_reannounce_by_index(handle, index: int):
 @sio.on("libtorrent:force_reannounce")  # type: ignore
 @validate_payload(ForceReannouncePayload)
 async def force_reannounce(sid: str, data: ForceReannouncePayload):
+    if not data.trackers:
+        return {"status": "error", "message": "Trackers list is empty"}
+
     ses = await LibtorrentSession.get_session()
-    try:
-        target_hash = data.info_hash
-        target_trackers = set(data.trackers)
+    target_hash = data.info_hash.lower()
 
-        for handle in ses.get_torrents():
-            if str(handle.info_hash()) == target_hash:
-                ti = handle.get_torrent_info()
-                all_trackers = list(ti.trackers())
-                print(all_trackers)
+    for handle in ses.get_torrents():
+        if not handle.is_valid():
+            continue
 
-                logger.info(f"[force_reannounce] Found torrent with {len(all_trackers)} tracker")
-                for t in all_trackers:
-                    logger.info(f"[force_reannounce] Existing tracker: {t.url}")
+        # Convert torrent info hash to string before comparison
+        if str(handle.info_hash()) == target_hash:
+            if not handle.has_metadata():
+                return {"status": "error", "message": "Torrent metadata not yet available"}
 
-                matching_indices = [
-                    i
-                    for i, tr in enumerate(all_trackers)
-                    if tr.url.strip().rstrip("/") in target_trackers
-                ]
-
-                if matching_indices:
-                    for i in matching_indices:
-                        logger.info(f"[force_reannounce] Reannouncing to: {all_trackers[i].url}")
-                        await to_thread.run_sync(_force_reannounce_by_index, handle, i)
-
-                    return {
-                        "status": "success",
-                        "message": f"Reannounce triggered for {len(matching_indices)} tracker(s)",
-                    }
-
+            current_trackers = handle.trackers()
+            if not current_trackers:
                 return {
                     "status": "error",
-                    "message": "None of the provided trackers matched existing ones",
+                    "message": "No trackers currently associated with torrent",
                 }
 
-        return {"status": "error", "message": "Torrent not found"}
+            logger.info(f"[force_reannounce] Found {len(current_trackers)} trackers on torrent")
 
-    except Exception as e:
-        logger.exception("Failed to force reannounce")
-        return {"status": "error", "message": str(e)}
+            for tr in current_trackers:
+                logger.info(f"[force_reannounce] Tracker: {tr['url']} (tier: {tr['tier']})")
+
+            target_trackers = set(t.strip().rstrip("/") for t in data.trackers)
+            matching_indices = [
+                i
+                for i, tr in enumerate(current_trackers)
+                if tr["url"].strip().rstrip("/") in target_trackers
+            ]
+
+            if matching_indices:
+                for i in matching_indices:
+                    logger.info(f"[force_reannounce] Reannouncing to: {current_trackers[i]['url']}")
+                    await to_thread.run_sync(_force_reannounce_by_index, handle, i)
+
+                return {
+                    "status": "success",
+                    "message": f"Reannounce triggered for {len(matching_indices)} tracker(s)",
+                }
+
+            return {
+                "status": "error",
+                "message": "None of the provided trackers matched existing ones",
+            }
+
+    return {"status": "error", "message": "Torrent not found"}

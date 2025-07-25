@@ -353,23 +353,31 @@ export function FileDialog({
                 </div>
 
                 <DialogFooter className="mt-4 flex justify-end gap-3">
-                    <DialogClose asChild>
-                        <div className="flex gap-2">
-                            <Button
-                                onClick={confirmAddTorrent}
-                                disabled={loading}
-                            >
-                                Add Torrent
-                            </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={() => {
+                                if (!loading) {
+                                    confirmAddTorrent();
+                                }
+                            }}
+                            disabled={loading}
+                        >
+                            Add Torrent
+                        </Button>
+                        <DialogClose asChild>
                             <Button
                                 variant="outline"
-                                onClick={cancelTorrent}
+                                onClick={() => {
+                                    if (!loading) {
+                                        cancelTorrent();
+                                    }
+                                }}
                                 disabled={loading}
                             >
                                 Cancel
                             </Button>
-                        </div>
-                    </DialogClose>
+                        </DialogClose>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

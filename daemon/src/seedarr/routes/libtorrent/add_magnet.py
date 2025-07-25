@@ -1,10 +1,13 @@
+import os
 import tempfile
 
 from pydantic import BaseModel, Field, field_validator
 
 import libtorrent as lt
 from seedarr.decorators import validate_payload
-from seedarr.singletons import SIO, LibtorrentSession, Logger
+from seedarr.singletons import SIO, FolderLock, LibtorrentSession, Logger
+
+folder_lock = FolderLock.get_instance()
 
 sio = SIO.get_instance()
 logger = Logger.get_logger()
@@ -40,6 +43,7 @@ async def add_magnet(sid: str, data: AddMagnetPayload):
 
         # Get torrent info
         ti = handle.get_torrent_info()
+        await folder_lock.add_folder(os.path.join(data.save_path, handle.name()))
 
         return {
             "status": "success",

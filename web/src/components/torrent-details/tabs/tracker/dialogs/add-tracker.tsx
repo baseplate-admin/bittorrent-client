@@ -64,15 +64,9 @@ export function AddTrackerDialog({
                 </DialogHeader>
                 <DialogFooter>
                     <Button onClick={() => handleAddButtonClick()}>Add</Button>
-
-                    <Button
-                        onClick={() => {
-                            onOpenChange(false);
-                        }}
-                        variant="outline"
-                    >
-                        Cancel
-                    </Button>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">Cancel</Button>
+                    </DialogTrigger>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

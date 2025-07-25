@@ -9,8 +9,8 @@ sio = SIO.get_instance()
 
 
 class RenameTrackerPayload(BaseModel):
-    old_tracker_name: str = Field(...)
-    new_tracker_name: str = Field(...)
+    old_tracker: str = Field(...)
+    new_tracker: str = Field(...)
     info_hash: str = Field(...)
 
 
@@ -30,9 +30,9 @@ async def rename_trackers(sid: str, data: RenameTrackerPayload):
             updated_trackers = []
 
             for entry in tracker_entries:
-                if entry["url"] == data.old_tracker_name:
+                if entry["url"] == data.old_tracker:
                     # Replace with new tracker
-                    new_entry = lt.announce_entry(data.new_tracker_name)
+                    new_entry = lt.announce_entry(data.new_tracker)
                     updated_trackers.append(new_entry)
                 else:
                     updated_trackers.append(entry)
@@ -51,8 +51,8 @@ async def rename_trackers(sid: str, data: RenameTrackerPayload):
             return {
                 "status": "success",
                 "message": (
-                    f"Tracker {data.old_tracker_name} renamed to "
-                    f"{data.new_tracker_name}"
+                    f"Tracker {data.old_tracker} renamed to "
+                    f"{data.new_tracker}"
                 ),
                 "files": torrent_files,
             }

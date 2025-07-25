@@ -19,6 +19,7 @@ import {
 import { TrackerInfo } from "@/types/socket/torrent_info";
 import { CONTEXT_MENU_ATOM_SET_INTERVAL } from "@/consts/context-menu";
 import { AddTrackerDialog } from "./dialogs/add-tracker";
+import { EditTrackerDialog } from "./dialogs/edit-tracker";
 
 export function TrackerTabContextMenu({
     rowData,
@@ -29,7 +30,8 @@ export function TrackerTabContextMenu({
     children: React.ReactElement;
     infoHash: string;
 }) {
-    const [addDialogOpen, setAddDialogOpen] = useState(false); // <-- NEW
+    const [openDialog, setOpenDialog] = useState<"add" | "edit" | null>(null);
+
     const setIgnoredElements = useSetAtom(ignoredElementsRefAtom);
     const clearTimer = useRef<NodeJS.Timeout | null>(null);
     const setIgnoreTableClear = useSetAtom(ignoreTableClearAtom);
@@ -79,8 +81,14 @@ export function TrackerTabContextMenu({
     return (
         <>
             <AddTrackerDialog
-                open={addDialogOpen}
-                onOpenChange={setAddDialogOpen}
+                open={openDialog === "add"}
+                onOpenChange={(open) => setOpenDialog(open ? "add" : null)}
+                infoHash={infoHash}
+            />
+            <EditTrackerDialog
+                open={openDialog === "edit"}
+                onOpenChange={(open) => setOpenDialog(open ? "edit" : null)}
+                trackerURL={rowData.url}
                 infoHash={infoHash}
             />
 
@@ -90,11 +98,19 @@ export function TrackerTabContextMenu({
                     ref={contextMenuRefCallback}
                     className="w-69"
                 >
-                    <ContextMenuItem onClick={() => setAddDialogOpen(true)}>
+                    <ContextMenuItem
+                        onClick={() => {
+                            setOpenDialog("add");
+                        }}
+                    >
                         <PlusCircle className="h-4 w-4" />
                         Add Trackers
                     </ContextMenuItem>
-                    <ContextMenuItem>
+                    <ContextMenuItem
+                        onClick={() => {
+                            setOpenDialog("edit");
+                        }}
+                    >
                         <PencilIcon className="h-4 w-4" />
                         Edit Tracker URL
                     </ContextMenuItem>

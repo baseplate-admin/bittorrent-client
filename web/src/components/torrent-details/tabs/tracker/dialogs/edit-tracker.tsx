@@ -1,4 +1,3 @@
-import { Textarea } from "@/components/ui/textarea";
 import {
     Dialog,
     DialogContent,
@@ -11,27 +10,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useSocketConnection } from "@/hooks/use-socket";
-
-export function AddTrackerDialog({
+import { Input } from "@/components/ui/input";
+export function EditTrackerDialog({
     open,
     onOpenChange,
     infoHash,
+
+    trackerURL,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     infoHash: string;
+    trackerURL: string;
 }) {
-    const [textAreaValue, setTextAreaValue] = useState("");
+    const [inputValue, setInputValue] = useState(trackerURL);
     const socket = useSocketConnection();
-    const handleAddButtonClick = () => {
+    const handleEditButtonClick = () => {
         socket.current?.emit(
-            "libtorrent:add_tracker",
+            "libtorrent:rename_trackers",
             {
                 info_hash: infoHash,
-                trackers: textAreaValue
-                    .split("\n")
-                    .map((line) => line.trim())
-                    .filter((line) => line.length > 0),
+                old_tracker: trackerURL,
+                new_tracker: inputValue,
             },
             (response: { status: "error" | "success"; message: string }) => {
                 console.log(response);
@@ -46,25 +46,23 @@ export function AddTrackerDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add Trackers</DialogTitle>
+                    <DialogTitle>Edit Trackers</DialogTitle>
                     <DialogDescription asChild>
                         <div className="flex flex-col gap-4 py-3">
-                            <Textarea
-                                value={textAreaValue}
-                                onChange={(e) =>
-                                    setTextAreaValue(e.target.value)
-                                }
-                                className="h-32"
-                                placeholder="List of trackers to add"
+                            <Input
+                                value={inputValue}
+                                onInput={(event) => {
+                                    setInputValue(event.currentTarget.value);
+                                }}
+                                placeholder="Enter tracker URL"
                             />
-                            <p className="text-sm italic">
-                                One link per line (udp,http,wss are supported)
-                            </p>
                         </div>
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button onClick={() => handleAddButtonClick()}>Add</Button>
+                    <Button onClick={() => handleEditButtonClick()}>
+                        Edit
+                    </Button>
                     <DialogTrigger asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogTrigger>

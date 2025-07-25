@@ -25,9 +25,12 @@ interface DataTableProps<TData, TValue> {
 }
 
 export function TrackerTabDataTable<TData, TValue>({
+    infoHash,
     columns,
     data,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData, TValue> & {
+    infoHash: string;
+}) {
     "use no memo";
     const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -73,6 +76,7 @@ export function TrackerTabDataTable<TData, TValue>({
                     {table.getRowModel().rows.length ? (
                         table.getRowModel().rows.map((row) => (
                             <TrackerTabContextMenu
+                                infoHash={infoHash}
                                 rowData={row.original as TrackerInfo}
                                 key={row.id}
                             >

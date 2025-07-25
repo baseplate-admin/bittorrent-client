@@ -74,6 +74,7 @@ export default function TrackersTab({ infoHash }: { infoHash: string }) {
                 <ScrollArea className="w-full flex-1 overflow-x-auto pb-4">
                     <div>
                         <TrackerTabDataTable
+                            infoHash={infoHash}
                             columns={columns}
                             data={torrentData?.trackers || []}
                         />

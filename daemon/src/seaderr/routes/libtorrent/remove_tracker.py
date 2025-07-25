@@ -6,14 +6,14 @@ from seaderr.singletons import SIO, LibtorrentSession
 sio = SIO.get_instance()
 
 
-class AddTrackerPayload(BaseModel):
+class RemoveTrackerPayload(BaseModel):
     info_hash: str = Field(...)
     trackers: list[str] = Field(...)
 
 
-@sio.on("libtorrent:add_tracker")  # type: ignore
-@validate_payload(AddTrackerPayload)
-async def add_tracker(sid: str, data: AddTrackerPayload):
+@sio.on("libtorrent:remove_tracker")  # type: ignore
+@validate_payload(RemoveTrackerPayload)
+async def remove_tracker(sid: str, data: RemoveTrackerPayload):
     ses = await LibtorrentSession.get_session()
     handles = ses.get_torrents()
 
@@ -24,39 +24,32 @@ async def add_tracker(sid: str, data: AddTrackerPayload):
         if str(handle.info_hash()) == data.info_hash:
             try:
                 existing_trackers = handle.trackers()
-                existing_urls = {tr["url"] for tr in existing_trackers}
+                original_urls = {tr["url"] for tr in existing_trackers}
 
-                # Get max existing tier to place new trackers after them
-                max_tier = max((tr["tier"] for tr in existing_trackers), default=0)
-
-                # New trackers to be added (skip duplicates)
-                new_trackers = [
-                    {"url": url, "tier": max_tier + 1}
-                    for url in data.trackers
-                    if url not in existing_urls
+                # Trackers to remove
+                to_remove = set(data.trackers)
+                updated_trackers = [
+                    {"url": tr["url"], "tier": tr["tier"]}
+                    for tr in existing_trackers
+                    if tr["url"] not in to_remove
                 ]
 
-                # Convert existing announce_entry to dict
-                existing_as_dicts = [
-                    {"url": tr["url"], "tier": tr["tier"]} for tr in existing_trackers
-                ]
-
-                # Final list: existing first, then new ones
-                combined_trackers = existing_as_dicts + new_trackers
-
-                # Replace the entire tracker list
-                handle.replace_trackers(combined_trackers)
+                handle.replace_trackers(updated_trackers)
 
                 return {
                     "status": "success",
-                    "message": f"Added {len(new_trackers)} tracker(s)",
-                    "all_trackers": [tr["url"] for tr in combined_trackers],
+                    "message": (
+                        f"Removed "
+                        f"{len(original_urls - set(t['url'] for t in updated_trackers))}"
+                        " tracker(s)"
+                    ),
+                    "remaining_trackers": [tr["url"] for tr in updated_trackers],
                 }
 
             except Exception as e:
                 return {
                     "status": "error",
-                    "message": f"Failed to add trackers: {str(e)}",
+                    "message": f"Failed to remove trackers: {str(e)}",
                 }
 
     return {

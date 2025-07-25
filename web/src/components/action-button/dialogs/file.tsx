@@ -118,7 +118,7 @@ export function FileDialog({
                 message?: string;
             }) => {
                 if (response.status === "success") {
-                    // TODO: SHow something here
+                    // TODO: Show something here
                 }
             },
         );
@@ -353,31 +353,29 @@ export function FileDialog({
                 </div>
 
                 <DialogFooter className="mt-4 flex justify-end gap-3">
-                    <div className="flex gap-2">
-                        <Button
-                            onClick={() => {
-                                if (!loading) {
-                                    confirmAddTorrent();
-                                }
-                            }}
-                            disabled={loading}
-                        >
-                            Add Torrent
-                        </Button>
-                        <DialogClose asChild>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    if (!loading) {
-                                        cancelTorrent();
-                                    }
-                                }}
-                                disabled={loading}
-                            >
+                    {/* TODO: Reduce duplication  */}
+                    {loading ? (
+                        <div className="flex gap-2">
+                            <Button disabled={true}>Add Torrent</Button>
+                            <Button variant="outline" disabled={true}>
                                 Cancel
                             </Button>
+                        </div>
+                    ) : (
+                        <DialogClose asChild>
+                            <div className="flex gap-2">
+                                <Button onClick={confirmAddTorrent}>
+                                    Add Torrent
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={cancelTorrent}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
                         </DialogClose>
-                    </div>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

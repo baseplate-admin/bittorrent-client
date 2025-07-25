@@ -60,8 +60,10 @@ class FolderLock:
         folder_path = str(Path(folder_path).resolve())
         return folder_path in self._locks
 
-    async def clear_all(self):
-        for folder_path, lock in list(self._locks.items()):
+    @classmethod
+    async def clear_all(cls):
+        instance = cls.get_instance()
+        for folder_path, lock in list(instance._locks.items()):
             await anyio.to_thread.run_sync(lock.release)
             print(f"[Unlocked] {folder_path}")
-        self._locks.clear()
+        instance._locks.clear()

@@ -7,6 +7,7 @@ import socketio
 from seedarr.singletons import (
     SIO,
     EventBus,
+    FolderLock,
     LibtorrentSession,
     Logger,
 )
@@ -41,6 +42,7 @@ async def on_startup(sio: socketio.AsyncServer):
 async def on_shutdown():
     await LibtorrentSession.close()
     await SIO.close()
+    await FolderLock.clear_all()
 
 
 async def create_app():

@@ -1,1 +1,1 @@
-from .broadcast_client_manager import BroadcastClientManager as BroadcastClientManager
+from .broadcast_client import BroadcastClientManager as BroadcastClientManager

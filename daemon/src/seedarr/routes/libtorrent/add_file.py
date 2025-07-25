@@ -1,8 +1,10 @@
+import os
 import tempfile
 
 import libtorrent as lt
-from seedarr.singletons import SIO, LibtorrentSession, Logger
+from seedarr.singletons import SIO, FolderLock, LibtorrentSession, Logger
 
+folder_lock = FolderLock.get_instance()
 sio = SIO.get_instance()
 logger = Logger.get_logger()
 
@@ -38,6 +40,7 @@ async def add_file(sid: str, data: dict):
     except Exception as e:
         return {"status": "error", "message": f"Failed to add torrent: {e}"}
 
+    await folder_lock.add_folder(os.path.join(save_path, handle.name()))
     return {
         "status": "success",
         "message": "Torrent added successfully",

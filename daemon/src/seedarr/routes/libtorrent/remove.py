@@ -1,11 +1,14 @@
+import os
+
 from pydantic import BaseModel, Field
 
 import libtorrent as lt
 from seedarr.datastructures import EventDataclass
 from seedarr.decorators import validate_payload
 from seedarr.enums import SyntheticEvent
-from seedarr.singletons import SIO, EventBus, LibtorrentSession
+from seedarr.singletons import SIO, EventBus, FolderLock, LibtorrentSession
 
+folder_lock = FolderLock.get_instance()
 sio = SIO.get_instance()
 event_bus = EventBus.get_bus()
 
@@ -43,5 +46,6 @@ async def remove(sid: str, data: RemoveRequestPayload):
 
     flags = lt.options_t.delete_files if data.remove_data else 0
     ses.remove_torrent(handle, flags)
+    await folder_lock.remove_folder(os.path.join(handle.save_path(), handle.name()))
     sio.start_background_task(publish_remove_event, handle)
     return {"status": "success", "message": "Torrent removed"}

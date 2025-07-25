@@ -111,7 +111,8 @@ export function TorrentDataTable<TData, TValue>({
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [setRowSelection, ignoredElementsRef]);
+    }, [canTorrentDetailsClear, setRowSelection, ignoredElementsRef]);
+
     return (
         <div className="h-full w-full rounded-md border">
             <ScrollArea className="relative h-full w-full">

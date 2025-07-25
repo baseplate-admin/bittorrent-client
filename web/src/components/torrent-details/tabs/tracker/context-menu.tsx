@@ -10,7 +10,7 @@ import {
     ignoredElementsRefAtom,
     canTorrentDetailsClearAtom,
 } from "@/atoms/table";
-import { useSetAtom } from "jotai";
+import { useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
     Copy,
@@ -20,7 +20,6 @@ import {
     PlusCircle,
 } from "lucide-react";
 import { TrackerInfo } from "@/types/socket/torrent_info";
-import { CONTEXT_MENU_ATOM_SET_INTERVAL } from "@/consts/context-menu";
 import { AddTrackerDialog } from "./dialogs/add-tracker";
 import { EditTrackerDialog } from "./dialogs/edit-tracker";
 import { useSocketConnection } from "@/hooks/use-socket";
@@ -36,24 +35,18 @@ export function TrackerTabContextMenu({
     children: React.ReactElement;
     infoHash: string;
 }) {
+    // State to track which dialog is open: "add", "edit", or null
     const [openDialog, setOpenDialog] = useState<"add" | "edit" | null>(null);
 
+    // New state to track if the context menu itself is open or closed
+    const [contextMenuOpen, setContextMenuOpen] = useState(false);
+
     const setIgnoredElements = useSetAtom(ignoredElementsRefAtom);
-    const setCanTorrentDetailsClear = useSetAtom(canTorrentDetailsClearAtom);
+    const [canTorentDetailsClear, setCanTorrentDetailsClear] = useAtom(
+        canTorrentDetailsClearAtom,
+    );
     const lastNodeRef = useRef<HTMLDivElement | null>(null);
     const socket = useSocketConnection();
-
-    useEffect(() => {
-        if (openDialog !== null) {
-            // Dialog opened — disable clearing immediately
-            setCanTorrentDetailsClear(false);
-        } else {
-            // Dialog closed — re-enable clearing after delay
-            setTimeout(() => {
-                setCanTorrentDetailsClear(true);
-            });
-        }
-    }, [openDialog, setCanTorrentDetailsClear]);
 
     const contextMenuRefCallback = useCallback(
         (node: HTMLDivElement | null) => {
@@ -80,18 +73,6 @@ export function TrackerTabContextMenu({
         },
         [setIgnoredElements],
     );
-
-    const handleContextMenuOpenChange = (open: boolean) => {
-        if (open) {
-            setCanTorrentDetailsClear(false);
-        } else {
-            if (openDialog === null) {
-                setTimeout(() => {
-                    setCanTorrentDetailsClear(true);
-                });
-            }
-        }
-    };
 
     const handleRemoveButtonClick = () => {
         socket.current?.emit(
@@ -132,12 +113,22 @@ export function TrackerTabContextMenu({
             },
         );
     };
-    useEffect(() => {
-        console.log(openDialog);
-    }, [openDialog]);
+
     const handleCopyButtonClick = async () => {
         await navigator.clipboard.writeText(rowData.url);
     };
+
+    useEffect(() => {
+        if (openDialog === null && !contextMenuOpen) {
+            setTimeout(() => {
+                setCanTorrentDetailsClear(true);
+            }, 250);
+        } else {
+            setTimeout(() => {
+                setCanTorrentDetailsClear(false);
+            });
+        }
+    }, [openDialog, contextMenuOpen]);
 
     return (
         <>
@@ -153,25 +144,17 @@ export function TrackerTabContextMenu({
                 infoHash={infoHash}
             />
 
-            <ContextMenu onOpenChange={handleContextMenuOpenChange}>
+            <ContextMenu onOpenChange={setContextMenuOpen}>
                 <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
                 <ContextMenuContent
                     ref={contextMenuRefCallback}
                     className="w-69"
                 >
-                    <ContextMenuItem
-                        onClick={() => {
-                            setOpenDialog("add");
-                        }}
-                    >
+                    <ContextMenuItem onClick={() => setOpenDialog("add")}>
                         <PlusCircle className="h-4 w-4" />
                         Add Trackers
                     </ContextMenuItem>
-                    <ContextMenuItem
-                        onClick={() => {
-                            setOpenDialog("edit");
-                        }}
-                    >
+                    <ContextMenuItem onClick={() => setOpenDialog("edit")}>
                         <PencilIcon className="h-4 w-4" />
                         Edit Tracker URL
                     </ContextMenuItem>
@@ -185,19 +168,17 @@ export function TrackerTabContextMenu({
                     </ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem
-                        onClick={() => {
-                            handleReannounceButtonClick(rowData.url);
-                        }}
+                        onClick={() => handleReannounceButtonClick(rowData.url)}
                     >
                         <Megaphone className="h-4 w-4" />
                         Force Reannounce to Tracker
                     </ContextMenuItem>
                     <ContextMenuItem
-                        onClick={() => {
+                        onClick={() =>
                             handleReannounceButtonClick(
                                 allRows.map((row) => row.url),
-                            );
-                        }}
+                            )
+                        }
                     >
                         <Megaphone className="h-4 w-4" />
                         Force Reannounce to all Trackers

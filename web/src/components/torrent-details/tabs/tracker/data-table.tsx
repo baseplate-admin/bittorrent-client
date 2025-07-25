@@ -78,6 +78,9 @@ export function TrackerTabDataTable<TData, TValue>({
                             <TrackerTabContextMenu
                                 infoHash={infoHash}
                                 rowData={row.original as TrackerInfo}
+                                allRows={table
+                                    .getRowModel()
+                                    .rows.map((r) => r.original as TrackerInfo)}
                                 key={row.id}
                             >
                                 <TableRow

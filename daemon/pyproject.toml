@@ -1,5 +1,5 @@
 [project]
-name = "seaderr"
+name = "seedarr"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -25,17 +25,17 @@ where = ["src"]
 
 
 [project.scripts]
-seaderr = "seaderr.__main__:main"
+seedarr = "seedarr.__main__:main"
 
 [tool.uv]
 package = true
 
 [tool.ruff]
-line-length = 88
+line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I"] # E: pyflakes, F: pycodestyle, I: isort
 
 [tool.ruff.lint.isort]
-known-first-party = ["seaderr"]
+known-first-party = ["seedarr"]
 combine-as-imports = true

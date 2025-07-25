@@ -26,7 +26,9 @@ export function TrackerTabContextMenu({
     rowData,
     children,
     infoHash,
+    allRows,
 }: {
+    allRows: TrackerInfo[];
     rowData: TrackerInfo;
     children: React.ReactElement;
     infoHash: string;
@@ -95,6 +97,32 @@ export function TrackerTabContextMenu({
         );
     };
 
+    const handleReannounceButtonClick = (
+        trackerURL: string | Array<string>,
+    ) => {
+        console.log({
+            info_hash: infoHash,
+            trackers: Array.isArray(trackerURL) ? trackerURL : [trackerURL],
+        });
+        socket.current?.emit(
+            "libtorrent:force_reannounce",
+            {
+                info_hash: infoHash,
+                trackers: Array.isArray(trackerURL) ? trackerURL : [trackerURL],
+            },
+            (response: { status: "success" | "error"; message: string }) => {
+                console.log(response);
+                if (response.status === "success") {
+                    console.log("Reannounced to tracker successfully");
+                } else {
+                    throw new Error(
+                        `Failed to reannounce to tracker: ${response.message}`,
+                    );
+                }
+            },
+        );
+    };
+
     const handleCopyButtonClick = async () => {
         await navigator.clipboard.writeText(rowData.url);
     };
@@ -144,7 +172,11 @@ export function TrackerTabContextMenu({
                         Copy Tracker URL
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem>
+                    <ContextMenuItem
+                        onClick={() => {
+                            handleReannounceButtonClick(rowData.url);
+                        }}
+                    >
                         <Megaphone className="h-4 w-4" />
                         Force Reannounce to Tracker
                     </ContextMenuItem>

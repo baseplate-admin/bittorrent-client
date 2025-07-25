@@ -84,13 +84,11 @@ def download_file(url):
 def main():
     os_name = get_os_name_for_asset()
     py_minor = get_python_minor_version()
-    pattern = re.compile(
-        rf"python-bindings-{os_name}-latest-py3\.{py_minor}-build\.zip"
-    )
+    pattern = re.compile(rf"python-bindings-{os_name}-latest-py3\.{py_minor}-build\.zip")
     print(f"Looking for assets matching OS='{os_name}', Python 3.{py_minor}")
 
     GITHUB_API_RELEASES_URL = (
-        "https://api.github.com/repos/seaderr/libtorrent-python/releases/latest"
+        "https://api.github.com/repos/seedarr/libtorrent-python/releases/latest"
     )
 
     release_data = fetch_json(GITHUB_API_RELEASES_URL)

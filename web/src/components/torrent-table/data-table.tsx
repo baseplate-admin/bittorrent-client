@@ -95,7 +95,6 @@ export function TorrentDataTable<TData, TValue>({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            console.log(ignoreTableClear);
             if (ignoreTableClear) return;
             if (event.button !== 0) return; // Only left click
             const target = event.target as Node;

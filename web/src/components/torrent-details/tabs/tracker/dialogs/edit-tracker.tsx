@@ -34,7 +34,6 @@ export function EditTrackerDialog({
                 new_tracker: inputValue,
             },
             (response: { status: "error" | "success"; message: string }) => {
-                console.log(response);
                 if (response.status === "success") {
                     onOpenChange(false);
                 }

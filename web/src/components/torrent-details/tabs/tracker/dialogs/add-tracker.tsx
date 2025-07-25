@@ -34,7 +34,6 @@ export function AddTrackerDialog({
                     .filter((line) => line.length > 0),
             },
             (response: { status: "error" | "success"; message: string }) => {
-                console.log(response);
                 if (response.status === "success") {
                     onOpenChange(false);
                 }

@@ -1,0 +1,1 @@
+export const CONTEXT_MENU_ATOM_SET_INTERVAL = 250;

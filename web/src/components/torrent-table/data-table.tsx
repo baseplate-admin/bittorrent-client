@@ -21,10 +21,14 @@ import {
 
 import { Fragment, RefObject, useEffect, useRef, useState } from "react";
 
-import { ignoredElementsRefAtom, selectedRowAtom } from "@/atoms/table";
-import { useAtom } from "jotai";
+import {
+    ignoredElementsRefAtom,
+    selectedRowAtom,
+    ignoreTableClearAtom,
+} from "@/atoms/table";
+import { useAtom, useAtomValue } from "jotai";
 import { TorrentInfo } from "@/types/socket/torrent_info";
-import { RowContextMenu } from "./row-context-menu";
+import { RowContextMenu } from "./context-menu";
 import { cn } from "@/lib/utils";
 import { ColumnResizer } from "../column-resizer";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -44,6 +48,7 @@ export function TorrentDataTable<TData, TValue>({
     const [ignoredElementsRef, setIgnoredElementsRef] = useAtom(
         ignoredElementsRefAtom,
     );
+    const ignoreTableClear = useAtomValue(ignoreTableClearAtom);
     const tableRef = useRef<HTMLTableElement>(null);
     const scrollBarRef = useRef<HTMLDivElement>(null);
 
@@ -90,9 +95,10 @@ export function TorrentDataTable<TData, TValue>({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
+            console.log(ignoreTableClear);
+            if (ignoreTableClear) return;
             if (event.button !== 0) return; // Only left click
             const target = event.target as Node;
-            console.log(ignoredElementsRef);
 
             for (const ref of ignoredElementsRef) {
                 if (ref.current && ref.current.contains(target)) {

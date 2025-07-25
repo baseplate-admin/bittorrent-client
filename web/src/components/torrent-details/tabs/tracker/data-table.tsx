@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { useState } from "react";
 import { TrackerTabContextMenu } from "./context-menu";
+import { TrackerInfo } from "@/types/socket/torrent_info";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -71,7 +72,10 @@ export function TrackerTabDataTable<TData, TValue>({
                 <TableBody>
                     {table.getRowModel().rows.length ? (
                         table.getRowModel().rows.map((row) => (
-                            <TrackerTabContextMenu key={row.id}>
+                            <TrackerTabContextMenu
+                                rowData={row.original as TrackerInfo}
+                                key={row.id}
+                            >
                                 <TableRow
                                     data-state={
                                         row.getIsSelected()

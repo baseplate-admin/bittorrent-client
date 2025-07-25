@@ -95,6 +95,7 @@ export function TorrentDataTable<TData, TValue>({
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
+            console.log(canTorrentDetailsClear);
             if (!canTorrentDetailsClear) return;
             if (event.button !== 0) return; // Only left click
             const target = event.target as Node;
@@ -110,7 +111,8 @@ export function TorrentDataTable<TData, TValue>({
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [setRowSelection, ignoredElementsRef]);
+    }, [canTorrentDetailsClear, setRowSelection, ignoredElementsRef]);
+
     return (
         <div className="h-full w-full rounded-md border">
             <ScrollArea className="relative h-full w-full">

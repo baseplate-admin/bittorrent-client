@@ -43,7 +43,6 @@ async def remove_tracker(sid: str, data: RemoveTrackerPayload):
                         f"{len(original_urls - set(t['url'] for t in updated_trackers))}"
                         " tracker(s)"
                     ),
-                    "remaining_trackers": [tr["url"] for tr in updated_trackers],
                 }
 
             except Exception as e:

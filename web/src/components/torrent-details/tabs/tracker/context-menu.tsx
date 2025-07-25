@@ -20,6 +20,7 @@ import { TrackerInfo } from "@/types/socket/torrent_info";
 import { CONTEXT_MENU_ATOM_SET_INTERVAL } from "@/consts/context-menu";
 import { AddTrackerDialog } from "./dialogs/add-tracker";
 import { EditTrackerDialog } from "./dialogs/edit-tracker";
+import { useSocketConnection } from "@/hooks/use-socket";
 
 export function TrackerTabContextMenu({
     rowData,
@@ -36,6 +37,7 @@ export function TrackerTabContextMenu({
     const clearTimer = useRef<NodeJS.Timeout | null>(null);
     const setIgnoreTableClear = useSetAtom(ignoreTableClearAtom);
     const lastNodeRef = useRef<HTMLDivElement | null>(null);
+    const socket = useSocketConnection();
 
     const contextMenuRefCallback = useCallback(
         (node: HTMLDivElement | null) => {
@@ -72,6 +74,25 @@ export function TrackerTabContextMenu({
                 setIgnoreTableClear(false);
             }, CONTEXT_MENU_ATOM_SET_INTERVAL);
         }
+    };
+
+    const handleRemoveButtonClick = () => {
+        socket.current?.emit(
+            "libtorrent:remove_tracker",
+            {
+                info_hash: infoHash,
+                trackers: [rowData.url],
+            },
+            (response: { status: "success" | "error"; message: string }) => {
+                if (response.status === "success") {
+                    console.log("Tracker removed successfully");
+                } else {
+                    throw new Error(
+                        `Failed to remove tracker: ${response.message}`,
+                    );
+                }
+            },
+        );
     };
 
     const handleCopyButtonClick = async () => {
@@ -114,7 +135,7 @@ export function TrackerTabContextMenu({
                         <PencilIcon className="h-4 w-4" />
                         Edit Tracker URL
                     </ContextMenuItem>
-                    <ContextMenuItem>
+                    <ContextMenuItem onClick={handleRemoveButtonClick}>
                         <OctagonMinus className="h-4 w-4" />
                         Remove Tracker
                     </ContextMenuItem>
